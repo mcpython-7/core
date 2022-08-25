@@ -6,7 +6,7 @@ import sys
 local = os.path.dirname(os.path.dirname(__file__))
 
 
-subprocess.call(
+code = subprocess.call(
     [
         sys.executable,
         "-m",
@@ -19,4 +19,8 @@ subprocess.call(
         local,
     ]
 )
+
+
+if code != 0:
+    sys.exit(code)
 
