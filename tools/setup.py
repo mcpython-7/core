@@ -4,7 +4,10 @@ import subprocess
 import sys
 import zipfile
 
-with open("./config.json") as f:
+
+local = os.path.dirname(os.path.dirname(__file__))
+
+with open(local+"/tools/config.json") as f:
     data = json.load(f)
 
 print("[INFO] installing dependencies")
@@ -44,17 +47,17 @@ import requests
 asset_url = data["mc target"]["version url"]
 asset_request = requests.get(asset_url)
 
-os.makedirs("../cache", exist_ok=True)
-with open("../cache/assets_tmp.zip", mode="wb") as f:
+os.makedirs(local+"/cache", exist_ok=True)
+with open(local+"/cache/assets_tmp.zip", mode="wb") as f:
     f.write(asset_request.content)
 
 print("[INFO] filtering assets")
 
-if os.path.exists("../cache/assets.zip"):
-    os.remove("../cache/assets.zip")
+if os.path.exists(local+"/cache/assets.zip"):
+    os.remove(local+"/cache/assets.zip")
 
-with zipfile.ZipFile("../cache/assets_tmp.zip") as fr, zipfile.ZipFile(
-    "../cache/assets.zip", mode="w"
+with zipfile.ZipFile(local+"/cache/assets_tmp.zip") as fr, zipfile.ZipFile(
+    local+"/cache/assets.zip", mode="w"
 ) as fw:
     for file in fr.namelist():
         if not file.endswith(".class"):
@@ -63,4 +66,4 @@ with zipfile.ZipFile("../cache/assets_tmp.zip") as fr, zipfile.ZipFile(
 
 print("[INFO] cleaning up")
 
-os.remove("../cache/assets_tmp.zip")
+os.remove(local+"/cache/assets_tmp.zip")
