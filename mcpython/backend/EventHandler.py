@@ -27,6 +27,9 @@ class EventHandler:
         self.__enabled = False
 
     def subscribe(self, event: str, callback: typing.Callable[[...], typing.Awaitable]):
+        if event not in self._events:
+            raise NameError(f"event name '{event}' is not registered!")
+
         self._subscribers.setdefault(event, []).append(callback)
         return callback
 
@@ -79,7 +82,7 @@ class EventHandler:
         if run_parallel:
             exceptions = await asyncio.gather(*awaits)
 
-            if exceptions:
+            if any(e != None for e in exceptions):
                 if not ignore_exceptions:
                     raise CombinedEventException(exceptions)
             else:
