@@ -12,4 +12,3 @@ class BlockState:
 
     async def on_remove(self, force=False, player=None) -> bool:
         pass
-

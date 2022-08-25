@@ -1,6 +1,10 @@
 import typing
 
-from mcpython.world.AbstractDefinition import AbstractChunk, AbstractSection, AbstractDimension
+from mcpython.world.AbstractDefinition import (
+    AbstractChunk,
+    AbstractSection,
+    AbstractDimension,
+)
 from mcpython.world.block.BlockState import BlockState
 
 
@@ -75,7 +79,9 @@ class Section(AbstractSection):
         cx, cy, cz = (await self.get_range())[0]
         await self.set_block_relative(x - cx, y - cy, z - cz, real_pos=(x, y, z))
 
-    async def set_block_relative(self, dx: int, dy: int, dz: int, blockstate: BlockState | None, real_pos=None):
+    async def set_block_relative(
+        self, dx: int, dy: int, dz: int, blockstate: BlockState | None, real_pos=None
+    ):
         index = dx + dy * 16 + dz * 256
         previous_block = self.blocks[index]
 
@@ -83,8 +89,11 @@ class Section(AbstractSection):
             await previous_block.on_remove()
 
         if blockstate is not None:
-            blockstate.position = real_pos or (dx + self.chunk.position[0] * 16, dy + self.y * 16, dz * self.chunk.position[1] * 16)
+            blockstate.position = real_pos or (
+                dx + self.chunk.position[0] * 16,
+                dy + self.y * 16,
+                dz * self.chunk.position[1] * 16,
+            )
             await blockstate.on_addition()
 
         self.blocks[index] = blockstate
-

@@ -1,7 +1,11 @@
 import os
 import typing
 
-from mcpython.world.AbstractDefinition import AbstractWorld, DimensionFormatException, AbstractDimension
+from mcpython.world.AbstractDefinition import (
+    AbstractWorld,
+    DimensionFormatException,
+    AbstractDimension,
+)
 from mcpython.world.Dimension import Dimension
 
 
@@ -23,7 +27,9 @@ class World(AbstractWorld):
 
     async def get_dimension(self, name: str) -> Dimension:
         if name not in self.arrival_dimensions:
-            raise NameError(f"Dimension {name} is not arrival! You need to create it if you want it!")
+            raise NameError(
+                f"Dimension '{name}' is not arrival! You need to create it if you want it!"
+            )
 
         if name not in self.dimensions:
             await self.load_dimension_from_save(name)
@@ -47,4 +53,3 @@ class World(AbstractWorld):
 WORLD = World()
 WORLD.add_dimension(Dimension("minecraft:overworld", (0 - 64, 256 + 64)))
 WORLD.current_dimension = WORLD.get_dimension("minecraft:overworld")
-

@@ -166,7 +166,7 @@ class GameWindow(pyglet.window.Window):
 
     def set_3d(self):
         width, height = self.get_size()
-        self.projection = Mat4.perspective_projection(width / height, .1, 100)
+        self.projection = Mat4.perspective_projection(width / height, 0.1, 100)
 
 
 WINDOW = GameWindow()

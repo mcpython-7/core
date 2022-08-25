@@ -29,4 +29,3 @@ class AbstractState(ABC):
 
     async def on_deactivate(self):
         pass
-

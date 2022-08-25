@@ -149,10 +149,9 @@ class EventHandler:
             for exception in exceptions:
                 pass
 
-    def _create_invoke_ables(
-        self, event_name: str, args, kwargs
-    ):
-        if not self.__enabled or event_name not in self._subscribers: return
+    def _create_invoke_ables(self, event_name: str, args, kwargs):
+        if not self.__enabled or event_name not in self._subscribers:
+            return
 
         for sub in self._subscribers[event_name]:
             r = sub(*args, **kwargs)
@@ -183,4 +182,3 @@ class EventHandler:
     async def invoke_event_queue(self):
         while self._event_queue.qsize() > 0:
             await self._event_queue.get()
-

@@ -14,7 +14,7 @@ code = subprocess.call(
         "discover",
         "--locals",
         "-s",
-        local+"/game_tests/units",
+        local + "/game_tests/units",
         "-t",
         local,
     ]
@@ -23,4 +23,3 @@ code = subprocess.call(
 
 if code != 0:
     sys.exit(code)
-

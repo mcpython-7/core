@@ -11,7 +11,8 @@ import PIL.Image
 import pyglet.image
 
 
-class ResourceNotFoundException(Exception): pass
+class ResourceNotFoundException(Exception):
+    pass
 
 
 class AbstractResourcePath(ABC):
@@ -98,4 +99,3 @@ class ResourceManager:
 
 
 MANAGER = ResourceManager()
-

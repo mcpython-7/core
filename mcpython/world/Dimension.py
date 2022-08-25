@@ -1,6 +1,10 @@
 import typing
 
-from mcpython.world.AbstractDefinition import AbstractDimension, AbstractWorld, ChunkDoesNotExistException
+from mcpython.world.AbstractDefinition import (
+    AbstractDimension,
+    AbstractWorld,
+    ChunkDoesNotExistException,
+)
 from mcpython.world.Chunk import Chunk
 
 
@@ -30,7 +34,9 @@ class Dimension(AbstractDimension):
 
         return self.chunks[pos]
 
-    async def load_chunk_from_saves(self, cx: typing.Type[int, int] | int, cz: int = None):
+    async def load_chunk_from_saves(
+        self, cx: typing.Type[int, int] | int, cz: int = None
+    ):
         pos = (cx, cz) if cz is not None else cz
 
         self.chunks[pos] = Chunk(self, pos)
@@ -45,10 +51,11 @@ class Dimension(AbstractDimension):
     async def get_loaded_chunks(self) -> typing.List[Chunk]:
         return list(self.chunks.values())
 
-    async def create_chunk(self, cx: typing.Tuple[int, int] | int, cz: int = None) -> Chunk:
+    async def create_chunk(
+        self, cx: typing.Tuple[int, int] | int, cz: int = None
+    ) -> Chunk:
         pos = (cx, cz) if cz is not None else cz
         chunk = Chunk(self, pos)
         self.chunks[cx, cz] = chunk
         self.arrival_chunks.add(pos)
         return chunk
-

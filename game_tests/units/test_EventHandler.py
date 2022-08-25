@@ -25,7 +25,9 @@ class TestEventHandler(TestCase):
 
     def test_register_for_not_present(self):
         instance = EventHandler()
-        self.assertRaises(NameError, lambda: instance.subscribe("test", self.target_invoke))
+        self.assertRaises(
+            NameError, lambda: instance.subscribe("test", self.target_invoke)
+        )
         self.assertCalls(0)
 
     def test_invoke(self):
@@ -84,4 +86,3 @@ class TestEventHandler(TestCase):
         instance.disable()
         asyncio.get_event_loop().run_until_complete(instance.invoke_event("test"))
         self.assertCalls(0)
-

@@ -15,7 +15,9 @@ class _StateManager:
         self.states[state.NAME] = state.INSTANCE = state()
         return state
 
-    async def activate_state(self, name: str | AbstractState | typing.Type[AbstractState] | None):
+    async def activate_state(
+        self, name: str | AbstractState | typing.Type[AbstractState] | None
+    ):
         try:
             is_sub = issubclass(name, AbstractState)
         except TypeError:
@@ -39,4 +41,3 @@ class _StateManager:
 
 
 MANAGER = _StateManager()
-

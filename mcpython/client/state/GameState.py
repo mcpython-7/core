@@ -37,6 +37,3 @@ class GameState(AbstractState):
         self._rendering_container.overlay_batch.draw()
 
         pyglet.gl.glClear(pyglet.gl.GL_DEPTH_BUFFER_BIT)
-
-
-
