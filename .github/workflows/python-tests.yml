@@ -28,4 +28,4 @@ jobs:
         python ./tools/setup.py
     - name: Run tests
       run: |
-        python ./tools/run tests.py --no-window
+        python "./tools/run tests.py" --no-window
