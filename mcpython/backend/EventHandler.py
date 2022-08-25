@@ -11,24 +11,53 @@ class CombinedEventException(Exception):
 
 class EventHandler:
     def __init__(self):
-        self.events: typing.Set[str] = set()
-        self.event_queue = queue.Queue()
-        self.subscribers: typing.Dict[str, typing.List[typing.Callable[[...], typing.Awaitable]]] = {}
+        self._events: typing.Set[str] = set()
+        self._event_queue = queue.Queue()
+        self._subscribers: typing.Dict[
+            str, typing.List[typing.Callable[[...], typing.Awaitable]]
+        ] = {}
+        self._children: typing.List[EventHandler] = []
+
+        self.__enabled = True
+
+    def enable(self):
+        self.__enabled = True
+
+    def disable(self):
+        self.__enabled = False
+
+    def subscribe(self, event: str, callback: typing.Callable[[...], typing.Awaitable]):
+        self._subscribers.setdefault(event, []).append(callback)
+        return callback
+
+    def create_child_handler(self) -> "EventHandler":
+        instance = EventHandler()
+        instance._events = self._events
+        self._children.append(instance)
+        return instance
 
     def register_event_type(self, name: str):
-        if name in self.events:
+        if name in self._events:
             raise ValueError(f"event name '{name}' is already registered!")
 
-        self.events.add(name)
-        self.subscribers.setdefault(name, [])
+        self._events.add(name)
+        self._subscribers.setdefault(name, [])
 
     def remove_event_type(self, name: str, discard_subscribers=True):
-        self.events.remove(name)
+        self._events.remove(name)
 
         if discard_subscribers:
-            del self.subscribers[name]
+            del self._subscribers[name]
 
-    async def invoke_event(self, name: str, args=tuple(), kwargs=None, run_parallel=True, ignore_exceptions=False):
+    async def invoke_event(
+        self,
+        name: str,
+        args=tuple(),
+        kwargs=None,
+        run_parallel=True,
+        ignore_exceptions=False,
+        abort_on_exception=True,
+    ):
         """
         Invokes the event in the handler
 
@@ -37,22 +66,24 @@ class EventHandler:
         :param kwargs: the kwargs to use
         :param run_parallel: if events should be called in parallel or not
         :param ignore_exceptions: if exceptions should be ignored
+        :param abort_on_exception: if to abort further execution if an exception is raised
         :raises NameError: if the event name is not registered
         :raises CombinedEventException: if run_parallel and not ignore_exceptions and exceptions are raised
         """
 
-        if name not in self.events:
+        if name not in self._events:
             raise NameError(f"event name '{name}' is not registered!")
 
-        awaits = self.__create_invoke_ables(self.subscribers[name], args, kwargs or {})
+        awaits = self._create_invoke_ables(name, args, kwargs or {})
 
         if run_parallel:
-            exceptions = await asyncio.gather(
-                *awaits
-            )
+            exceptions = await asyncio.gather(*awaits)
 
-            if exceptions and not ignore_exceptions:
-                raise CombinedEventException(exceptions)
+            if exceptions:
+                if not ignore_exceptions:
+                    raise CombinedEventException(exceptions)
+            else:
+                pass
 
             return
 
@@ -62,15 +93,65 @@ class EventHandler:
             try:
                 await sub
             except Exception as e:
-                if ignore_exceptions: continue
+                if ignore_exceptions:
+                    continue
+
+                if abort_on_exception:
+                    raise e
 
                 exceptions.append(e)
 
         if not ignore_exceptions and exceptions:
             raise CombinedEventException(exceptions)
+        else:
+            for exception in exceptions:
+                pass
 
-    def __create_invoke_ables(self, subscribers: typing.List[typing.Callable], args, kwargs):
-        for sub in subscribers:
+    async def invoke_cancelable(
+        self,
+        name: str,
+        args=tuple(),
+        kwargs=None,
+        ignore_exceptions=False,
+        abort_on_exception=True,
+    ):
+        if name not in self._events:
+            raise NameError(f"event name '{name}' is not registered!")
+
+        awaits = self._create_invoke_ables(name, args, kwargs or {})
+        exceptions = []
+
+        for sub in awaits:
+            try:
+                result = await sub
+
+                if result is True:
+                    break
+
+            except Exception as e:
+                if abort_on_exception:
+                    if ignore_exceptions:
+                        return
+
+                    raise e
+
+                elif ignore_exceptions:
+                    continue
+
+                exceptions.append(e)
+
+        if not ignore_exceptions and exceptions:
+            raise CombinedEventException(exceptions)
+        else:
+            for exception in exceptions:
+                pass
+
+    def _create_invoke_ables(
+        self, event_name: str, args, kwargs
+    ):
+        if not self.__enabled or event_name not in self._subscribers: return
+
+        for sub in self._subscribers[event_name]:
             r = sub(*args, **kwargs)
 
             if not isinstance(r, typing.Awaitable):
@@ -78,10 +159,25 @@ class EventHandler:
 
             yield r
 
-    def schedule_invoke_event(self, name: str, args=tuple(), kwargs=None, run_parallel=True, ignore_exceptions=False):
-        self.event_queue.put(self.invoke_event(name, args, kwargs, run_parallel, ignore_exceptions))
+        for handler in self._children:
+            yield from handler._create_invoke_ables(event_name, args, kwargs)
+
+    def schedule_invoke_event(
+        self,
+        name: str,
+        args=tuple(),
+        kwargs=None,
+        run_parallel=True,
+        ignore_exceptions=False,
+        abort_on_exception=True,
+    ):
+        self._event_queue.put(
+            self.invoke_event(
+                name, args, kwargs, run_parallel, ignore_exceptions, abort_on_exception
+            )
+        )
 
     async def invoke_event_queue(self):
-        while self.event_queue.qsize() > 0:
-            await self.event_queue.get()
+        while self._event_queue.qsize() > 0:
+            await self._event_queue.get()
 
