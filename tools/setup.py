@@ -2,7 +2,6 @@ import json
 import os
 import subprocess
 import sys
-import requests
 import zipfile
 
 with open("./config.json") as f:
@@ -38,6 +37,9 @@ if data["is development environment"]:
     )
 
 print("[INFO] downloading assets")
+
+# This belongs here as it is installed above
+import requests
 
 asset_url = data["mc target"]["version url"]
 asset_request = requests.get(asset_url)
