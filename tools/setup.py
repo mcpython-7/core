@@ -20,7 +20,7 @@ subprocess.call(
         "install",
         # "--user",
         "-r",
-        "../requirements.txt",
+        local+"/requirements.txt",
     ]
 )
 
@@ -35,7 +35,7 @@ if data["is development environment"]:
             "install",
             # "--user",
             "-r",
-            "../requirements_dev.txt",
+            local+"/requirements_dev.txt",
         ]
     )
 
