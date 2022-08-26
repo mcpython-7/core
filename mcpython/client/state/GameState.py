@@ -1,7 +1,15 @@
+import math
+
 import pyglet
+from pyglet.math import Mat4
+from pyglet.math import Vec3
+from pyglet.window import key
 
 from mcpython.client.state.AbstractState import AbstractState
 from mcpython.client.rendering.Window import WINDOW
+from mcpython.world.World import WORLD
+from mcpython.world.block import Blocks
+from mcpython.world.block.BlockState import BlockState
 
 
 class WorldRenderingContainer:
@@ -23,17 +31,94 @@ class GameState(AbstractState):
         global RENDERING_CONTAINER
         self._rendering_container = RENDERING_CONTAINER = WorldRenderingContainer()
 
+        from mcpython.client.rendering.BlockRendering import BlockRenderer
+
+        # Temporary here for testing
+        self.block_renderer = BlockRenderer()
+
+        self.position_label = pyglet.text.Label(color=(0, 0, 0, 255))
+
     async def setup(self):
         self.window_handler.subscribe("on_draw", self.on_draw)
+        self.window_handler.subscribe("on_tick", self.on_tick)
+
+        await (await WORLD.get_dimension("minecraft:overworld")).create_chunk(0, 0)
+        await (await WORLD.get_dimension("minecraft:overworld")).set_block(
+            0, 0, 0, BlockState(Blocks.STONE)
+        )
+        await self.block_renderer.add_to_batch(
+            self._rendering_container.normal_3d_batch
+        )
 
     async def on_draw(self, dt: float):
-        WINDOW.set_3d()
+        WINDOW.set_3d_world_view()
+
+        pyglet.gl.glEnable(pyglet.gl.GL_DEPTH_TEST)
+        pyglet.gl.glEnable(pyglet.gl.GL_CULL_FACE)
 
         self._rendering_container.normal_3d_batch.draw()
 
         pyglet.gl.glClear(pyglet.gl.GL_DEPTH_BUFFER_BIT)
 
         WINDOW.set_2d()
+        pyglet.gl.glDisable(pyglet.gl.GL_DEPTH_TEST)
+        pyglet.gl.glDisable(pyglet.gl.GL_CULL_FACE)
+
         self._rendering_container.overlay_batch.draw()
+        self.position_label.draw()
 
         pyglet.gl.glClear(pyglet.gl.GL_DEPTH_BUFFER_BIT)
+
+    async def on_tick(self, dt: float):
+        rotation = WORLD.current_render_rotation
+
+        dx, dz = math.cos(rotation[0]), math.sin(rotation[0])
+
+        self.position_label.text = "{} {} {} / {} {} / {} {}".format(
+            *[
+                round(e * 100) / 100
+                for e in WORLD.current_render_position
+                + WORLD.current_render_rotation
+                + [dx, dz]
+            ]
+        )
+
+        if WINDOW.key_handler[key.D]:
+            WORLD.current_render_position[0] -= dx * dt / 4
+            WORLD.current_render_position[2] -= dz * dt / 4
+        elif WINDOW.key_handler[key.A]:
+            WORLD.current_render_position[0] += dx * dt / 4
+            WORLD.current_render_position[2] += dz * dt / 4
+
+        if WINDOW.key_handler[key.W]:
+            dx, dz = math.cos(rotation[0] + math.pi / 2), math.sin(
+                rotation[0] + math.pi / 2
+            )
+            WORLD.current_render_position[0] -= dx * dt / 4
+            WORLD.current_render_position[2] -= dz * dt / 4
+        elif WINDOW.key_handler[key.S]:
+            dx, dz = math.cos(rotation[0] - math.pi / 2), math.sin(
+                rotation[0] - math.pi / 2
+            )
+            WORLD.current_render_position[0] -= dx * dt / 4
+            WORLD.current_render_position[2] -= dz * dt / 4
+
+        if WINDOW.key_handler[key.SPACE]:
+            WORLD.current_render_position[1] += dt
+        elif WINDOW.key_handler[key.LSHIFT]:
+            WORLD.current_render_position[1] -= dt
+
+        if WINDOW.key_handler[key.LEFT]:
+            WORLD.current_render_rotation[0] += dt
+        elif WINDOW.key_handler[key.RIGHT]:
+            WORLD.current_render_rotation[0] -= dt
+
+        if WINDOW.key_handler[key.UP]:
+            WORLD.current_render_rotation[1] += dt
+        elif WINDOW.key_handler[key.DOWN]:
+            WORLD.current_render_rotation[1] -= dt
+
+        WORLD.current_render_rotation[0] %= 360
+        WORLD.current_render_rotation[1] = max(
+            min(WORLD.current_render_rotation[1], 180), 0
+        )

@@ -34,7 +34,7 @@ class AbstractWorld(ABC):
     async def get_chunk_for_position(
         self,
         dimension: str,
-        x: typing.Type[int, int] | typing.Type[int, int, int] | int,
+        x: typing.Tuple[int, int] | typing.Tuple[int, int, int] | int,
         y: int = None,
         z: int = None,
     ):
@@ -64,7 +64,7 @@ class AbstractDimension(ABC):
         raise NotImplementedError
 
     async def get_chunk(
-        self, cx: typing.Type[int, int] | int, cz: int = None
+        self, cx: typing.Tuple[int, int] | int, cz: int = None
     ) -> "AbstractChunk":
         raise NotImplementedError
 
@@ -76,7 +76,7 @@ class AbstractDimension(ABC):
     async def get_name(self) -> str:
         raise NotImplementedError
 
-    async def get_height_range(self) -> typing.Tuple[int, int]:
+    def get_height_range(self) -> typing.Tuple[int, int]:
         raise NotImplementedError
 
     async def get_loaded_chunks(self) -> typing.List["AbstractChunk"]:
@@ -84,7 +84,7 @@ class AbstractDimension(ABC):
 
     async def get_chunk_for_position(
         self,
-        x: typing.Type[int, int] | typing.Type[int, int, int] | int,
+        x: typing.Tuple[int, int] | typing.Tuple[int, int, int] | int,
         y: int = None,
         z: int = None,
     ):
@@ -97,7 +97,7 @@ class AbstractDimension(ABC):
         return await (await self.get_chunk(cx, cz)).get_section(cy)
 
     async def get_section_for_position(
-        self, x: typing.Type[int, int, int] | int, y: int = None, z: int = None
+        self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None
     ):
         if isinstance(x, tuple):
             return (await self.get_chunk_for_position(x)).get_section_for_position(x[1])
@@ -148,7 +148,7 @@ class AbstractChunk(ABC):
 
     async def get_section_for_position(
         self,
-        x: typing.Type[int, int] | typing.Type[int, int, int] | int,
+        x: typing.Tuple[int, int, int] | int,
         y: int = None,
         z: int = None,
     ):

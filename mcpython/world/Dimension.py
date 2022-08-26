@@ -23,7 +23,9 @@ class Dimension(AbstractDimension):
     async def get_world(self) -> AbstractWorld:
         return self.world
 
-    async def get_chunk(self, cx: typing.Type[int, int] | int, cz: int = None) -> Chunk:
+    async def get_chunk(
+        self, cx: typing.Tuple[int, int] | int, cz: int = None
+    ) -> Chunk:
         pos = (cx, cz) if cz is not None else cz
 
         if pos not in self.arrival_chunks:
@@ -35,7 +37,7 @@ class Dimension(AbstractDimension):
         return self.chunks[pos]
 
     async def load_chunk_from_saves(
-        self, cx: typing.Type[int, int] | int, cz: int = None
+        self, cx: typing.Tuple[int, int] | int, cz: int = None
     ):
         pos = (cx, cz) if cz is not None else cz
 
@@ -45,7 +47,7 @@ class Dimension(AbstractDimension):
     async def get_name(self) -> str:
         return self.name
 
-    async def get_height_range(self) -> typing.Tuple[int, int]:
+    def get_height_range(self) -> typing.Tuple[int, int]:
         return self.height_range
 
     async def get_loaded_chunks(self) -> typing.List[Chunk]:

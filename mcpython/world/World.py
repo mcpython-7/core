@@ -21,6 +21,14 @@ class World(AbstractWorld):
         self.dimensions: typing.Dict[str, Dimension] = {}
 
         self.current_dimension: Dimension = None
+        self.current_render_position = [0, 5, 0]
+        self.current_render_rotation = [0, -90]
+
+    async def setup_default(self):
+        await self.add_dimension(Dimension("minecraft:overworld", (0 - 64, 256 + 64)))
+        self.current_dimension = overworld = await WORLD.get_dimension(
+            "minecraft:overworld"
+        )
 
     async def get_save_file_location(self) -> str:
         return local + "/home/saves/test"
@@ -51,5 +59,3 @@ class World(AbstractWorld):
 
 
 WORLD = World()
-WORLD.add_dimension(Dimension("minecraft:overworld", (0 - 64, 256 + 64)))
-WORLD.current_dimension = WORLD.get_dimension("minecraft:overworld")

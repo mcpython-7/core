@@ -1,11 +1,14 @@
 import asyncio
+import math
 import time
 import typing
 
 import pyglet
 from pyglet.math import Mat4
+from pyglet.math import Vec3
 
 from mcpython.backend.EventHandler import EventHandler
+from mcpython.world.World import WORLD
 
 
 class GameWindow(pyglet.window.Window):
@@ -163,10 +166,31 @@ class GameWindow(pyglet.window.Window):
     def set_2d(self):
         width, height = self.get_size()
         self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
+        self.view = Mat4.from_translation(Vec3(0, 0, 0))
 
     def set_3d(self):
-        width, height = self.get_size()
-        self.projection = Mat4.perspective_projection(width / height, 0.1, 100)
+        self.projection = Mat4.perspective_projection(self.aspect_ratio, 0.1, 255)
+        self.view = Mat4.from_rotation(45, (0, 1, 0)) @ Mat4.from_translation(
+            Vec3(0, 0, -5)
+        )
+
+    def set_3d_world_view(self):
+        position = WORLD.current_render_position
+        rotation = WORLD.current_render_rotation
+
+        self.projection = Mat4.perspective_projection(self.aspect_ratio, 0.1, 255)
+        self.view = (
+            Mat4.from_translation(Vec3(*position))
+            @ Mat4.from_rotation(rotation[0], Vec3(0, 1, 0))
+            @ Mat4.from_rotation(
+                -rotation[1],
+                Vec3(
+                    math.cos(math.radians(rotation[0])),
+                    0,
+                    math.sin(math.radians(rotation[0])),
+                ),
+            )
+        )
 
 
 WINDOW = GameWindow()

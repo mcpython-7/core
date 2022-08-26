@@ -8,12 +8,15 @@ from mcpython.resources.ResourceManagement import (
 )
 from mcpython.client.state.StateManager import MANAGER as STATE_MANAGER
 from mcpython.client.state.GameState import GameState
+from mcpython.world.World import WORLD
 
 
 local = os.path.dirname(os.path.dirname(__file__))
 
 
 async def setup():
+    await WORLD.setup_default()
+
     RESOURCE_MANAGER.register_path(ArchiveResourcePath(local + "/cache/assets.zip"))
     await RESOURCE_MANAGER.setup()
 

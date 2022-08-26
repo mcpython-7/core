@@ -39,13 +39,14 @@ class Chunk(AbstractChunk):
         section = self.sections[y]
 
         if section is None:
-            await self.load_section_from_saves(y)
+            section = await self.load_section_from_saves(y)
 
         return section
 
     async def load_section_from_saves(self, y: int):
-        self.sections[y] = Section(self, y)
+        section = self.sections[y] = Section(self, y)
         # TODO: load
+        return section
 
 
 class Section(AbstractSection):
@@ -77,7 +78,9 @@ class Section(AbstractSection):
 
     async def set_block(self, x: int, y: int, z: int, blockstate: BlockState | None):
         cx, cy, cz = (await self.get_range())[0]
-        await self.set_block_relative(x - cx, y - cy, z - cz, real_pos=(x, y, z))
+        await self.set_block_relative(
+            x - cx, y - cy, z - cz, blockstate, real_pos=(x, y, z)
+        )
 
     async def set_block_relative(
         self, dx: int, dy: int, dz: int, blockstate: BlockState | None, real_pos=None
