@@ -70,6 +70,8 @@ class GameState(AbstractState):
         pyglet.gl.glClear(pyglet.gl.GL_DEPTH_BUFFER_BIT)
 
     async def on_tick(self, dt: float):
+        speed = .5 if not WINDOW.key_handler[key.LCTRL] else 2
+
         rotation = WORLD.current_render_rotation
 
         dx, dz = math.cos(rotation[0]), math.sin(rotation[0])
@@ -84,24 +86,24 @@ class GameState(AbstractState):
         )
 
         if WINDOW.key_handler[key.D]:
-            WORLD.current_render_position[0] -= dx * dt / 4
-            WORLD.current_render_position[2] -= dz * dt / 4
+            WORLD.current_render_position[0] -= dx * dt * speed
+            WORLD.current_render_position[2] -= dz * dt * speed
         elif WINDOW.key_handler[key.A]:
-            WORLD.current_render_position[0] += dx * dt / 4
-            WORLD.current_render_position[2] += dz * dt / 4
+            WORLD.current_render_position[0] += dx * dt * speed
+            WORLD.current_render_position[2] += dz * dt * speed
 
         if WINDOW.key_handler[key.W]:
             dx, dz = math.cos(rotation[0] + math.pi / 2), math.sin(
                 rotation[0] + math.pi / 2
             )
-            WORLD.current_render_position[0] -= dx * dt / 4
-            WORLD.current_render_position[2] -= dz * dt / 4
+            WORLD.current_render_position[0] -= dx * dt * speed
+            WORLD.current_render_position[2] -= dz * dt * speed
         elif WINDOW.key_handler[key.S]:
             dx, dz = math.cos(rotation[0] - math.pi / 2), math.sin(
                 rotation[0] - math.pi / 2
             )
-            WORLD.current_render_position[0] -= dx * dt / 4
-            WORLD.current_render_position[2] -= dz * dt / 4
+            WORLD.current_render_position[0] -= dx * dt * speed
+            WORLD.current_render_position[2] -= dz * dt * speed
 
         if WINDOW.key_handler[key.SPACE]:
             WORLD.current_render_position[1] += dt
@@ -118,7 +120,7 @@ class GameState(AbstractState):
         elif WINDOW.key_handler[key.DOWN]:
             WORLD.current_render_rotation[1] -= dt
 
-        WORLD.current_render_rotation[0] %= 360
+        WORLD.current_render_rotation[0] %= math.pi * 2
         WORLD.current_render_rotation[1] = max(
-            min(WORLD.current_render_rotation[1], 180), 0
+            min(WORLD.current_render_rotation[1], math.pi * 3 / 2), math.pi / 2
         )
