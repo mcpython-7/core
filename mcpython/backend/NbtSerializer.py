@@ -38,16 +38,39 @@ class IObjectNBTSerializer:
 
 class NBTSerializer:
     def __init__(self):
-        pass
+        self.serializers: typing.List[typing.Type[IObjectNBTSerializer]] = []
+        self.type2serializer: typing.Dict[typing.Type, typing.Type[IObjectNBTSerializer]] = {}
 
     def register_type_serializer(self, data_type: typing.Type, serializer: typing.Type[IObjectNBTSerializer]):
-        pass
+        self.serializers.append(serializer)
+        self.type2serializer[data_type] = serializer
 
     def decode_stream(self, stream: io.BytesIO):
-        pass
+        for serializer in self.serializers:
+            if serializer.check_if_top(stream, self):
+                return serializer.decode_from_top(stream, self)
+
+        raise ValueError(stream.tell())
 
     def encode_into_stream(self, obj: object) -> bytes:
-        pass
+        obj_types = [type(obj)]
+        visited = {object}
+
+        while obj_types:
+            obj_type = obj_types.pop()
+
+            if obj_type in visited: continue
+
+            if obj_type in self.type2serializer:
+                serializer = self.type2serializer[obj_type]
+                break
+
+            visited.add(obj_type)
+            obj_types += obj_type.__bases__
+        else:
+            raise ValueError(obj)
+
+        return serializer.encode_data(obj, self)
 
 
 SERIALIZER = NBTSerializer()
