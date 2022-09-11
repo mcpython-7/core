@@ -1,7 +1,11 @@
 import asyncio
+import multiprocessing
 import queue
+import sys
 import typing
 import logging
+
+import _queue
 
 
 class TaskScheduler:
@@ -59,5 +63,49 @@ class TaskScheduler:
             await self._linear_callbacks.get(False)
 
 
+class OffProcessWorker:
+    CURRENT_PROCESS = None
+    WORKER_LOGGER = logging.getLogger(__name__)
+
+    @classmethod
+    def _exit(cls):
+        cls.WORKER_LOGGER.fatal("Stopping Worker Process!")
+        sys.exit(1)
+
+    def __init__(self):
+        self.task_queue = multiprocessing.Queue()
+
+    def start(self):
+        OffProcessWorker.CURRENT_PROCESS = multiprocessing.Process(target=OffProcessWorker.target, args=(self,), name="mcpython worker process")
+        OffProcessWorker.CURRENT_PROCESS.start()
+
+    def stop(self):
+        try:
+            while True:
+                self.task_queue.get(block=False)
+        except _queue.Empty:
+            pass
+
+        self.task_queue.put(self._exit)
+
+    def target(self):
+        global WORKER
+        WORKER = self
+
+        self.WORKER_LOGGER.info("Starting Worker Process...")
+
+        while True:
+            task = self.task_queue.get()
+
+            try:
+                result = task()
+                if isinstance(result, typing.Awaitable):
+                    # todo: maybe async this?
+                    asyncio.run(result)
+            except Exception as e:
+                self.WORKER_LOGGER.error(e)
+
+
 SCHEDULER = TaskScheduler()
+WORKER = OffProcessWorker()
 

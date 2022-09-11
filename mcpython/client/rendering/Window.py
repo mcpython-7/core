@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import math
 import time
 import typing
@@ -13,6 +14,8 @@ from mcpython.world.World import WORLD
 
 
 class GameWindow(pyglet.window.Window):
+    LOGGER = logging.getLogger(__name__)
+
     def __init__(self):
         super().__init__()
         self.set_caption("mcpython 7 - development version")
@@ -46,6 +49,13 @@ class GameWindow(pyglet.window.Window):
         self.push_handlers(self.key_handler)
 
         pyglet.clock.schedule_interval(self.on_tick, 1 / 20)
+
+    def on_close(self):
+        self.LOGGER.info("Closing Game Window")
+        from mcpython.world.TaskScheduler import WORKER
+        WORKER.stop()
+        self.close()
+        self.LOGGER.info("Window closed!")
 
     def get_mouse_position(self):
         return self.__mouse_position
