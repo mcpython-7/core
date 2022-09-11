@@ -1,23 +1,73 @@
 from mcpython.backend.Registry import IRegistryEntry
 
 
+class BlockUtil:
+    @classmethod
+    async def update_visual(cls, blockstate):
+        await blockstate.chunk_section.update_block_visual(blockstate)
+
+
 class Block(IRegistryEntry):
     REGISTRY = "minecraft:block"
 
     def __init__(self):
         pass
 
-    async def on_added_to_world(self, blockstate) -> bool:
+    async def on_added_to_world(self, blockstate, force=False, player=None) -> bool:
+        """
+        Invoked when the block is added to the world.
+        on_block_update() is invoked afterwards (when the adding instance ask for block updates).
+        Should be invoked before any of the other functions are invoked, when not stated otherwise.
+        Invoked on the same thread as the adding block call is using
+
+        :param blockstate: the respective block state
+        :param force: if the block is force-added to the world
+        :param player: the player instance adding the block
+        :return: if to add the block or not
+        """
         return True
 
     async def on_removed_from_world(self, blockstate, force=False, player=None) -> bool:
+        """
+        Invoked when the block is removed from the world
+
+        :param blockstate: the blockstate representing the block
+        :param force: if force-removal is scheduled
+        :param player: the player breaking, if provided
+        :return: True to break the block, False if not, if force is True, this is ignored
+        """
+        return True
+
+    async def on_starting_to_break(self, blockstate, force=False, player=None):
+        """
+        Similar to on_removed_from_world(), but is invoked before the break animation starts,
+        so you can early cancel the breaking
+        """
         return True
 
     async def on_block_update(self, blockstate, source=None):
-        pass
+        """
+        Invoked when a block-update hits this block
+        May be executed in a processing thread, so do not directly interact with critical systems
+        """
 
     async def on_random_update(self):
-        pass
+        """
+        Invoked when a random update hits this block
+        May be executed in a processing thread, so do not directly interact with critical systems
+        """
 
-    async def on_player_interaction(self, blockstate, player, hand, button, itemstack) -> bool:
+    async def on_player_interaction(self, blockstate, player, hand, button, modifiers, itemstack) -> bool:
+        """
+        Method invoked when the block is interacted with by the player.
+        Block breaking and adding is handled afterwards by default!
+
+        :param blockstate: the block state of the block
+        :param player: the player instance
+        :param hand: the hand, as an enum value
+        :param button: the mouse button, see pyglet.window.mouse
+        :param modifiers: what modifiers are used
+        :param itemstack: the itemstack used
+        :return: True if the event is handled, False otherwise
+        """
         return False

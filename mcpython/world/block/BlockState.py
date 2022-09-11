@@ -7,11 +7,26 @@ class BlockState:
     def __init__(self, block_type: Block | RegistryObject = None):
         self.block_type = block_type if not isinstance(block_type, RegistryObject) else block_type.get()
 
+        # The Section instance this block is in
         self.chunk_section = None
         self.world_position: typing.Tuple[int, int, int] = None
 
         self.block_state: typing.Dict[str, str] = {}
+        self.__previous_blockstate = {}
+        self.__blockstate_ref_cache = None
         self.nbt: typing.Dict[str, object] = {}
+
+    def _check_blockstate_dirty(self) -> bool:
+        return self.block_state == self.__previous_blockstate
+
+    def _reset_dirty_blockstate(self):
+        self.__previous_blockstate = self.block_state.copy()
+
+    def _set_blockstate_ref_cache(self, cache: typing.Any):
+        self.__blockstate_ref_cache = cache
+
+    def _get_blockstate_ref_cache(self):
+        return self.__blockstate_ref_cache
 
     async def on_addition(self) -> bool:
         return await self.block_type.on_added_to_world(self)

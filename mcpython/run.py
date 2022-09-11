@@ -37,7 +37,7 @@ async def setup():
 
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(setup())
+    asyncio.run(setup())
 
     import pyglet
 

@@ -8,6 +8,7 @@ from pyglet.math import Mat4
 from pyglet.math import Vec3
 
 from mcpython.backend.EventHandler import EventHandler
+from mcpython.world.TaskScheduler import SCHEDULER
 from mcpython.world.World import WORLD
 
 
@@ -60,18 +61,14 @@ class GameWindow(pyglet.window.Window):
         pyglet.gl.glClearColor(1, 1, 1, 1)
         self.clear()
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_event(
                 "on_draw", args=(dt,), run_parallel=False, ignore_exceptions=True
             )
         )
 
     def on_tick(self, dt: float):
-        asyncio.get_event_loop().run_until_complete(
-            self.event_handler.invoke_event(
-                "on_tick", args=(dt,), ignore_exceptions=True
-            )
-        )
+        asyncio.run(SCHEDULER.tick(dt))
 
     def on_key_press(self, symbol, modifiers):
         self._key_press_duration[symbol] = time.time()
@@ -81,14 +78,14 @@ class GameWindow(pyglet.window.Window):
         else:
             last_invoke = -1
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_cancelable(
                 "on_key_press:cancelable",
                 args=(symbol, modifiers, last_invoke),
                 ignore_exceptions=True,
             )
         )
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_event(
                 "on_key_press",
                 args=(symbol, modifiers, last_invoke),
@@ -101,14 +98,14 @@ class GameWindow(pyglet.window.Window):
 
         duration = time.time() - self._key_press_duration[symbol]
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_cancelable(
                 "on_key_release:cancelable",
                 args=(symbol, modifiers, duration),
                 ignore_exceptions=True,
             )
         )
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_event(
                 "on_key_release",
                 args=(symbol, modifiers, duration),
@@ -119,14 +116,14 @@ class GameWindow(pyglet.window.Window):
     def on_mouse_motion(self, x, y, dx, dy):
         self.__mouse_position = x, y
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_cancelable(
                 "on_mouse_motion:cancelable",
                 args=(x, y, dx, dy, 0, 0),
                 ignore_exceptions=True,
             )
         )
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_event(
                 "on_mouse_motion",
                 args=(x, y, dx, dy, 0, 0),
@@ -137,14 +134,14 @@ class GameWindow(pyglet.window.Window):
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         self.__mouse_position = x, y
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_cancelable(
                 "on_mouse_motion:cancelable",
                 args=(x, y, dx, dy, buttons, modifiers),
                 ignore_exceptions=True,
             )
         )
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_event(
                 "on_mouse_motion",
                 args=(x, y, dx, dy, buttons, modifiers),
@@ -155,7 +152,7 @@ class GameWindow(pyglet.window.Window):
     def on_resize(self, width, height):
         super().on_resize(width, height)
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             self.event_handler.invoke_event(
                 "on_resize",
                 args=(width, height),
@@ -170,7 +167,7 @@ class GameWindow(pyglet.window.Window):
 
     def set_3d(self):
         self.projection = Mat4.perspective_projection(self.aspect_ratio, 0.1, 255)
-        self.view = Mat4.from_rotation(45, (0, 1, 0)) @ Mat4.from_translation(
+        self.view = Mat4.from_rotation(45, Vec3(0, 1, 0)) @ Mat4.from_translation(
             Vec3(0, 0, -5)
         )
 

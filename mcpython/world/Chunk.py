@@ -122,3 +122,9 @@ class Section(AbstractSection):
         await GameState.INSTANCE.block_renderer.add_to_batch(
             blockstate, RENDERING_CONTAINER.normal_3d_batch
         )
+
+    async def hide_block(self, blockstate: BlockState):
+        pass
+
+    async def update_block_visual(self, blockstate: BlockState):
+        pass
