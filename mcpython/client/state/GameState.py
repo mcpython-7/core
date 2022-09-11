@@ -43,12 +43,11 @@ class GameState(AbstractState):
         self.window_handler.subscribe("on_tick", self.on_tick)
 
         await (await WORLD.get_dimension("minecraft:overworld")).create_chunk(0, 0)
-        await (await WORLD.get_dimension("minecraft:overworld")).set_block(
-            0, 0, 0, BlockState(Blocks.STONE)
-        )
-        await self.block_renderer.add_to_batch(
-            self._rendering_container.normal_3d_batch
-        )
+        await (await WORLD.get_dimension("minecraft:overworld")).set_block(0, 0, 0, "stone")
+        await (await WORLD.get_dimension("minecraft:overworld")).set_block(1, 0, 0, "minecraft:stone")
+        await (await WORLD.get_dimension("minecraft:overworld")).set_block(2, 0, 0, Blocks.STONE)
+        await (await WORLD.get_dimension("minecraft:overworld")).set_block(3, 0, 0, BlockState(Blocks.STONE))
+        await (await WORLD.get_dimension("minecraft:overworld")).set_block(3, 0, 0, BlockState(Blocks.STONE.get()))
 
     async def on_draw(self, dt: float):
         WINDOW.set_3d_world_view()

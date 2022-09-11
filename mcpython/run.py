@@ -10,12 +10,17 @@ from mcpython.resources.ResourceManagement import (
 from mcpython.client.state.StateManager import MANAGER as STATE_MANAGER
 from mcpython.client.state.GameState import GameState
 from mcpython.world.World import WORLD
+from mcpython.backend.Registry import init as init_registries
 
 
 local = os.path.dirname(os.path.dirname(__file__))
 
 
 async def setup():
+    from mcpython.world.block import Blocks
+
+    await init_registries()
+
     await WORLD.setup_default()
 
     RESOURCE_MANAGER.register_path(FolderResourcePath(local))

@@ -6,6 +6,7 @@ from mcpython.world.AbstractDefinition import (
     AbstractDimension,
 )
 from mcpython.world.block.BlockState import BlockState
+from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
 
 
 class Chunk(AbstractChunk):
@@ -85,6 +86,9 @@ class Section(AbstractSection):
     async def set_block_relative(
         self, dx: int, dy: int, dz: int, blockstate: BlockState | None, real_pos=None
     ):
+        if not isinstance(blockstate, BlockState):
+            blockstate = BlockState(BLOCK_REGISTRY.lookup(blockstate))
+
         index = dx + dy * 16 + dz * 256
         previous_block = self.blocks[index]
 
@@ -92,7 +96,7 @@ class Section(AbstractSection):
             await previous_block.on_remove()
 
         if blockstate is not None:
-            blockstate.position = real_pos or (
+            blockstate.world_position = real_pos = real_pos or (
                 dx + self.chunk.position[0] * 16,
                 dy + self.y * 16,
                 dz * self.chunk.position[1] * 16,
@@ -100,3 +104,21 @@ class Section(AbstractSection):
             await blockstate.on_addition()
 
         self.blocks[index] = blockstate
+
+        keep = await blockstate.on_addition()
+
+        if not keep:
+            self.blocks[index] = previous_block
+            if not await previous_block.on_addition():
+                self.blocks[index] = None
+
+        await self.chunk.dimension.block_update_neighbors(*real_pos)
+
+        await self.show_block(self.blocks[index])
+
+    async def show_block(self, blockstate: BlockState):
+        from mcpython.client.state.GameState import GameState, RENDERING_CONTAINER
+
+        await GameState.INSTANCE.block_renderer.add_to_batch(
+            blockstate, RENDERING_CONTAINER.normal_3d_batch
+        )

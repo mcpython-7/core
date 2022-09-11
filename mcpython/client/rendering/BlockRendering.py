@@ -9,7 +9,7 @@ from pyglet.model import Model
 from pyglet.resource import FileLocation
 
 from mcpython.resources.ResourceManagement import MANAGER as RESOURCE_MANAGER
-
+from mcpython.world.block.BlockState import BlockState
 
 local = os.path.dirname(os.path.dirname(sys.argv[0]))
 
@@ -19,7 +19,7 @@ class BlockRenderer:
     TEXTURE_GROUP = None
     SHADER = None
 
-    async def add_to_batch(self, batch: pyglet.graphics.Batch):
+    async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
         pyglet.resource._default_loader.reindex()
         pyglet.resource._default_loader._index["box.obj"] = FileLocation(
             local + "/mcpython/client/rendering"
@@ -31,4 +31,4 @@ class BlockRenderer:
             local + "/mcpython/client/rendering"
         )
         self.model_box: Model = pyglet.resource.model("box.obj", batch=batch)
-        self.model_box.matrix.from_translation((0, 0, 0))
+        self.model_box.matrix.from_translation(block.world_position)

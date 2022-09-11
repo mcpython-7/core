@@ -112,6 +112,25 @@ class AbstractDimension(ABC):
             x, y, z, blockstate
         )
 
+    async def block_update_neighbors(self, x: int, y: int, z: int, include_self=True):
+        cause = (x, y, z)
+
+        for dx, dy, dz in (
+            (1, 0, 0),
+            (-1, 0, 0),
+            (0, 1, 0),
+            (0, -1, 0),
+            (0, 0, 1),
+            (0, 0, -1)
+        ) + (((0, 0, 0),) if include_self else tuple()):
+            try:
+                block = await self.get_block(x + dx, y + dy, z + dz)
+            except ChunkDoesNotExistException:
+                continue  # todo: do we want to load the chunk?
+
+            if block is not None:
+                await block.on_block_update(cause)
+
 
 class AbstractChunk(ABC):
     DEFAULT_SECTION_TYPE: typing.Type["AbstractSection"] = None
