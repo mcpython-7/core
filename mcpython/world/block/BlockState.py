@@ -4,6 +4,16 @@ from mcpython.backend.Registry import RegistryObject
 
 
 class BlockState:
+    __slots__ = (
+        "block_type",
+        "chunk_section",
+        "world_position",
+        "block_state",
+        "__previous_blockstate",
+        "__blockstate_ref_cache",
+        "nbt",
+    )
+
     def __init__(self, block_type: Block | RegistryObject = None):
         self.block_type = (
             block_type
