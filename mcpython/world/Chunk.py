@@ -77,14 +77,35 @@ class Section(AbstractSection):
     async def get_block_relative(self, dx: int, dy: int, dz: int) -> BlockState | None:
         return self.blocks[dx + dy * 16 + dz * 256]
 
-    async def set_block(self, x: int, y: int, z: int, blockstate: BlockState | None, force=False, player=None):
+    async def set_block(
+        self,
+        x: int,
+        y: int,
+        z: int,
+        blockstate: BlockState | None,
+        force=False,
+        player=None,
+    ):
         cx, cy, cz = (await self.get_range())[0]
         await self.set_block_relative(
-            x - cx, y - cy, z - cz, blockstate, real_pos=(x, y, z), force=force, player=player
+            x - cx,
+            y - cy,
+            z - cz,
+            blockstate,
+            real_pos=(x, y, z),
+            force=force,
+            player=player,
         )
 
     async def set_block_relative(
-        self, dx: int, dy: int, dz: int, blockstate: BlockState | None, real_pos=None, force=False, player=None
+        self,
+        dx: int,
+        dy: int,
+        dz: int,
+        blockstate: BlockState | None,
+        real_pos=None,
+        force=False,
+        player=None,
     ):
         if not isinstance(blockstate, BlockState):
             blockstate = BlockState(BLOCK_REGISTRY.lookup(blockstate))
@@ -93,7 +114,10 @@ class Section(AbstractSection):
         previous_block = self.blocks[index]
 
         if previous_block is not None:
-            if not await previous_block.on_remove(force=force, player=player) and not force:
+            if (
+                not await previous_block.on_remove(force=force, player=player)
+                and not force
+            ):
                 return
 
         if blockstate is not None:
@@ -113,7 +137,9 @@ class Section(AbstractSection):
 
             await previous_block.on_addition(force=True, player=player)
 
-        await self.chunk.dimension.block_update_neighbors(*real_pos, cause=blockstate.world_position)
+        await self.chunk.dimension.block_update_neighbors(
+            *real_pos, cause=blockstate.world_position
+        )
 
         await self.show_block(self.blocks[index])
 

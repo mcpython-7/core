@@ -50,7 +50,14 @@ class AbstractWorld(ABC):
         )
 
     async def set_block(
-        self, dimension: str, x: int, y: int, z: int, blockstate: BlockState | None, force=False, player=None
+        self,
+        dimension: str,
+        x: int,
+        y: int,
+        z: int,
+        blockstate: BlockState | None,
+        force=False,
+        player=None,
     ):
         return await (await self.get_chunk_for_position(dimension, x, y, z)).set_block(
             x, y, z, blockstate, force=force, player=player
@@ -107,12 +114,27 @@ class AbstractDimension(ABC):
     async def get_block(self, x: int, y: int, z: int) -> BlockState | None:
         return await (await self.get_chunk_for_position(x, y, z)).get_block(x, y, z)
 
-    async def set_block(self, x: int, y: int, z: int, blockstate: BlockState | None, force=False, player=None):
+    async def set_block(
+        self,
+        x: int,
+        y: int,
+        z: int,
+        blockstate: BlockState | None,
+        force=False,
+        player=None,
+    ):
         await (await self.get_chunk_for_position(x, y, z)).set_block(
-            x, y, z, blockstate, force=force, player=player,
+            x,
+            y,
+            z,
+            blockstate,
+            force=force,
+            player=player,
         )
 
-    async def block_update_neighbors(self, x: int, y: int, z: int, include_self=True, cause=None):
+    async def block_update_neighbors(
+        self, x: int, y: int, z: int, include_self=True, cause=None
+    ):
         cause = cause or (x, y, z)
 
         for dx, dy, dz in (
@@ -187,14 +209,37 @@ class AbstractChunk(ABC):
             dx, y - await section.get_y_level() * 16, dz
         )
 
-    async def set_block(self, x: int, y: int, z: int, blockstate: BlockState | None, force=False, player=None):
-        await (await self.get_section_for_position(y)).set_block(x, y, z, blockstate, force=force, player=player)
+    async def set_block(
+        self,
+        x: int,
+        y: int,
+        z: int,
+        blockstate: BlockState | None,
+        force=False,
+        player=None,
+    ):
+        await (await self.get_section_for_position(y)).set_block(
+            x, y, z, blockstate, force=force, player=player
+        )
 
     async def set_block_relative(
-        self, dx: int, y: int, dz: int, blockstate: BlockState | None, force=False, player=None
+        self,
+        dx: int,
+        y: int,
+        dz: int,
+        blockstate: BlockState | None,
+        force=False,
+        player=None,
     ):
         section = await self.get_section_for_position(y)
-        await section.set_block_relative(dx, y - await section.get_y_level() * 16, dz, blockstate, force=force, player=player)
+        await section.set_block_relative(
+            dx,
+            y - await section.get_y_level() * 16,
+            dz,
+            blockstate,
+            force=force,
+            player=player,
+        )
 
 
 class AbstractSection(ABC):
@@ -227,10 +272,24 @@ class AbstractSection(ABC):
     async def get_block_relative(self, dx: int, dy: int, dz: int) -> BlockState | None:
         raise NotImplementedError
 
-    async def set_block(self, x: int, y: int, z: int, blockstate: BlockState | None, force=False, player=None):
+    async def set_block(
+        self,
+        x: int,
+        y: int,
+        z: int,
+        blockstate: BlockState | None,
+        force=False,
+        player=None,
+    ):
         raise NotImplementedError
 
     async def set_block_relative(
-        self, dx: int, dy: int, dz: int, blockstate: BlockState | None, force=False, player=None
+        self,
+        dx: int,
+        dy: int,
+        dz: int,
+        blockstate: BlockState | None,
+        force=False,
+        player=None,
     ):
         raise NotImplementedError

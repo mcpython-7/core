@@ -36,7 +36,9 @@ class BlockState:
         return await self.block_type.on_added_to_world(self, force=force, player=player)
 
     async def on_remove(self, force=False, player=None) -> bool:
-        return await self.block_type.on_removed_from_world(self, force=force, player=player)
+        return await self.block_type.on_removed_from_world(
+            self, force=force, player=player
+        )
 
     async def on_block_update(self, source=None):
         await self.block_type.on_block_update(self, source)
