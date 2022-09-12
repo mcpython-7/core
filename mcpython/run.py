@@ -8,7 +8,7 @@ local = os.path.dirname(os.path.dirname(__file__))
 _async_log.logger.disabled = True
 
 os.makedirs(local+"/cache/logs", exist_ok=True)
-logging.basicConfig(format="[%(name)s][%(levelname)s]: %(message)s", level=logging.DEBUG)
+logging.basicConfig(format="[%(asctime)s][%(processName)s][%(name)s][%(levelname)s]: %(message)s", level=logging.DEBUG)
 
 from mcpython.resources.ResourceManagement import (
     MANAGER as RESOURCE_MANAGER,

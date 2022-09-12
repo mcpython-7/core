@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import multiprocessing
 import queue
 import sys
@@ -72,12 +73,34 @@ class OffProcessWorker:
         cls.WORKER_LOGGER.fatal("Stopping Worker Process!")
         sys.exit(1)
 
+    @classmethod
+    async def _run_target_with_callback(cls, target: typing.Callable[[], typing.Awaitable] | typing.Awaitable, callback: typing.Callable[[object], typing.Awaitable]):
+        target = target if isinstance(target, typing.Awaitable) else target()
+        result = await target
+
+        WORKER.result_data_queue.put(functools.partial(callback, result))
+
     def __init__(self):
         self.task_queue = multiprocessing.Queue()
+        self.result_data_queue = multiprocessing.Queue()
+
+    def put_task(self, target: typing.Callable[[], typing.Awaitable | object]):
+        self.task_queue.put(target)
+
+    def put_task_with_callback(self, target: typing.Callable[[], typing.Awaitable | object], callback: typing.Callable[[object], typing.Awaitable | object]):
+        self.put_task(functools.partial(self._run_target_with_callback, target, callback))
 
     def start(self):
         OffProcessWorker.CURRENT_PROCESS = multiprocessing.Process(target=OffProcessWorker.target, args=(self,), name="mcpython worker process")
         OffProcessWorker.CURRENT_PROCESS.start()
+
+        SCHEDULER.add_tick_callback(self.fetch_results)
+
+    async def fetch_results(self, dt: float = 0):
+        while not self.result_data_queue.empty():
+            r = self.result_data_queue.get()
+            if callable(r): r = r()
+            if isinstance(r, typing.Awaitable): await r
 
     def stop(self):
         try:
