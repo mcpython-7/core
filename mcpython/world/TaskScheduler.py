@@ -145,11 +145,14 @@ class OffProcessWorker:
 
     async def fetch_results(self, dt: float = 0):
         while not self.result_data_queue.empty():
-            r = self.result_data_queue.get()
-            if callable(r):
-                r = r()
-            if isinstance(r, typing.Awaitable):
-                await r
+            try:
+                r = self.result_data_queue.get()
+                if callable(r):
+                    r = r()
+                if isinstance(r, typing.Awaitable):
+                    await r
+            except Exception as e:
+                self.WORKER_LOGGER.error(e)
 
     def stop(self):
         try:
