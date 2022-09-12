@@ -112,8 +112,8 @@ class AbstractDimension(ABC):
             x, y, z, blockstate, force=force, player=player,
         )
 
-    async def block_update_neighbors(self, x: int, y: int, z: int, include_self=True):
-        cause = (x, y, z)
+    async def block_update_neighbors(self, x: int, y: int, z: int, include_self=True, cause=None):
+        cause = cause or (x, y, z)
 
         for dx, dy, dz in (
             (1, 0, 0),

@@ -113,7 +113,7 @@ class Section(AbstractSection):
 
             await previous_block.on_addition(force=True, player=player)
 
-        await self.chunk.dimension.block_update_neighbors(*real_pos)
+        await self.chunk.dimension.block_update_neighbors(*real_pos, cause=blockstate.world_position)
 
         await self.show_block(self.blocks[index])
 
