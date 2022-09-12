@@ -85,6 +85,7 @@ class Section(AbstractSection):
         blockstate: BlockState | None,
         force=False,
         player=None,
+        block_update=True,
     ):
         cx, cy, cz = (await self.get_range())[0]
         await self.set_block_relative(
@@ -95,6 +96,7 @@ class Section(AbstractSection):
             real_pos=(x, y, z),
             force=force,
             player=player,
+            block_update=block_update,
         )
 
     async def set_block_relative(
@@ -106,6 +108,7 @@ class Section(AbstractSection):
         real_pos=None,
         force=False,
         player=None,
+        block_update=True,
     ):
         if not isinstance(blockstate, BlockState):
             blockstate = BlockState(BLOCK_REGISTRY.lookup(blockstate))
@@ -136,10 +139,12 @@ class Section(AbstractSection):
             self.blocks[index] = previous_block
 
             await previous_block.on_addition(force=True, player=player)
+            block_update = False
 
-        await self.chunk.dimension.block_update_neighbors(
-            *real_pos, cause=blockstate.world_position
-        )
+        if block_update:
+            await self.chunk.dimension.block_update_neighbors(
+                *real_pos, cause=blockstate.world_position
+            )
 
         await self.show_block(self.blocks[index])
 

@@ -58,9 +58,10 @@ class AbstractWorld(ABC):
         blockstate: BlockState | None,
         force=False,
         player=None,
+        block_update=True,
     ):
         return await (await self.get_chunk_for_position(dimension, x, y, z)).set_block(
-            x, y, z, blockstate, force=force, player=player
+            x, y, z, blockstate, force=force, player=player, block_update=block_update
         )
 
 
@@ -122,6 +123,7 @@ class AbstractDimension(ABC):
         blockstate: BlockState | None,
         force=False,
         player=None,
+        block_update=True,
     ):
         await (await self.get_chunk_for_position(x, y, z)).set_block(
             x,
@@ -130,6 +132,7 @@ class AbstractDimension(ABC):
             blockstate,
             force=force,
             player=player,
+            block_update=block_update,
         )
 
     async def block_update_neighbors(
@@ -217,9 +220,10 @@ class AbstractChunk(ABC):
         blockstate: BlockState | None,
         force=False,
         player=None,
+        block_update=True,
     ):
         await (await self.get_section_for_position(y)).set_block(
-            x, y, z, blockstate, force=force, player=player
+            x, y, z, blockstate, force=force, player=player, block_update=block_update
         )
 
     async def set_block_relative(
@@ -230,6 +234,7 @@ class AbstractChunk(ABC):
         blockstate: BlockState | None,
         force=False,
         player=None,
+        block_update=True,
     ):
         section = await self.get_section_for_position(y)
         await section.set_block_relative(
@@ -239,6 +244,7 @@ class AbstractChunk(ABC):
             blockstate,
             force=force,
             player=player,
+            block_update=block_update,
         )
 
 
@@ -280,6 +286,7 @@ class AbstractSection(ABC):
         blockstate: BlockState | None,
         force=False,
         player=None,
+        block_update=True,
     ):
         raise NotImplementedError
 
@@ -291,5 +298,6 @@ class AbstractSection(ABC):
         blockstate: BlockState | None,
         force=False,
         player=None,
+        block_update=True,
     ):
         raise NotImplementedError
