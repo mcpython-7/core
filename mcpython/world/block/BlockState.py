@@ -5,7 +5,11 @@ from mcpython.backend.Registry import RegistryObject
 
 class BlockState:
     def __init__(self, block_type: Block | RegistryObject = None):
-        self.block_type = block_type if not isinstance(block_type, RegistryObject) else block_type.get()
+        self.block_type = (
+            block_type
+            if not isinstance(block_type, RegistryObject)
+            else block_type.get()
+        )
 
         # The Section instance this block is in
         self.chunk_section = None
@@ -40,5 +44,9 @@ class BlockState:
     async def on_random_update(self):
         await self.block_type.on_random_update()
 
-    async def on_player_interaction(self, blockstate, player, hand, button, itemstack) -> bool:
-        return await self.block_type.on_player_interaction(blockstate, player, hand, button, itemstack)
+    async def on_player_interaction(
+        self, blockstate, player, hand, button, itemstack
+    ) -> bool:
+        return await self.block_type.on_player_interaction(
+            blockstate, player, hand, button, itemstack
+        )

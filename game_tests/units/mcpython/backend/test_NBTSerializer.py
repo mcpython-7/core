@@ -8,5 +8,3 @@ class TestBasicValueSerialization(TestCase):
     #     self.assertEqual(b"\x01\x7a", SERIALIZER.encode_into_stream(NBT_BYTE(122)))
     #     self.assertEqual(123, SERIALIZER.decode_stream(io.BytesIO(b"\x01\x7b")))
     pass
-
-

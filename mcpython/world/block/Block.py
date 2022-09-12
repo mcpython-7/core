@@ -57,7 +57,9 @@ class Block(IRegistryEntry):
         May be executed in a processing thread, so do not directly interact with critical systems
         """
 
-    async def on_player_interaction(self, blockstate, player, hand, button, modifiers, itemstack) -> bool:
+    async def on_player_interaction(
+        self, blockstate, player, hand, button, modifiers, itemstack
+    ) -> bool:
         """
         Method invoked when the block is interacted with by the player.
         Block breaking and adding is handled afterwards by default!

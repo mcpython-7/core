@@ -121,7 +121,7 @@ class AbstractDimension(ABC):
             (0, 1, 0),
             (0, -1, 0),
             (0, 0, 1),
-            (0, 0, -1)
+            (0, 0, -1),
         ) + (((0, 0, 0),) if include_self else tuple()):
             try:
                 block = await self.get_block(x + dx, y + dy, z + dz)

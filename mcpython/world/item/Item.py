@@ -19,5 +19,7 @@ class Block(IRegistryEntry):
     async def on_random_update(self):
         pass
 
-    async def on_player_interaction(self, blockstate, player, hand, button, itemstack) -> bool:
+    async def on_player_interaction(
+        self, blockstate, player, hand, button, itemstack
+    ) -> bool:
         return False

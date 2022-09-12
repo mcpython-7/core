@@ -3,4 +3,3 @@ from mcpython.world.block.Block import Block
 
 
 BLOCK_REGISTRY = Registry("minecraft:block", Block)
-

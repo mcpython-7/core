@@ -32,7 +32,12 @@ class RegistryObject:
 
 
 class Registry:
-    def __init__(self, name: str, obj_type: typing.Type[IRegistryEntry], registration_phase: str = None):
+    def __init__(
+        self,
+        name: str,
+        obj_type: typing.Type[IRegistryEntry],
+        registration_phase: str = None,
+    ):
         self.__name = name
         self._obj_type = obj_type
         self.registration_phase = registration_phase
@@ -40,31 +45,46 @@ class Registry:
         self._entries_without_namespace: typing.Dict[str, typing.List[obj_type]] = {}
 
         REGISTRIES[name] = self
-        self._lazy_inits: typing.List[typing.Callable[[], typing.Awaitable[IRegistryEntry]]] = []
+        self._lazy_inits: typing.List[
+            typing.Callable[[], typing.Awaitable[IRegistryEntry]]
+        ] = []
 
-    def get_name(self): return self.__name
+    def get_name(self):
+        return self.__name
 
     name = property(get_name)
 
     async def register(self, name: str | None, obj):
         if not isinstance(obj, self._obj_type):
-            raise ValueError(f"Cannot register {obj} into registry '{self.name}': The registry expects the type {self._obj_type}, but got {type(obj)}")
+            raise ValueError(
+                f"Cannot register {obj} into registry '{self.name}': The registry expects the type {self._obj_type}, but got {type(obj)}"
+            )
 
         if name is not None:
             obj.NAME = name
 
         if obj.NAME is None:
-            raise ValueError(f"Cannot register {obj} into registry '{self.name}': 'NAME' is not set")
+            raise ValueError(
+                f"Cannot register {obj} into registry '{self.name}': 'NAME' is not set"
+            )
 
         if ":" not in obj.NAME:
-            raise ValueError(f"Cannot register {obj} into registry '{self.name}': 'NAME' ({obj.NAME}) has no naamspace set")
+            raise ValueError(
+                f"Cannot register {obj} into registry '{self.name}': 'NAME' ({obj.NAME}) has no naamspace set"
+            )
 
         self._entries[obj.NAME] = obj
-        self._entries_without_namespace.setdefault(obj.NAME.split(":")[-1], []).append(obj)
+        self._entries_without_namespace.setdefault(obj.NAME.split(":")[-1], []).append(
+            obj
+        )
 
         return RegistryObject(lambda: obj)
 
-    def register_lazy(self, name: str | None, lazy: typing.Callable[[], typing.Awaitable[IRegistryEntry]]):
+    def register_lazy(
+        self,
+        name: str | None,
+        lazy: typing.Callable[[], typing.Awaitable[IRegistryEntry]],
+    ):
         async def register():
             nonlocal name
 
@@ -100,7 +120,6 @@ class Registry:
         raise ValueError(obj)
 
 
-
 REGISTRIES: typing.Dict[str, Registry] = {}
 _SCHEDULE_REGISTRY_UPDATE: typing.List[typing.Type[IRegistryEntry]] = []
 
@@ -115,4 +134,3 @@ async def init():
 
     for registry in REGISTRIES.values():
         await registry.init()
-

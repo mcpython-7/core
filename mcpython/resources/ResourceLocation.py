@@ -22,4 +22,3 @@ class ResourceLocation:
 
     async def read_nbt(self):
         return await MANAGER.read_nbt(self.location)
-

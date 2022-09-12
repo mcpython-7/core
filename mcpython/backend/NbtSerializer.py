@@ -39,9 +39,13 @@ class IObjectNBTSerializer:
 class NBTSerializer:
     def __init__(self):
         self.serializers: typing.List[typing.Type[IObjectNBTSerializer]] = []
-        self.type2serializer: typing.Dict[typing.Type, typing.Type[IObjectNBTSerializer]] = {}
+        self.type2serializer: typing.Dict[
+            typing.Type, typing.Type[IObjectNBTSerializer]
+        ] = {}
 
-    def register_type_serializer(self, data_type: typing.Type, serializer: typing.Type[IObjectNBTSerializer]):
+    def register_type_serializer(
+        self, data_type: typing.Type, serializer: typing.Type[IObjectNBTSerializer]
+    ):
         self.serializers.append(serializer)
         self.type2serializer[data_type] = serializer
 
@@ -59,7 +63,8 @@ class NBTSerializer:
         while obj_types:
             obj_type = obj_types.pop()
 
-            if obj_type in visited: continue
+            if obj_type in visited:
+                continue
 
             if obj_type in self.type2serializer:
                 serializer = self.type2serializer[obj_type]
@@ -84,7 +89,7 @@ SERIALIZER.register_type_serializer(
         lambda stream, serializer: stream.tell() == 1,
         lambda stream, serializer: NBT_BYTE(_BYTE.unpack(stream.read(2)[1:])),
         lambda obj, serializer: b"\x01" + _BYTE.pack(obj.value),
-    )
+    ),
 )
 
 # Short
@@ -97,7 +102,7 @@ SERIALIZER.register_type_serializer(
         lambda stream, serializer: stream.tell() == 2,
         lambda stream, serializer: NBT_SHORT(_SHORT.unpack(stream.read(3)[1:])),
         lambda obj, serializer: b"\x02" + _SHORT.pack(obj.value),
-    )
+    ),
 )
 
 # Int
@@ -109,7 +114,7 @@ SERIALIZER.register_type_serializer(
         lambda stream, serializer: stream.tell() == 3,
         lambda stream, serializer: NBT_INT(_INT.unpack(stream.read(5)[1:])),
         lambda obj, serializer: b"\x03" + _INT.pack(obj.value),
-    )
+    ),
 )
 
 # Long
@@ -121,7 +126,7 @@ SERIALIZER.register_type_serializer(
         lambda stream, serializer: stream.tell() == 4,
         lambda stream, serializer: NBT_LONG(_LONG.unpack(stream.read(9)[1:])),
         lambda obj, serializer: b"\x04" + _LONG.pack(obj.value),
-    )
+    ),
 )
 
 # Float
@@ -133,7 +138,7 @@ SERIALIZER.register_type_serializer(
         lambda stream, serializer: stream.tell() == 5,
         lambda stream, serializer: NBT_FLOAT(_FLOAT.unpack(stream.read(5)[1:])),
         lambda obj, serializer: b"\05" + _FLOAT.pack(obj.value),
-    )
+    ),
 )
 
 # Double
@@ -145,7 +150,7 @@ SERIALIZER.register_type_serializer(
         lambda stream, serializer: stream.tell() == 6,
         lambda stream, serializer: NBT_DOUBLE(_DOUBLE.unpack(stream.read(9)[1:])),
         lambda obj, serializer: b"\06" + _DOUBLE.pack(obj.value),
-    )
+    ),
 )
 
 # Byte Array
@@ -154,9 +159,11 @@ SERIALIZER.register_type_serializer(
     NBT_BYTE_ARRAY,
     IObjectNBTSerializer.create(
         lambda stream, serializer: stream.tell() == 7,
-        lambda stream, serializer: NBT_BYTE_ARRAY(stream.read(_INT.unpack(stream.read(5)[1:]))),
+        lambda stream, serializer: NBT_BYTE_ARRAY(
+            stream.read(_INT.unpack(stream.read(5)[1:]))
+        ),
         lambda obj, serializer: b"\07" + _INT.pack(len(obj.value)) + obj.value,
-    )
+    ),
 )
 
 # String
@@ -165,10 +172,13 @@ SERIALIZER.register_type_serializer(
     NBT_BYTE_ARRAY,
     IObjectNBTSerializer.create(
         lambda stream, serializer: stream.tell() == 7,
-        lambda stream, serializer: NBT_BYTE_ARRAY(stream.read(_USHORT.unpack(stream.read(5)[1:])).decode("utf-8")),
-        lambda obj, serializer: b"\07" + _USHORT.pack(len(obj.value)) + obj.value.encode("utf-8"),
-    )
+        lambda stream, serializer: NBT_BYTE_ARRAY(
+            stream.read(_USHORT.unpack(stream.read(5)[1:])).decode("utf-8")
+        ),
+        lambda obj, serializer: b"\07"
+        + _USHORT.pack(len(obj.value))
+        + obj.value.encode("utf-8"),
+    ),
 )
 
 # List
-

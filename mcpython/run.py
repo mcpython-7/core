@@ -7,8 +7,11 @@ local = os.path.dirname(os.path.dirname(__file__))
 
 _async_log.logger.disabled = True
 
-os.makedirs(local+"/cache/logs", exist_ok=True)
-logging.basicConfig(format="[%(asctime)s][%(processName)s][%(name)s][%(levelname)s]: %(message)s", level=logging.DEBUG)
+os.makedirs(local + "/cache/logs", exist_ok=True)
+logging.basicConfig(
+    format="[%(asctime)s][%(processName)s][%(name)s][%(levelname)s]: %(message)s",
+    level=logging.DEBUG,
+)
 
 from mcpython.resources.ResourceManagement import (
     MANAGER as RESOURCE_MANAGER,
@@ -31,7 +34,7 @@ async def setup():
 
     RESOURCE_MANAGER.register_path(FolderResourcePath(local))
     RESOURCE_MANAGER.register_path(ArchiveResourcePath(local + "/cache/assets.zip"))
-    RESOURCE_MANAGER.register_path(FolderResourcePath(local+"/cache"))
+    RESOURCE_MANAGER.register_path(FolderResourcePath(local + "/cache"))
     await RESOURCE_MANAGER.setup()
 
     version_data = await RESOURCE_MANAGER.read_json("version.json")
@@ -43,9 +46,11 @@ async def setup():
     GameState.register()
 
     from mcpython.client.state.StateManager import MANAGER as STATE_MANAGER
+
     await STATE_MANAGER.activate_state(GameState)
 
     from mcpython.world.TaskScheduler import WORKER
+
     WORKER.start()
 
 

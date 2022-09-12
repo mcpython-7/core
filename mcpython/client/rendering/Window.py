@@ -53,6 +53,7 @@ class GameWindow(pyglet.window.Window):
     def on_close(self):
         self.LOGGER.info("Closing Game Window")
         from mcpython.world.TaskScheduler import WORKER
+
         WORKER.stop()
         self.close()
         self.LOGGER.info("Window closed!")
