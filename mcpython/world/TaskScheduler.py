@@ -14,6 +14,7 @@ class TaskScheduler:
         self._invoke_on_tick = []
         self._special_invoke_on_tick = {}
         self._linear_callbacks = queue.Queue()
+        self._scheduled_in_ticks: typing.List[typing.List[typing.Awaitable]] = [[] for _ in range(20)]
 
     def add_tick_callback(self, target: typing.Callable[[float], typing.Awaitable] | typing.Callable[[], typing.Awaitable], supress_exceptions=True):
         tar = target
@@ -54,11 +55,22 @@ class TaskScheduler:
         """
         self._linear_callbacks.put(target if isinstance(target, typing.Awaitable) else target())
 
+    def add_invoke_in_ticks(self, target: typing.Callable[[], typing.Awaitable] | typing.Awaitable, ticks: int):
+        if ticks > len(self._scheduled_in_ticks):
+            self._scheduled_in_ticks += [[] for _ in range(ticks - len(self._scheduled_in_ticks))]
+
+        self._scheduled_in_ticks[ticks].append(target if isinstance(target, typing.Awaitable) else target())
+
     async def tick(self, dt: float):
         await asyncio.gather(*(
             func(dt)
             for func in self._invoke_on_tick
         ))
+
+        this_ticks = self._scheduled_in_ticks.pop(0)
+        await asyncio.gather(*this_ticks)
+        del this_ticks
+        self._scheduled_in_ticks.append([])
 
         while self._linear_callbacks.qsize() > 0:
             await self._linear_callbacks.get(False)
