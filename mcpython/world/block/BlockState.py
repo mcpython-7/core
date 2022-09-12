@@ -32,11 +32,11 @@ class BlockState:
     def _get_blockstate_ref_cache(self):
         return self.__blockstate_ref_cache
 
-    async def on_addition(self) -> bool:
-        return await self.block_type.on_added_to_world(self)
+    async def on_addition(self, force=False, player=None) -> bool:
+        return await self.block_type.on_added_to_world(self, force=force, player=player)
 
     async def on_remove(self, force=False, player=None) -> bool:
-        return await self.block_type.on_removed_from_world(self, force, player)
+        return await self.block_type.on_removed_from_world(self, force=force, player=player)
 
     async def on_block_update(self, source=None):
         await self.block_type.on_block_update(self, source)
