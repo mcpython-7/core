@@ -1,34 +1,140 @@
+import json
 import os.path
 import sys
+import typing
 
 import pyglet
-import PIL.Image
+import pyglet.gl as gl
+from pyglet.gl import GL_TRIANGLES
 from pyglet.graphics.shader import Shader
 from pyglet.graphics.shader import ShaderProgram
-from pyglet.model import Model
-from pyglet.resource import FileLocation
+from pyglet.image import Texture
+from pyglet.math import Vec3
+from pyglet.model import BaseMaterialGroup
+from pyglet.model import Material
 
 from mcpython.resources.ResourceManagement import MANAGER as RESOURCE_MANAGER
 from mcpython.world.block.BlockState import BlockState
 
-local = os.path.dirname(os.path.dirname(sys.argv[0]))
+# pyglet.image.GL_TEXTURE_MIN_FILTER = pyglet.gl.GL_NEAREST
+pyglet.image.GL_TEXTURE_MAX_FILTER = pyglet.gl.GL_NEAREST
+
+local = os.path.dirname(__file__)
+
+
+with open(local+"/vertices.json") as f:
+    CUBE_VERTEX_DEF = json.load(f)
+    CUBE_VERTEX_DEF = [
+        Vec3(*CUBE_VERTEX_DEF[3*i:3*i+3]) for i in range(len(CUBE_VERTEX_DEF) // 3)
+    ]
+
+
+with open(local+"/tex_coords.json") as f:
+    CUBE_TEX_COORDS = json.load(f)
+
+
+with open(local+"/normals.json") as f:
+    CUBE_NORMALS = json.load(f)
+
+
+def _inner_product(a: Vec3, b: Vec3):
+    return Vec3(a.x * b.x, a.y * b.y, a.z * b.z)
+
+
+class TexturedMaterialGroup(BaseMaterialGroup):
+    default_vert_src = open(local+"/cube_vertex_shader.glsl").read()
+    default_frag_src = open(local+"/cube_fragment_shader.glsl").read()
+
+    PROGRAM = ShaderProgram(
+        Shader(default_vert_src, "vertex"),
+        Shader(default_frag_src, "fragment")
+    )
+
+    def __init__(self, material, texture, order=0, parent=None):
+        super().__init__(material, self.PROGRAM, order, parent)
+        self.texture = texture
+
+    def set_state(self):
+        gl.glActiveTexture(gl.GL_TEXTURE0)
+        gl.glTexParameteri(self.texture.target, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        gl.glBindTexture(self.texture.target, self.texture.id)
+        self.program.use()
+        self.program['model'] = self.matrix
+
+    def __hash__(self):
+        return hash((self.texture.target, self.texture.id, self.program, self.order, self.parent))
+
+    def __eq__(self, other):
+        return (self.__class__ is other.__class__ and
+                self.material == other.material and
+                self.texture.target == other.texture.target and
+                self.texture.id == other.texture.id and
+                self.program == other.program and
+                self.order == other.order and
+                self.parent == other.parent)
+
+
+class CubeVertexCreator:
+    MATERIAL = Material(
+        "stone",
+        (1, 1, 1),
+        (1, 1, 1),
+        (1, 1, 1),
+        (1, 1, 1),
+        (1, 1, 1),
+    )
+
+    def __init__(self, size: typing.Tuple[float, float, float], offset: typing.Tuple[float, float, float], texture: str):
+        self.size = Vec3(*size)
+        self.offset = Vec3(*offset)
+        self.texture_path = texture
+
+        self.texture: Texture = None
+        self.texture_group: TexturedMaterialGroup = None
+
+        self._had_setup = False
+
+    async def setup(self):
+        self._had_setup = True
+
+        self.texture = (await RESOURCE_MANAGER.read_pyglet_image(self.texture_path)).get_texture()
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        self.texture_group = TexturedMaterialGroup(self.MATERIAL, self.texture, parent=None)
+
+    def add_to_batch(self, position: typing.Tuple[float, float, float], batch: pyglet.graphics.Batch, scale=1.0):
+        count = len(CUBE_VERTEX_DEF)
+
+        pos = Vec3(*position) + self.offset.scale(scale)
+        delta = self.size.scale(scale / 2)
+
+        vertices = [pos + _inner_product(delta, e) for e in CUBE_VERTEX_DEF]
+
+        return self.texture_group.program.vertex_list(
+            count, GL_TRIANGLES, batch, self.texture_group,
+            vertices=('f', sum(map(tuple, vertices), tuple())),
+            uvCoord=('f', CUBE_TEX_COORDS),
+        )
 
 
 class BlockRenderer:
-    TEXTURE = None
-    TEXTURE_GROUP = None
-    SHADER = None
+    RENDERER = CubeVertexCreator((1, 1, 1), (0, 0, 0), "assets/minecraft/textures/block/stone.png")
 
     async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
-        pyglet.resource._default_loader.reindex()
-        pyglet.resource._default_loader._index["box.obj"] = FileLocation(
-            local + "/mcpython/client/rendering"
-        )
-        pyglet.resource._default_loader._index["box.mtl"] = FileLocation(
-            local + "/mcpython/client/rendering"
-        )
-        pyglet.resource._default_loader._index["pyglet.png"] = FileLocation(
-            local + "/mcpython/client/rendering"
-        )
-        self.model_box: Model = pyglet.resource.model("box.obj", batch=batch)
-        self.model_box.matrix.from_translation(block.world_position)
+        if not self.RENDERER._had_setup:
+            await self.RENDERER.setup()
+
+        block._set_blockstate_ref_cache(self.RENDERER.add_to_batch(block.world_position, batch))
+
+        # pyglet.resource._default_loader.reindex()
+        # pyglet.resource._default_loader._index["box.obj"] = FileLocation(
+        #     local + "/mcpython/client/rendering"
+        # )
+        # pyglet.resource._default_loader._index["box.mtl"] = FileLocation(
+        #     local + "/mcpython/client/rendering"
+        # )
+        # pyglet.resource._default_loader._index["pyglet.png"] = FileLocation(
+        #     local + "/mcpython/client/rendering"
+        # )
+        # self.model_box: Model = pyglet.resource.model("box.obj", batch=batch)
+        # self.model_box.matrix.from_translation(block.world_position)

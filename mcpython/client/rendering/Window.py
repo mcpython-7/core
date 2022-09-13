@@ -80,6 +80,11 @@ class GameWindow(pyglet.window.Window):
 
     def on_tick(self, dt: float):
         asyncio.run(SCHEDULER.tick(dt))
+        asyncio.run(
+            self.event_handler.invoke_event(
+                "on_tick", args=(dt,), ignore_exceptions=True
+            )
+        )
 
     def on_key_press(self, symbol, modifiers):
         self._key_press_duration[symbol] = time.time()
