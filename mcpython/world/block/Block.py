@@ -19,7 +19,7 @@ class Block(IRegistryEntry):
         from mcpython.world.item.BlockItem import BlockItem
         from mcpython.world.item.ItemManager import ITEM_REGISTRY
 
-        self.BLOCK_ITEM_INSTANCE = ITEM_REGISTRY.register_lazy(self.NAME, lambda: BlockItem().set_block_type(self))
+        self.BLOCK_ITEM_INSTANCE = ITEM_REGISTRY.register_lazy(self.NAME, lambda: BlockItem().set_registry_name(self.NAME).set_block_type(self))
         return self
 
     def get_blockstate_class(self):

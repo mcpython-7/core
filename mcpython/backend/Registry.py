@@ -15,6 +15,7 @@ class IRegistryEntry(ABC):
 
     def set_registry_name(self, name: str):
         self.NAME = name
+        return self
 
     def get_registry_name(self) -> str:
         return self.NAME
