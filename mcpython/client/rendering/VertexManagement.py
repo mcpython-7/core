@@ -5,7 +5,6 @@ import typing
 import pyglet
 from pyglet.gl import GL_TRIANGLES
 from pyglet.image import Texture
-from pyglet.math import Mat3
 from pyglet.math import Vec3
 from pyglet.model import Material
 
