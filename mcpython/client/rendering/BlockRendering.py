@@ -38,3 +38,12 @@ class BlockRenderer:
         block._set_blockstate_ref_cache(
             [cube.add_to_batch(block.world_position, batch) for cube in self.cubes]
         )
+
+    async def remove_from_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
+        if block._get_blockstate_ref_cache() is None:
+            return
+
+        for e in block._get_blockstate_ref_cache():
+            e.delete()
+
+        block._set_blockstate_ref_cache(None)

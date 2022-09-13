@@ -178,6 +178,9 @@ class AbstractDimension(ABC):
             if block is not None:
                 await block.on_block_update(cause)
 
+    async def update_neighbor_visuals(self, position: typing.Tuple[int, int, int]):
+        pass
+
 
 class AbstractChunk(ABC):
     DEFAULT_SECTION_TYPE: typing.Type["AbstractSection"] = None
@@ -188,7 +191,7 @@ class AbstractChunk(ABC):
     async def generate(self):
         raise NotImplementedError
 
-    async def get_dimension(self, name: str) -> AbstractDimension:
+    async def get_dimension(self) -> AbstractDimension:
         raise NotImplementedError
 
     async def get_position(self) -> typing.Tuple[int, int]:

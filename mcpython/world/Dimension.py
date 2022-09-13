@@ -61,3 +61,22 @@ class Dimension(AbstractDimension):
         self.chunks[cx, cz] = chunk
         self.arrival_chunks.add(pos)
         return chunk
+
+    async def update_neighbor_visuals(self, position: typing.Tuple[int, int, int]):
+        x, y, z = position
+
+        for dx, dy, dz in (
+            (1, 0, 0),
+            (-1, 0, 0),
+            (0, 1, 0),
+            (0, -1, 0),
+            (0, 0, 1),
+            (0, 0, -1),
+        ):
+            try:
+                block = await self.get_block(x + dx, y + dy, z + dz)
+            except ChunkDoesNotExistException:
+                continue
+
+            if block is not None:
+                await block.chunk_section.update_block_visual(block)

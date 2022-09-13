@@ -28,7 +28,7 @@ class Chunk(AbstractChunk):
     async def generate(self):
         raise NotImplementedError
 
-    async def get_dimension(self, name: str) -> AbstractDimension:
+    async def get_dimension(self) -> AbstractDimension:
         return self.dimension
 
     async def get_position(self) -> typing.Tuple[int, int]:
@@ -135,12 +135,15 @@ class Section(AbstractSection):
             ):
                 return
 
+            await self.hide_block(blockstate)
+
         if blockstate is not None:
             blockstate.world_position = real_pos = real_pos or (
                 dx + self.chunk.position[0] * 16,
                 dy + self.y * 16,
                 dz * self.chunk.position[1] * 16,
             )
+            blockstate.chunk_section = self
             keep = await blockstate.on_addition(force=force, player=player) or force
         else:
             keep = True
@@ -153,22 +156,26 @@ class Section(AbstractSection):
             await previous_block.on_addition(force=True, player=player)
             block_update = False
 
+        await self.show_block(self.blocks[index])
+        await (await (await self.get_chunk()).get_dimension()).update_neighbor_visuals(blockstate.world_position)
+
         if block_update:
             await self.chunk.dimension.block_update_neighbors(
                 *real_pos, cause=blockstate.world_position
             )
 
-        await self.show_block(self.blocks[index])
-
     async def show_block(self, blockstate: BlockState):
-        from mcpython.client.state.GameState import GameState, RENDERING_CONTAINER
+        from mcpython.client.state.GameState import RENDERING_CONTAINER
 
         await blockstate.block_type.BLOCK_RENDERER.add_to_batch(
             blockstate, RENDERING_CONTAINER.normal_3d_batch
         )
 
     async def hide_block(self, blockstate: BlockState):
-        pass
+        from mcpython.client.state.GameState import RENDERING_CONTAINER
+
+        await blockstate.block_type.BLOCK_RENDERER.remove_from_batch(blockstate, RENDERING_CONTAINER.normal_3d_batch)
 
     async def update_block_visual(self, blockstate: BlockState):
-        pass
+        await self.hide_block(blockstate)
+        await self.show_block(blockstate)
