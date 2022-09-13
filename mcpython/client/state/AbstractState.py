@@ -18,7 +18,7 @@ class AbstractState(ABC):
         MANAGER.register_state(cls)
 
     def __init__(self):
-        self.window_handler: EventHandler = WINDOW.event_handler.create_child_handler()
+        self.window_handler: EventHandler = WINDOW.event_handler.create_child_handler(f"event handler for state {self.NAME}")
         self._is_set_up = False
 
     async def setup(self):

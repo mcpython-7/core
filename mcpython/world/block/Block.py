@@ -66,7 +66,7 @@ class Block(IRegistryEntry):
         """
         return True
 
-    async def on_starting_to_break(self, blockstate, force=False, player=None):
+    async def on_starting_to_break(self, blockstate, itemstack, force=False, player=None):
         """
         Similar to on_removed_from_world(), but is invoked before the break animation starts,
         so you can early cancel the breaking
@@ -77,6 +77,8 @@ class Block(IRegistryEntry):
         """
         Invoked when a block-update hits this block
         May be executed in a processing thread, so do not directly interact with critical systems
+        'source' is the source of the update, varying based on context.
+        Could be Player, block position, blockstate, ...
         """
 
     async def on_random_update(self):

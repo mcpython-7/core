@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import queue
 import typing
 
@@ -10,7 +11,9 @@ class CombinedEventException(Exception):
 
 
 class EventHandler:
-    def __init__(self):
+    def __init__(self, name: str = "<unnamed event handler>"):
+        self.name = name
+        self.LOGGER = logging.getLogger(name)
         self._events: typing.Set[str] = set()
         self._event_queue = queue.Queue()
         self._subscribers: typing.Dict[
@@ -33,8 +36,8 @@ class EventHandler:
         self._subscribers.setdefault(event, []).append(callback)
         return callback
 
-    def create_child_handler(self) -> "EventHandler":
-        instance = EventHandler()
+    def create_child_handler(self, name=None) -> "EventHandler":
+        instance = EventHandler(name or f"<child event handler of {self.name}>")
         instance._events = self._events
         self._children.append(instance)
         return instance
@@ -108,7 +111,7 @@ class EventHandler:
             raise CombinedEventException(exceptions)
         else:
             for exception in exceptions:
-                pass
+                self.LOGGER.exception(f"Error during invoking event {name}", exc_info=exception)
 
     async def invoke_cancelable(
         self,
@@ -147,7 +150,7 @@ class EventHandler:
             raise CombinedEventException(exceptions)
         else:
             for exception in exceptions:
-                pass
+                self.LOGGER.exception(f"Error during invoking event {name} (cancelable)", exc_info=exception)
 
     def _create_invoke_ables(self, event_name: str, args, kwargs):
         if not self.__enabled or event_name not in self._subscribers:
