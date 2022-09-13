@@ -26,8 +26,8 @@ class BlockRenderer:
     def __init__(self):
         self.cubes: typing.List[CubeVertexCreator] = []
 
-    async def add_cube(self, size, offset, texture: str):
-        self.cubes.append(cube := CubeVertexCreator(size, offset, texture))
+    async def add_cube(self, size, offset, textures: typing.Iterable[str]):
+        self.cubes.append(cube := CubeVertexCreator(size, offset, tuple(textures)))
         await cube.setup()
 
     def bake(self):

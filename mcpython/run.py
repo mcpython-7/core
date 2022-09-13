@@ -2,10 +2,12 @@ import asyncio
 import logging
 import os
 from asyncio import log as _async_log
+from PIL.PngImagePlugin import logger as _pil_logger
 
 local = os.path.dirname(os.path.dirname(__file__))
 
 _async_log.logger.disabled = True
+_pil_logger.setLevel(logging.WARN)
 
 os.makedirs(local + "/cache/logs", exist_ok=True)
 logging.basicConfig(

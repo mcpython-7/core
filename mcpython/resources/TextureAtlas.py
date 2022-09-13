@@ -45,13 +45,13 @@ class TextureInfo:
 
         raise ValueError("No space found!")
 
-    def prepare_tex_coords(self, coords: typing.List[int]):
+    def prepare_tex_coords(self, coords: typing.List[int], part: int):
         step = 1 / self.atlas.size[0], 1 / self.atlas.size[1]
 
-        for i, e in enumerate(coords):
+        for i, e in enumerate(coords[part * 12 : part * 12 + 12]):
             pos = self.real_location[i % 2]
 
-            yield (pos + e) * step[i % 2]
+            coords[part * 12 + i] = (pos + e) * step[i % 2]
 
 
 class TextureAtlas:
@@ -64,6 +64,8 @@ class TextureAtlas:
         self.textures: typing.Dict[str, TextureInfo] = {}
 
     def add_texture(self, name: str, texture: PIL.Image.Image) -> TextureInfo:
+        if name in self.textures: return self.textures[name]
+
         info = TextureInfo(self, name, texture)
         self.textures[name] = info
         return info

@@ -31,8 +31,6 @@ class GameState(AbstractState):
         global RENDERING_CONTAINER
         self._rendering_container = RENDERING_CONTAINER = WorldRenderingContainer()
 
-        from mcpython.client.rendering.BlockRendering import BlockRenderer
-
         self.position_label = pyglet.text.Label(color=(0, 0, 0, 255))
 
     async def setup(self):
