@@ -1,3 +1,5 @@
+import typing
+
 import pyglet
 
 from mcpython.client.rendering.VertexManagement import CubeVertexCreator
@@ -6,13 +8,34 @@ from mcpython.world.block.BlockState import BlockState
 pyglet.image.GL_TEXTURE_MAX_FILTER = pyglet.gl.GL_NEAREST
 
 
+class BlockRenderingManager:
+    def __init__(self):
+        self.renderers: typing.List["BlockRenderer"] = []
+
+    def bake(self):
+        CubeVertexCreator.ATLAS.bake()
+
+        for renderer in self.renderers:
+            renderer.bake()
+
+
+MANAGER = BlockRenderingManager()
+
+
 class BlockRenderer:
-    RENDERER = CubeVertexCreator((1, 1, 1), (0, 0, 0), "assets/minecraft/textures/block/stone.png")
+    def __init__(self):
+        self.cubes: typing.List[CubeVertexCreator] = []
+
+    async def add_cube(self, size, offset, texture: str):
+        self.cubes.append(cube := CubeVertexCreator(size, offset, texture))
+        await cube.setup()
+
+    def bake(self):
+        for cube in self.cubes:
+            cube.bake()
 
     async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
-        if not self.RENDERER._had_setup:
-            await self.RENDERER.setup()
-            self.RENDERER.ATLAS.bake()
-            self.RENDERER.bake()
-
-        block._set_blockstate_ref_cache(self.RENDERER.add_to_batch(block.world_position, batch))
+        block._set_blockstate_ref_cache([
+            cube.add_to_batch(block.world_position, batch)
+            for cube in self.cubes
+        ])

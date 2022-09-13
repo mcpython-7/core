@@ -26,16 +26,21 @@ local = os.path.dirname(os.path.dirname(__file__))
 
 
 async def setup():
-    from mcpython.world.block import Blocks
-
-    await init_registries()
-
-    await WORLD.setup_default()
-
     RESOURCE_MANAGER.register_path(FolderResourcePath(local))
     RESOURCE_MANAGER.register_path(ArchiveResourcePath(local + "/cache/assets.zip"))
     RESOURCE_MANAGER.register_path(FolderResourcePath(local + "/cache"))
     await RESOURCE_MANAGER.setup()
+
+    from mcpython.world.block import Blocks
+    from mcpython.world.item import Items
+
+    from mcpython.client.rendering.BlockRendering import MANAGER
+
+    await init_registries()
+
+    MANAGER.bake()
+
+    await WORLD.setup_default()
 
     version_data = await RESOURCE_MANAGER.read_json("version.json")
 

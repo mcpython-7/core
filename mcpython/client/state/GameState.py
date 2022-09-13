@@ -33,9 +33,6 @@ class GameState(AbstractState):
 
         from mcpython.client.rendering.BlockRendering import BlockRenderer
 
-        # Temporary here for testing
-        self.block_renderer = BlockRenderer()
-
         self.position_label = pyglet.text.Label(color=(0, 0, 0, 255))
 
     async def setup(self):
@@ -45,10 +42,7 @@ class GameState(AbstractState):
         dimension = await WORLD.get_dimension("minecraft:overworld")
         chunk = await dimension.create_chunk(0, 0)
         await dimension.set_block(0, 0, 0, "stone")
-        # await dimension.set_block(1, 0, 0, "minecraft:stone")
-        # await dimension.set_block(2, 0, 0, Blocks.STONE)
-        # await dimension.set_block(3, 0, 0, BlockState(Blocks.STONE))
-        # await dimension.set_block(3, 0, 0, BlockState(Blocks.STONE.get()))
+        await dimension.set_block(1, 0, 0, "minecraft:dirt")
 
     async def on_draw(self, dt: float):
         WINDOW.set_3d_world_view()

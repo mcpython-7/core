@@ -85,6 +85,8 @@ class Registry:
             obj
         )
 
+        await obj.on_register()
+
         return RegistryObject(lambda: obj)
 
     def register_lazy(

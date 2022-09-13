@@ -11,9 +11,18 @@ class Block(IRegistryEntry):
     REGISTRY = "minecraft:block"
     BLOCKSTATE_CLASS = None  # Reference to a BlockState-like class
     BLOCK_ITEM_INSTANCE: RegistryObject = None
+    BLOCK_RENDERER = None
 
     def __init__(self):
         pass
+
+    async def on_register(self):
+        from mcpython.client.rendering.BlockRendering import BlockRenderer, MANAGER
+
+        self.BLOCK_RENDERER = BlockRenderer()
+        MANAGER.renderers.append(self.BLOCK_RENDERER)
+
+        await self.BLOCK_RENDERER.add_cube((1, 1, 1), (0, 0, 0), "assets/{}/textures/block/{}.png".format(*self.NAME.split(":")))
 
     def register_block_item(self):
         from mcpython.world.item.BlockItem import BlockItem

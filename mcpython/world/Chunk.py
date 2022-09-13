@@ -159,7 +159,7 @@ class Section(AbstractSection):
     async def show_block(self, blockstate: BlockState):
         from mcpython.client.state.GameState import GameState, RENDERING_CONTAINER
 
-        await GameState.INSTANCE.block_renderer.add_to_batch(
+        await blockstate.block_type.BLOCK_RENDERER.add_to_batch(
             blockstate, RENDERING_CONTAINER.normal_3d_batch
         )
 

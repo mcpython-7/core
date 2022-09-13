@@ -91,6 +91,8 @@ class ResourceManager:
     async def read_pillow_image(self, file: str) -> PIL.Image.Image:
         try:
             return PIL.Image.open(io.BytesIO(await self.read_bytes(file)))
+        except ResourceNotFoundException:
+            raise
         except:
             raise ValueError(file)
 
