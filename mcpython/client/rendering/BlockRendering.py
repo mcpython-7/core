@@ -33,10 +33,6 @@ with open(local+"/tex_coords.json") as f:
     CUBE_TEX_COORDS = json.load(f)
 
 
-with open(local+"/normals.json") as f:
-    CUBE_NORMALS = json.load(f)
-
-
 def _inner_product(a: Vec3, b: Vec3):
     return Vec3(a.x * b.x, a.y * b.y, a.z * b.z)
 
