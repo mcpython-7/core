@@ -89,7 +89,10 @@ class ResourceManager:
         return json.loads((await self.read_bytes(file)).decode("utf-8"))
 
     async def read_pillow_image(self, file: str) -> PIL.Image.Image:
-        return PIL.Image.open(await self.read_bytes(file))
+        try:
+            return PIL.Image.open(io.BytesIO(await self.read_bytes(file)))
+        except:
+            raise ValueError(file)
 
     async def read_pyglet_image(self, file: str) -> pyglet.image.AbstractImage:
         return pyglet.image.load(file, io.BytesIO(await self.read_bytes(file)))

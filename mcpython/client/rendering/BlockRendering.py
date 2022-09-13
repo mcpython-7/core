@@ -14,6 +14,8 @@ from pyglet.model import BaseMaterialGroup
 from pyglet.model import Material
 
 from mcpython.resources.ResourceManagement import MANAGER as RESOURCE_MANAGER
+from mcpython.resources.TextureAtlas import TextureAtlas
+from mcpython.resources.TextureAtlas import TextureInfo
 from mcpython.world.block.BlockState import BlockState
 
 # pyglet.image.GL_TEXTURE_MIN_FILTER = pyglet.gl.GL_NEAREST
@@ -80,23 +82,29 @@ class CubeVertexCreator:
         (1, 1, 1),
     )
 
+    ATLAS = TextureAtlas()
+
     def __init__(self, size: typing.Tuple[float, float, float], offset: typing.Tuple[float, float, float], texture: str):
         self.size = Vec3(*size)
         self.offset = Vec3(*offset)
         self.texture_path = texture
+        self.texture_info: TextureInfo = None
 
         self.texture: Texture = None
         self.texture_group: TexturedMaterialGroup = None
+        self.tex_coords = None
 
         self._had_setup = False
 
     async def setup(self):
         self._had_setup = True
 
-        self.texture = (await RESOURCE_MANAGER.read_pyglet_image(self.texture_path)).get_texture()
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        self.texture_info = self.ATLAS.add_texture(self.texture_path, await RESOURCE_MANAGER.read_pillow_image(self.texture_path))
+
+    def bake(self):
+        self.texture = self.ATLAS.pyglet_texture
         self.texture_group = TexturedMaterialGroup(self.MATERIAL, self.texture, parent=None)
+        self.tex_coords = tuple(self.texture_info.prepare_tex_coords(CUBE_TEX_COORDS))
 
     def add_to_batch(self, position: typing.Tuple[float, float, float], batch: pyglet.graphics.Batch, scale=1.0):
         count = len(CUBE_VERTEX_DEF)
@@ -109,7 +117,7 @@ class CubeVertexCreator:
         return self.texture_group.program.vertex_list(
             count, GL_TRIANGLES, batch, self.texture_group,
             vertices=('f', sum(map(tuple, vertices), tuple())),
-            uvCoord=('f', CUBE_TEX_COORDS),
+            uvCoord=('f', self.tex_coords),
         )
 
 
@@ -119,18 +127,7 @@ class BlockRenderer:
     async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
         if not self.RENDERER._had_setup:
             await self.RENDERER.setup()
+            self.RENDERER.ATLAS.bake()
+            self.RENDERER.bake()
 
         block._set_blockstate_ref_cache(self.RENDERER.add_to_batch(block.world_position, batch))
-
-        # pyglet.resource._default_loader.reindex()
-        # pyglet.resource._default_loader._index["box.obj"] = FileLocation(
-        #     local + "/mcpython/client/rendering"
-        # )
-        # pyglet.resource._default_loader._index["box.mtl"] = FileLocation(
-        #     local + "/mcpython/client/rendering"
-        # )
-        # pyglet.resource._default_loader._index["pyglet.png"] = FileLocation(
-        #     local + "/mcpython/client/rendering"
-        # )
-        # self.model_box: Model = pyglet.resource.model("box.obj", batch=batch)
-        # self.model_box.matrix.from_translation(block.world_position)
