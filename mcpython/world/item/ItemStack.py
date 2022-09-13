@@ -26,14 +26,24 @@ class ItemStack:
 
         self.nbt: typing.Dict[str, typing.Any] = {}
 
-    def set_count(self, count: int, validate=True, raise_exception=False, call_event=True):
+    def set_count(
+        self, count: int, validate=True, raise_exception=False, call_event=True
+    ):
         if count < 0:
             if raise_exception:
-                raise InvalidItemCount(f"Stack size {count} is less than 0, which is invalid")
+                raise InvalidItemCount(
+                    f"Stack size {count} is less than 0, which is invalid"
+                )
             count = 0
-        elif validate and self.item_type is not None and self.item_type.get_maximum_stack_size() < count:
+        elif (
+            validate
+            and self.item_type is not None
+            and self.item_type.get_maximum_stack_size() < count
+        ):
             if raise_exception:
-                raise InvalidItemCount(f"Stack size {count} is bigger than the maximum stack size of {self.item_type.NAME}, which is {self.item_type.get_maximum_stack_size()}")
+                raise InvalidItemCount(
+                    f"Stack size {count} is bigger than the maximum stack size of {self.item_type.NAME}, which is {self.item_type.get_maximum_stack_size()}"
+                )
 
             count = self.item_type.get_maximum_stack_size()
 
@@ -131,4 +141,3 @@ class ItemStack:
         self.nbt = copy.deepcopy(itemstack.nbt)
         self.item_type.on_itemstack_copied(itemstack, self)
         return self
-

@@ -128,7 +128,9 @@ class Registry:
 
         raise ValueError(obj)
 
-    def lookup_optional(self, obj: str | IRegistryEntry | RegistryObject) -> IRegistryEntry | None:
+    def lookup_optional(
+        self, obj: str | IRegistryEntry | RegistryObject
+    ) -> IRegistryEntry | None:
         try:
             return self.lookup(obj)
         except ValueError:

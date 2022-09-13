@@ -65,7 +65,13 @@ class Item(IRegistryEntry):
         return True
 
     async def on_player_interaction(
-        self, itemstack, blockstate: typing.Optional[BlockState], player, hand, button, modifiers
+        self,
+        itemstack,
+        blockstate: typing.Optional[BlockState],
+        player,
+        hand,
+        button,
+        modifiers,
     ) -> bool:
         return False
 

@@ -43,11 +43,17 @@ class AbstractWorld(ABC):
         )
 
     async def get_block(
-        self, dimension: str, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None
+        self,
+        dimension: str,
+        x: typing.Tuple[int, int, int] | int,
+        y: int = None,
+        z: int = None,
     ) -> BlockState | None:
-        return await (await self.get_chunk_for_position(dimension, *((x, y, z) if isinstance(x, int) is not None else x))).get_block(
-            x, y, z
-        )
+        return await (
+            await self.get_chunk_for_position(
+                dimension, *((x, y, z) if isinstance(x, int) is not None else x)
+            )
+        ).get_block(x, y, z)
 
     async def set_block(
         self,
@@ -101,7 +107,9 @@ class AbstractDimension(ABC):
 
         return await self.get_chunk(x // 16, (z or y) // 16)
 
-    async def get_section_of_chunk(self, cx: typing.Tuple[int, int, int] | int, cy: int = None, cz: int = None):
+    async def get_section_of_chunk(
+        self, cx: typing.Tuple[int, int, int] | int, cy: int = None, cz: int = None
+    ):
         if isinstance(cx, int):
             return await (await self.get_chunk(cx, cz)).get_section(cy)
         return await (await self.get_chunk(cx[0], cx[2])).get_section(cx[1])
@@ -114,7 +122,9 @@ class AbstractDimension(ABC):
 
         return (await self.get_chunk_for_position(x, z)).get_section(y)
 
-    async def get_block(self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None) -> BlockState | None:
+    async def get_block(
+        self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None
+    ) -> BlockState | None:
         if isinstance(x, int):
             return await (await self.get_chunk_for_position(x, y, z)).get_block(x, y, z)
         return await (await self.get_chunk_for_position(*x)).get_block(*x)
@@ -140,7 +150,12 @@ class AbstractDimension(ABC):
         )
 
     async def block_update_neighbors(
-        self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None, include_self=True, cause=None
+        self,
+        x: typing.Tuple[int, int, int] | int,
+        y: int = None,
+        z: int = None,
+        include_self=True,
+        cause=None,
     ):
         if isinstance(x, tuple):
             x, y, z = x
@@ -210,12 +225,16 @@ class AbstractChunk(ABC):
 
         return await self.get_section(y)
 
-    async def get_block(self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None) -> BlockState | None:
+    async def get_block(
+        self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None
+    ) -> BlockState | None:
         if isinstance(x, int):
             return await (await self.get_section_for_position(y)).get_block(x, y, z)
         return await (await self.get_section_for_position(x[0])).get_block(*x)
 
-    async def get_block_relative(self, dx: typing.Tuple[int, int, int] | int, y: int = None, dz: int = None) -> BlockState | None:
+    async def get_block_relative(
+        self, dx: typing.Tuple[int, int, int] | int, y: int = None, dz: int = None
+    ) -> BlockState | None:
         if isinstance(x, tuple):
             x, y, z = x
 
@@ -284,10 +303,14 @@ class AbstractSection(ABC):
         x, y, z = await self.get_cxyz_position()
         return (x * 16, y * 16, z * 16), (x * 16 + 16, y * 16 + 16, z * 16 + 16)
 
-    async def get_block(self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None) -> BlockState | None:
+    async def get_block(
+        self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None
+    ) -> BlockState | None:
         raise NotImplementedError
 
-    async def get_block_relative(self, dx: typing.Tuple[int, int, int] | int, dy: int = None, dz: int = None) -> BlockState | None:
+    async def get_block_relative(
+        self, dx: typing.Tuple[int, int, int] | int, dy: int = None, dz: int = None
+    ) -> BlockState | None:
         raise NotImplementedError
 
     async def set_block(

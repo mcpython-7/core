@@ -26,4 +26,3 @@ class BlockItem(Item):
         modifiers: int,
     ) -> typing.Optional[Block | BlockState]:
         return self.block_type
-

@@ -39,7 +39,15 @@ class BlockState:
         Useful for e.g. block rendering
         """
 
-        self._RANDOM.seed(hash((self.chunk_section.get_chunk().get_dimension().name, self.world_position, salt)))
+        self._RANDOM.seed(
+            hash(
+                (
+                    self.chunk_section.get_chunk().get_dimension().name,
+                    self.world_position,
+                    salt,
+                )
+            )
+        )
         return self._RANDOM.random()
 
     def _check_blockstate_dirty(self) -> bool:

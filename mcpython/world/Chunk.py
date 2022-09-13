@@ -71,7 +71,9 @@ class Section(AbstractSection):
     async def get_y_level(self) -> int:
         return self.y
 
-    async def get_block(self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None) -> BlockState | None:
+    async def get_block(
+        self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None
+    ) -> BlockState | None:
         if isinstance(x, tuple):
             x, y, z = x
 
@@ -79,7 +81,9 @@ class Section(AbstractSection):
 
         return self.blocks[(x - cx) + (y - cy) * 16 + (z - cz) * 256]
 
-    async def get_block_relative(self, dx: typing.Tuple[int, int, int] | int, dy: int = None, dz: int = None) -> BlockState | None:
+    async def get_block_relative(
+        self, dx: typing.Tuple[int, int, int] | int, dy: int = None, dz: int = None
+    ) -> BlockState | None:
         if isinstance(dx, tuple):
             dx, dy, dz = dx
         return self.blocks[dx + dy * 16 + dz * 256]

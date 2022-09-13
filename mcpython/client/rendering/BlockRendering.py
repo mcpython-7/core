@@ -35,7 +35,6 @@ class BlockRenderer:
             cube.bake()
 
     async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
-        block._set_blockstate_ref_cache([
-            cube.add_to_batch(block.world_position, batch)
-            for cube in self.cubes
-        ])
+        block._set_blockstate_ref_cache(
+            [cube.add_to_batch(block.world_position, batch) for cube in self.cubes]
+        )

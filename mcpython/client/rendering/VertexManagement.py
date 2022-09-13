@@ -18,14 +18,15 @@ from mcpython.resources.TextureAtlas import TextureInfo
 local = os.path.dirname(__file__)
 
 
-with open(local+"/vertices.json") as f:
+with open(local + "/vertices.json") as f:
     CUBE_VERTEX_DEF = json.load(f)
     CUBE_VERTEX_DEF = [
-        Vec3(*CUBE_VERTEX_DEF[3*i:3*i+3]) for i in range(len(CUBE_VERTEX_DEF) // 3)
+        Vec3(*CUBE_VERTEX_DEF[3 * i : 3 * i + 3])
+        for i in range(len(CUBE_VERTEX_DEF) // 3)
     ]
 
 
-with open(local+"/tex_coords.json") as f:
+with open(local + "/tex_coords.json") as f:
     CUBE_TEX_COORDS = json.load(f)
 
 
@@ -45,11 +46,18 @@ class CubeVertexCreator:
 
     ATLAS = TextureAtlas()
 
-    def __init__(self, size: typing.Tuple[float, float, float], offset: typing.Tuple[float, float, float], textures: typing.Tuple[str, str, str, str, str, str]):
+    def __init__(
+        self,
+        size: typing.Tuple[float, float, float],
+        offset: typing.Tuple[float, float, float],
+        textures: typing.Tuple[str, str, str, str, str, str],
+    ):
         self.size = Vec3(*size)
         self.offset = Vec3(*offset)
         self.texture_paths = textures
-        self.texture_infos: typing.Tuple[TextureInfo, TextureInfo, TextureInfo, TextureInfo, TextureInfo, TextureInfo] = None
+        self.texture_infos: typing.Tuple[
+            TextureInfo, TextureInfo, TextureInfo, TextureInfo, TextureInfo, TextureInfo
+        ] = None
 
         self.texture: Texture = None
         self.texture_group: TexturedMaterialGroup = None
@@ -63,17 +71,28 @@ class CubeVertexCreator:
         self.texture_infos = []
 
         for texture in self.texture_paths:
-            self.texture_infos.append(self.ATLAS.add_texture(texture, await RESOURCE_MANAGER.read_pillow_image(texture)))
+            self.texture_infos.append(
+                self.ATLAS.add_texture(
+                    texture, await RESOURCE_MANAGER.read_pillow_image(texture)
+                )
+            )
 
     def bake(self):
         self.texture = self.ATLAS.pyglet_texture
-        self.texture_group = TexturedMaterialGroup(self.MATERIAL, self.texture, parent=None)
+        self.texture_group = TexturedMaterialGroup(
+            self.MATERIAL, self.texture, parent=None
+        )
         self.tex_coords = CUBE_TEX_COORDS.copy()
 
         for i, texture in enumerate(self.texture_infos):
             texture.prepare_tex_coords(self.tex_coords, i)
 
-    def add_to_batch(self, position: typing.Tuple[float, float, float], batch: pyglet.graphics.Batch, scale=1.0):
+    def add_to_batch(
+        self,
+        position: typing.Tuple[float, float, float],
+        batch: pyglet.graphics.Batch,
+        scale=1.0,
+    ):
         count = len(CUBE_VERTEX_DEF)
 
         pos = Vec3(*position) + self.offset.scale(scale)
@@ -82,7 +101,10 @@ class CubeVertexCreator:
         vertices = [pos + _inner_product(delta, e) for e in CUBE_VERTEX_DEF]
 
         return self.texture_group.program.vertex_list(
-            count, GL_TRIANGLES, batch, self.texture_group,
-            vertices=('f', sum(map(tuple, vertices), tuple())),
-            uvCoord=('f', self.tex_coords),
+            count,
+            GL_TRIANGLES,
+            batch,
+            self.texture_group,
+            vertices=("f", sum(map(tuple, vertices), tuple())),
+            uvCoord=("f", self.tex_coords),
         )
