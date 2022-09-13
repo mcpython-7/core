@@ -1,4 +1,4 @@
-from mcpython.backend.Registry import IRegistryEntry
+from mcpython.backend.Registry import IRegistryEntry, RegistryObject
 
 
 class BlockUtil:
@@ -9,9 +9,21 @@ class BlockUtil:
 
 class Block(IRegistryEntry):
     REGISTRY = "minecraft:block"
+    BLOCKSTATE_CLASS = None  # Reference to a BlockState-like class
+    BLOCK_ITEM_INSTANCE: RegistryObject = None
 
     def __init__(self):
         pass
+
+    def register_block_item(self):
+        from mcpython.world.item.BlockItem import BlockItem
+        from mcpython.world.item.ItemManager import ITEM_REGISTRY
+
+        self.BLOCK_ITEM_INSTANCE = ITEM_REGISTRY.register_lazy(self.NAME, lambda: BlockItem().set_block_type(self))
+        return self
+
+    def get_blockstate_class(self):
+        return self.BLOCKSTATE_CLASS
 
     async def on_added_to_world(self, blockstate, force=False, player=None) -> bool:
         """

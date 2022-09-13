@@ -5,6 +5,7 @@ from mcpython.world.AbstractDefinition import (
     AbstractSection,
     AbstractDimension,
 )
+from mcpython.world.block.Block import Block
 from mcpython.world.block.BlockState import BlockState
 from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
 
@@ -117,7 +118,8 @@ class Section(AbstractSection):
         block_update=True,
     ):
         if not isinstance(blockstate, BlockState):
-            blockstate = BlockState(BLOCK_REGISTRY.lookup(blockstate))
+            block_type: Block = BLOCK_REGISTRY.lookup(blockstate)
+            blockstate = block_type.get_blockstate_class()(block_type)
 
         index = dx + dy * 16 + dz * 256
         previous_block = self.blocks[index]

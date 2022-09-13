@@ -1,6 +1,7 @@
 import typing
 from mcpython.world.block.Block import Block
 from mcpython.backend.Registry import RegistryObject
+import random
 
 
 class BlockState:
@@ -13,6 +14,8 @@ class BlockState:
         "__blockstate_ref_cache",
         "nbt",
     )
+
+    _RANDOM = random.Random()
 
     def __init__(self, block_type: Block | RegistryObject = None):
         self.block_type = (
@@ -29,6 +32,15 @@ class BlockState:
         self.__previous_blockstate = {}
         self.__blockstate_ref_cache = None
         self.nbt: typing.Dict[str, object] = {}
+
+    def get_positional_value(self, salt: typing.Hashable) -> float:
+        """
+        Returns a float value between 0 and 1 constant for the salt-position-dimension pair.
+        Useful for e.g. block rendering
+        """
+
+        self._RANDOM.seed(hash((self.chunk_section.get_chunk().get_dimension().name, self.world_position, salt)))
+        return self._RANDOM.random()
 
     def _check_blockstate_dirty(self) -> bool:
         return self.block_state == self.__previous_blockstate
@@ -57,8 +69,11 @@ class BlockState:
         await self.block_type.on_random_update()
 
     async def on_player_interaction(
-        self, blockstate, player, hand, button, itemstack
+        self, blockstate, player, hand, button: int, modifiers: int, itemstack
     ) -> bool:
         return await self.block_type.on_player_interaction(
-            blockstate, player, hand, button, itemstack
+            blockstate, player, hand, button, modifiers, itemstack
         )
+
+
+Block.BLOCKSTATE_CLASS = BlockState
