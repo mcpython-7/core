@@ -106,10 +106,7 @@ class TextureAtlas:
                 self.texture = PIL.Image.new(
                     "RGBA", (self.size[0] * 16, self.size[1] * 16), (255, 255, 255, 255)
                 )
-                free_cells = [
-                    e + [True] * y
-                    for e in free_cells
-                ]
+                free_cells = [e + [True] * y for e in free_cells]
                 free_cells += [[True] * self.size[1] for _ in range(x)]
                 print("increased size to", self.size)
 

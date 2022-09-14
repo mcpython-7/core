@@ -30,5 +30,6 @@ BEACON = BLOCK_REGISTRY.register_lazy(
     "minecraft:beacon", lambda: Block().register_block_item()
 )
 GRASS_BLOCK = BLOCK_REGISTRY.register_lazy(
-    "minecraft:grass_block", lambda: SingleBlockStateBlock({"snowy": "false"}).register_block_item()
+    "minecraft:grass_block",
+    lambda: SingleBlockStateBlock({"snowy": "false"}).register_block_item(),
 )

@@ -38,13 +38,16 @@ class GameState(AbstractState):
         dimension = await WORLD.get_dimension("minecraft:overworld")
 
         blocks = list(sorted(BLOCK_REGISTRY._entries.values(), key=lambda e: e.NAME))
-        block_with_states = sum([
+        block_with_states = sum(
             [
-                BlockState(block).with_state(state)
-                for state in block.get_all_valid_block_states()
-            ]
-            for block in blocks
-        ], [])
+                [
+                    BlockState(block).with_state(state)
+                    for state in block.get_all_valid_block_states()
+                ]
+                for block in blocks
+            ],
+            [],
+        )
 
         grid_size = math.ceil(math.sqrt(len(block_with_states)))
 

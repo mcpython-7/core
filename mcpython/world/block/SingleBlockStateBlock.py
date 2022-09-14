@@ -14,4 +14,3 @@ class SingleBlockStateBlock(Block):
     async def on_added_to_world(self, blockstate, force=False, player=None) -> bool:
         blockstate.block_state = self.state
         return True
-
