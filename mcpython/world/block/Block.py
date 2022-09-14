@@ -1,3 +1,5 @@
+import typing
+
 from mcpython.backend.Registry import IRegistryEntry, RegistryObject
 
 
@@ -15,6 +17,9 @@ class Block(IRegistryEntry):
 
     def __init__(self):
         pass
+
+    def get_all_valid_block_states(self) -> typing.List[dict]:
+        return [{}]
 
     async def on_register(self):
         from mcpython.client.rendering.BlockRendering import BlockRenderer, MANAGER

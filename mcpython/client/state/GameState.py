@@ -6,6 +6,7 @@ from pyglet.window import key
 from mcpython.client.state.AbstractState import AbstractState
 from mcpython.client.rendering.Window import WINDOW
 from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
+from mcpython.world.block.BlockState import BlockState
 from mcpython.world.World import WORLD
 
 
@@ -37,15 +38,22 @@ class GameState(AbstractState):
         dimension = await WORLD.get_dimension("minecraft:overworld")
 
         blocks = list(sorted(BLOCK_REGISTRY._entries.values(), key=lambda e: e.NAME))
+        block_with_states = sum([
+            [
+                BlockState(block).with_state(state)
+                for state in block.get_all_valid_block_states()
+            ]
+            for block in blocks
+        ], [])
 
-        grid_size = math.ceil(math.sqrt(len(blocks)))
+        grid_size = math.ceil(math.sqrt(len(block_with_states)))
 
         for dx in range(grid_size):
             for dz in range(grid_size):
-                if not blocks:
+                if not block_with_states:
                     break
 
-                await dimension.set_block(dx * 3, 0, dz * 3, blocks.pop())
+                await dimension.set_block(dx * 3, 0, dz * 3, block_with_states.pop())
             else:
                 continue
             break

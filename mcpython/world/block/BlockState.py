@@ -33,6 +33,14 @@ class BlockState:
         self.__blockstate_ref_cache = None
         self.nbt: typing.Dict[str, object] = {}
 
+    def with_state(self, state):
+        self.block_state = state
+
+        if self.chunk_section:
+            self.chunk_section.update_block_visual(self)
+
+        return self
+
     def get_positional_value(self, salt: typing.Hashable) -> float:
         """
         Returns a float value between 0 and 1 constant for the salt-position-dimension pair.
