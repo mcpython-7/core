@@ -21,7 +21,7 @@ class World(AbstractWorld):
         self.dimensions: typing.Dict[str, Dimension] = {}
 
         self.current_dimension: Dimension = None
-        self.current_render_position = [0, 5, 0]
+        self.current_render_position = [0, 10, 0]
         self.current_render_rotation = [0, -90]
 
     async def setup_default(self):

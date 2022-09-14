@@ -5,6 +5,7 @@ from pyglet.window import key
 
 from mcpython.client.state.AbstractState import AbstractState
 from mcpython.client.rendering.Window import WINDOW
+from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
 from mcpython.world.World import WORLD
 
 
@@ -34,15 +35,20 @@ class GameState(AbstractState):
         self.window_handler.subscribe("on_tick", self.on_tick)
 
         dimension = await WORLD.get_dimension("minecraft:overworld")
-        await dimension.set_block(-1, 0, 0, "minecraft:cobblestone")
-        await dimension.set_block(0, 0, 0, "minecraft:stone")
-        await dimension.set_block(1, 0, 0, "minecraft:dirt")
-        await dimension.set_block(0, 0, 1, "minecraft:coarse_dirt")
-        await dimension.set_block(0, 0, -1, "minecraft:diamond_block")
-        await dimension.set_block(1, 0, 1, "minecraft:ancient_debris")
-        await dimension.set_block(-1, 0, -1, "minecraft:acacia_sapling")
-        await dimension.set_block(-1, 0, 1, "minecraft:acacia_leaves")
-        await dimension.set_block(1, 0, -1, "minecraft:beacon")
+
+        blocks = list(sorted(BLOCK_REGISTRY._entries.values(), key=lambda e: e.NAME))
+
+        grid_size = math.ceil(math.sqrt(len(blocks)))
+
+        for dx in range(grid_size):
+            for dz in range(grid_size):
+                if not blocks:
+                    break
+
+                await dimension.set_block(dx * 3, 0, dz * 3, blocks.pop())
+            else:
+                continue
+            break
 
     async def on_draw(self, dt: float):
         WINDOW.set_3d_world_view()
