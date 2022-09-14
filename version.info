@@ -1,0 +1,20 @@
+
+----[github/uuk]: created this repository on the 25.08.2022
+    [uuk]: implemented basic tooling for working with code here (formatting, setup, requirements.txt, ...)
+    [uuk]: added unit test CI, running in python 3.11
+    [uuk]: added game window
+    [uuk]: added an event infrastructure for the game
+    [uuk]: implemented state system
+    [uuk]: added resource management code
+    [uuk]: implemented code holding the world
+    [uuk]: started testing around with block rendering
+    [uuk]: implemented registries
+    [uuk]: added the STONE block and DIRT block
+    [uuk]: added system for ticking the world
+    [uuk]: improved world handling code
+B   [uuk]: fixed some issues around block rendering; now using no longer .obj files
+    [uuk]: added TextureAtlas system
+    [uuk]: made it possible to render a block with multiple textures for each face
+    [uuk]: added COBBLESTONE block
+    [uuk]: made it possible to hide blocks
+    [uuk]: added DIRT and DIAMOND block
