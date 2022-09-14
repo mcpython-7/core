@@ -10,6 +10,9 @@ from mcpython.world.block.BlockState import BlockState
 from mcpython.resources.ResourceManagement import MANAGER as RESOURCE_MANAGER
 
 
+# see https://minecraft.fandom.com/wiki/Tutorials/Models for specs
+
+
 RENDERING_ORDER = [
     "up",
     "down",
@@ -136,4 +139,126 @@ class BlockModel:
             return "minecraft:"+texture
 
         raise ValueError(texture)
+
+
+class BlockStateFile:
+    class ModelLink:
+        @classmethod
+        async def from_data(cls, data: dict | list):
+            model_names = []
+
+            if isinstance(data, dict):
+                model_names.append(data["model"])
+
+            instance = cls(*model_names)
+
+            if isinstance(data, list):
+                instance.models += [
+                    await BlockStateFile.ModelLink.from_data(e)
+                    for e in data
+                ]
+
+            return instance
+
+        def __init__(self, *model_name: str):
+            self.model_names = list(model_name)
+            self.models: typing.List[BlockStateFile.ModelLink | BlockModel] = []
+
+            self.rotation = 0, 0, 0
+            self.uv_lock = False
+            self.weight = 1
+
+        async def bake(self):
+            from mcpython.client.rendering.BlockRendering import MANAGER
+
+            for name in self.model_names:
+                self.models.append(model := await MANAGER.lookup_block_model(name))
+
+                if not model.baked:
+                    await model.bake()
+
+            for model in self.models:
+                if isinstance(model, BlockStateFile.ModelLink):
+                    await model.bake()
+
+        async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
+            if not self.models:
+                return []
+
+            return await random.choice(self.models).add_to_batch(block, batch)
+
+        def get_model_names(self) -> typing.List[str]:
+            return self.model_names + sum((model.get_model_names() for model in self.models if isinstance(model, BlockStateFile.ModelLink)), [])
+
+    class MultipartCondition:
+        @classmethod
+        async def from_data(cls, data: dict):
+            instance = cls()
+            return instance
+
+        async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
+            return []
+
+        async def bake(self):
+            pass
+
+        def check_match(self, block: BlockState) -> bool:
+            return False
+
+    @classmethod
+    async def from_data(cls, name: str, data: dict):
+        instance = cls()
+
+        if "variants" in data:
+            if "multipart" in data:
+                raise ValueError
+
+            for key, model in data["variants"].items():
+                if key == "" or key == "default":
+                    key = {}
+                else:
+                    key = {e.split("=")[0]: e.split("=")[1] for e in key.split(",")}
+
+                instance.variants.append((key, await BlockStateFile.ModelLink.from_data(model)))
+        elif "multipart" in data:
+            for entry in data["multipart"]:
+                instance.multipart_items.append(
+                    (await BlockStateFile.MultipartCondition.from_data(entry.setdefault("when", {})),
+                     await BlockStateFile.ModelLink.from_data(entry["apply"]))
+                )
+        else:
+            raise ValueError
+
+        return instance
+
+    def __init__(self):
+        self.variants: typing.List[typing.Tuple[dict, BlockStateFile.ModelLink]] = []
+        self.multipart_items: typing.List[typing.Tuple[BlockStateFile.MultipartCondition, BlockStateFile.ModelLink]] = []
+
+    def get_required_models(self) -> typing.List[str]:
+        return sum([
+            e[1].get_model_names() for e in self.variants
+        ], []) + sum([
+            e[1].get_model_names() for e in self.multipart_items
+        ], [])
+
+    async def bake(self):
+        for _, model in self.variants:
+            await model.bake()
+
+        for _, model in self.multipart_items:
+            await model.bake()
+
+    async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
+        for key, model in self.variants:
+            if key == block.block_state:
+                return await model.add_to_batch(block, batch)
+
+        data = []
+
+        for condition, model in self.multipart_items:
+            if condition.check_match(block):
+                data += model.add_to_batch(block, batch)
+
+        return data
 

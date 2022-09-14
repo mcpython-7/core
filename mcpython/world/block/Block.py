@@ -19,12 +19,8 @@ class Block(IRegistryEntry):
     async def on_register(self):
         from mcpython.client.rendering.BlockRendering import BlockRenderer, MANAGER
 
-        self.BLOCK_RENDERER = BlockRenderer()
+        self.BLOCK_RENDERER = BlockRenderer(self.NAME)
         MANAGER.renderers.append(self.BLOCK_RENDERER)
-
-        await self.BLOCK_RENDERER.add_block_model(
-            "{}:block/{}".format(*self.NAME.split(":"))
-        )
 
     def register_block_item(self):
         from mcpython.world.item.BlockItem import BlockItem
