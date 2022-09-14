@@ -67,9 +67,16 @@ class TextureAtlas:
         self.pyglet_image = None
         self.pyglet_texture = None
 
-        self.textures: typing.Dict[str, TextureInfo] = {}
+        self.textures: typing.Dict[str, TextureInfo] = {
+            "MISSING_TEXTURE": TextureInfo(
+                self, "MISSING_TEXTURE", MISSING_TEXTURE
+            )
+        }
 
-    def add_texture(self, name: str, texture: PIL.Image.Image) -> TextureInfo:
+    def add_texture(self, name: str | None, texture: PIL.Image.Image) -> TextureInfo:
+        if name is None:
+            return self.textures["MISSING_TEXTURE"]
+
         if name in self.textures:
             return self.textures[name]
 
@@ -90,9 +97,7 @@ class TextureAtlas:
             )
         )
 
-        missing = self.textures["MISSING_TEXTURE"] = TextureInfo(
-            self, "MISSING_TEXTURE", MISSING_TEXTURE
-        )
+        missing = self.textures["MISSING_TEXTURE"]
         free_cells = [[True] * self.size[1]] * self.size[0]
         if missing.find_free(free_cells) != (0, 0):
             raise RuntimeError("something went horribly wrong :-(")

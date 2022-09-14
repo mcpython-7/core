@@ -47,16 +47,14 @@ class CubeVertexCreator:
 
     def __init__(
         self,
-        size: typing.Tuple[float, float, float],
-        offset: typing.Tuple[float, float, float],
+        size: typing.Tuple[float, float, float] | Vec3,
+        offset: typing.Tuple[float, float, float] | Vec3,
         textures: typing.Tuple[str, str, str, str, str, str],
     ):
         self.size = Vec3(*size)
         self.offset = Vec3(*offset)
         self.texture_paths = textures
-        self.texture_infos: typing.Tuple[
-            TextureInfo, TextureInfo, TextureInfo, TextureInfo, TextureInfo, TextureInfo
-        ] = None
+        self.texture_infos: typing.List[TextureInfo] = []
 
         self.texture: Texture = None
         self.texture_group: TexturedMaterialGroup = None
@@ -64,17 +62,25 @@ class CubeVertexCreator:
 
         self._had_setup = False
 
+    async def copy(self, textures: typing.Iterable[str] = None):
+        instance = type(self)(self.size, self.offset, textures or self.texture_paths)
+        await instance.setup()
+        return instance
+
     async def setup(self):
         self._had_setup = True
 
-        self.texture_infos = []
+        self.texture_infos.clear()
 
         for texture in self.texture_paths:
-            self.texture_infos.append(
-                self.ATLAS.add_texture(
+            if texture == "MISSING_TEXTURE":
+                info = self.ATLAS.add_texture(texture, None)
+            else:
+                info = self.ATLAS.add_texture(
                     texture, await RESOURCE_MANAGER.read_pillow_image(texture)
                 )
-            )
+
+            self.texture_infos.append(info)
 
     def bake(self):
         self.texture = self.ATLAS.pyglet_texture

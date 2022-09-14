@@ -9,137 +9,123 @@ from mcpython.world.block.BlockState import BlockState
 from mcpython.resources.ResourceManagement import MANAGER as RESOURCE_MANAGER
 
 
-class BlockModelFile:
-    class BlockModelFileLink:
-        @classmethod
-        async def from_data(cls, data: dict | list) -> typing.List["BlockModelFile.BlockModelFileLink"]:
-            result = []
+RENDERING_ORDER = [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west",
+]
 
-            if isinstance(data, list):
-                for entry in data:
-                    result.append(cls(await BlockModelFile.from_name(entry["model"])))
-            else:
-                result.append(cls(await BlockModelFile.from_name(data["model"])))
 
-            return result
-
-        def __init__(self, model: "BlockModelFile"):
-            self.model = model
-
-        async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
-            return self.model.add_to_batch(block, batch)
-
+class BlockModel:
     @classmethod
-    async def from_name(cls, name: str):
-        return await cls.from_file("assets/{}/models/{}.json".format(*name.split(":")), name)
+    async def load_from_file(cls, name: str, file: str) -> "BlockModel":
+        data: dict = await RESOURCE_MANAGER.read_json(file)
+        instance = cls(name, data["parent"] if "parent" in data else None)
 
-    @classmethod
-    async def from_file(cls, filename: str, name: str = None):
-        data = await RESOURCE_MANAGER.read_json(filename)
-        return await cls.from_data(data, name or f"{filename.split('/')[1]}:{filename.split('/')[3:]}")
+        instance.textures.update(data.setdefault("textures", {}))
 
-    @classmethod
-    async def from_data(cls, data: dict, name: str):
-        instance = cls(None if "parent" not in data else await cls.from_name(data["parent"]))
+        for element in data.setdefault("elements", []):
+            start = element["from"]
+            end = element["to"]
+
+            position = tuple((a + b) / 2 / 8 - .5 for a, b in zip(start, end))
+            size = tuple(abs(a - b) / 16 for a, b in zip(start, end))
+
+            cube = CubeVertexCreator(size, position, ("MISSING_TEXTURE",) * 6)
+            cube.raw_textures = [None] * 6
+
+            # todo: parse rotation & shade
+
+            for key, face in element["faces"].items():
+                # uv = face["uv"]  # todo: use
+                texture = face["texture"]
+                # todo: parse cull-face
+                # rotation = face["rotation"]  # todo: use by rotating some vertex data / uv data
+                # todo: parse tint index
+
+                cube.raw_textures[RENDERING_ORDER.index(key)] = texture
+
+            instance.cubes.append(cube)
+
         return instance
 
-    def __init__(self, parent: "BlockModelFile"):
+    def __init__(self, name: str, parent: typing.Union[str, "BlockModel"] = None):
+        self.name = name
         self.parent = parent
-        self.elements: typing.List[CubeVertexCreator] = []
 
-    def add_element(self, element: CubeVertexCreator):
-        self.elements.append(element)
+        self.textures: typing.Dict[str, str] = {}
+        self.cubes: typing.List[CubeVertexCreator] = []
 
-    async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
-        pass
+        self.can_be_rendered = False
+        self.baked = False
 
+    async def bake(self):
+        if self.baked:
+            return
 
-class BlockStateFile:
-    class AbstractBlockStateEntry(ABC):
-        @classmethod
-        async def from_data(cls, data: dict) -> "BlockStateFile.AbstractBlockStateEntry":
-            raise NotImplementedError
+        self.baked = True
 
-        def bake(self):
-            pass
+        if isinstance(self.parent, str):
+            from mcpython.client.rendering.BlockRendering import MANAGER
 
-        def check_for_match(self, block: BlockState) -> bool | None:
-            raise NotImplementedError
+            self.parent = await MANAGER.lookup_block_model(self.parent)
+            await self.parent.bake()
 
-        async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch):
-            raise NotImplementedError
+            self.textures = self.parent.textures | self.textures
 
-    class DefaultBlockStateEntry(AbstractBlockStateEntry):
-        @classmethod
-        async def from_data(cls, key: str, data: dict | list) -> "BlockStateFile.DefaultBlockStateEntry":
-            instance = cls({a.split("=")[0]: a.split("=")[1] for a in key.split(",")})
+            if len(self.cubes) == 0:
+                for cube in self.parent.cubes:
+                    new_cube = await cube.copy(("MISSING_TEXTURE",) * 6)
+                    new_cube.raw_textures = cube.raw_textures
+                    self.cubes.append(new_cube)
 
-            instance.models += await BlockModelFile.BlockModelFileLink.from_data(data)
+        try:
+            for cube in self.cubes:
+                cube.texture_paths = [
+                    "assets/{}/textures/{}.png".format(*self.lookup_texture(t).split(":"))
+                    for t in cube.raw_textures
+                ]
+                await cube.setup()
 
-            return instance
+            self.can_be_rendered = True
+        except ValueError:
+            self.can_be_rendered = False
 
-        def __init__(self, key: typing.Dict[str, str]):
-            self.key = key
-            self.models: typing.List[BlockModelFile.BlockModelFileLink] = []
+            for cube in self.cubes:
+                cube.texture_paths = ("MISSING_TEXTURE",) * 6
 
-        def check_for_match(self, block: BlockState) -> bool | None:
-            if block.block_state == self.key:
-                return True
+    async def after_texture_atlas_bake(self):
+        if not self.can_be_rendered:
+            return
 
-        async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
-            data = []
-
-            model = random.choice(self.models)
-            data += model.add_to_batch(block, batch)
-
-            return data
-
-    class MultipartBlockStateEntry(AbstractBlockStateEntry):
-        pass
-
-    @classmethod
-    async def decode_by_name(cls, name: str):
-        return await cls.decode_by_file("assets/{}/blockstates/{}.json".format(*name.split(":")), name)
-
-    @classmethod
-    async def decode_by_file(cls, filename: str, name: str = None):
-        data = await RESOURCE_MANAGER.read_json(filename)
-        return await cls.decode_from_data(data, name or f"{filename.split('/')[1]}:{filename.split('/')[2:]}")
-
-    @classmethod
-    async def decode_from_data(cls, data: dict, name: str):
-        if "variants" in data == "multipart" in data:
-            if "variants" in data:
-                raise ValueError(f"Cannot decode model {name}: both 'variants' and 'multipart' are present, but only one is allowed!")
-
-            raise ValueError(f"Cannot decode model {name}: either 'variants' or 'multipart' must be present!")
-
-        instance = cls()
-
-        if "variants" in data:
-            if isinstance(data["variants"], list):
-                for key, entry in data["variants"].items():
-                    instance.parts.append(await BlockStateFile.DefaultBlockStateEntry.from_data(key, entry))
-            else:
-                instance.parts.append(await BlockStateFile.DefaultBlockStateEntry.from_data("", data["variants"]))
-        else:
-            for entry in data["multipart"]:
-                instance.parts.append(await BlockStateFile.MultipartBlockStateEntry.from_data(entry))
-
-    def __init__(self):
-        self.parts: typing.List[BlockStateFile.AbstractBlockStateEntry] = []
+        for cube in self.cubes:
+            cube.bake()
 
     async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
+        if not self.can_be_rendered:
+            raise RuntimeError(f"tried to render not render-able model {self.name}!")
+
         data = []
 
-        for part in self.parts:
-            state = part.check_for_match(block)
-
-            if state is not None:
-                data += part.add_to_batch(block, batch)
-
-                if state is True:
-                    return data
+        for cube in self.cubes:
+            data.append(cube.add_to_batch(block.world_position, batch))
 
         return data
+
+    def lookup_texture(self, texture: str):
+        if ":" in texture:
+            return texture
+
+        texture = texture.removeprefix("#")
+
+        if texture in self.textures:
+            return self.lookup_texture(self.textures[texture])
+
+        if "#" + texture in self.textures:
+            return self.lookup_texture(self.textures[texture])
+
+        raise ValueError(texture)
 

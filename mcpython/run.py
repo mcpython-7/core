@@ -40,7 +40,7 @@ async def setup():
 
     await init_registries()
 
-    MANAGER.bake()
+    await MANAGER.bake()
 
     await WORLD.setup_default()
 

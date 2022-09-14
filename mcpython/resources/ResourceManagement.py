@@ -57,7 +57,10 @@ class ArchiveResourcePath(AbstractResourcePath):
         self.archive = ZipFile(self.path)
 
     async def read_bytes(self, file: str) -> bytes:
-        return self.archive.read(file)
+        try:
+            return self.archive.read(file)
+        except KeyError:
+            raise ResourceNotFoundException(file)
 
     async def walk(self, folder: str) -> typing.AsyncIterator[str]:
         for file in self.archive.namelist():

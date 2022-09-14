@@ -22,10 +22,8 @@ class Block(IRegistryEntry):
         self.BLOCK_RENDERER = BlockRenderer()
         MANAGER.renderers.append(self.BLOCK_RENDERER)
 
-        await self.BLOCK_RENDERER.add_cube(
-            (1, 1, 1),
-            (0, 0, 0),
-            ["assets/{}/textures/block/{}.png".format(*self.NAME.split(":"))] * 6,
+        await self.BLOCK_RENDERER.add_block_model(
+            "{}:block/{}".format(*self.NAME.split(":"))
         )
 
     def register_block_item(self):

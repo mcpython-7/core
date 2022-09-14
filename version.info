@@ -18,3 +18,4 @@ B   [uuk]: fixed some issues around block rendering; now using no longer .obj fi
     [uuk]: added COBBLESTONE block
     [uuk]: made it possible to hide blocks
     [uuk]: added DIRT and DIAMOND block
+    [uuk]: added model based block rendering
