@@ -47,8 +47,6 @@ class TextureInfo:
                         self.real_location = x, y
                         return x, y
 
-        raise ValueError("No space found!")
-
     def prepare_tex_coords(self, coords: typing.List[int], part: int, uv=(0, 0, 1, 1)):
         # todo: use uv
         step = 1 / self.atlas.size[0], 1 / self.atlas.size[1]
@@ -97,15 +95,23 @@ class TextureAtlas:
         )
 
         missing = self.textures["MISSING_TEXTURE"]
-        free_cells = [[True] * self.size[1]] * self.size[0]
+        free_cells = [[True] * self.size[1] for _ in range(self.size[0])]
         if missing.find_free(free_cells) != (0, 0):
             raise RuntimeError("something went horribly wrong :-(")
 
         for texture in textures:
-            if texture.find_free(free_cells) is None:
-                raise RuntimeError(
-                    f"Could not allocate space for texture {texture.name}"
+            while texture.find_free(free_cells) is None:
+                x, y = self.size
+                self.size = (self.size[0] * 2, self.size[1] * 2)
+                self.texture = PIL.Image.new(
+                    "RGBA", (self.size[0] * 16, self.size[1] * 16), (255, 255, 255, 255)
                 )
+                free_cells = [
+                    e + [True] * y
+                    for e in free_cells
+                ]
+                free_cells += [[True] * self.size[1] for _ in range(x)]
+                print("increased size to", self.size)
 
         for texture in self.textures.values():
             self.texture.paste(

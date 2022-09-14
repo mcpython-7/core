@@ -1,6 +1,6 @@
 from mcpython.world.block.Block import Block
 from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
-
+from mcpython.world.block.SingleBlockStateBlock import SingleBlockStateBlock
 
 STONE = BLOCK_REGISTRY.register_lazy(
     "minecraft:stone", lambda: Block().register_block_item()
@@ -28,4 +28,7 @@ ACACIA_LEAVES = BLOCK_REGISTRY.register_lazy(
 )
 BEACON = BLOCK_REGISTRY.register_lazy(
     "minecraft:beacon", lambda: Block().register_block_item()
+)
+GRASS_BLOCK = BLOCK_REGISTRY.register_lazy(
+    "minecraft:grass_block", lambda: SingleBlockStateBlock({"snowy": "false"}).register_block_item()
 )
