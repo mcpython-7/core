@@ -1,5 +1,2 @@
-
-
 class ModLoader:
     pass
-

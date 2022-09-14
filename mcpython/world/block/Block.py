@@ -60,7 +60,9 @@ class Block(IRegistryEntry):
         """
         return True
 
-    async def on_starting_to_break(self, blockstate, itemstack, force=False, player=None):
+    async def on_starting_to_break(
+        self, blockstate, itemstack, force=False, player=None
+    ):
         """
         Similar to on_removed_from_world(), but is invoked before the break animation starts,
         so you can early cancel the breaking

@@ -111,7 +111,9 @@ class EventHandler:
             raise CombinedEventException(exceptions)
         else:
             for exception in exceptions:
-                self.LOGGER.exception(f"Error during invoking event {name}", exc_info=exception)
+                self.LOGGER.exception(
+                    f"Error during invoking event {name}", exc_info=exception
+                )
 
     async def invoke_cancelable(
         self,
@@ -150,7 +152,10 @@ class EventHandler:
             raise CombinedEventException(exceptions)
         else:
             for exception in exceptions:
-                self.LOGGER.exception(f"Error during invoking event {name} (cancelable)", exc_info=exception)
+                self.LOGGER.exception(
+                    f"Error during invoking event {name} (cancelable)",
+                    exc_info=exception,
+                )
 
     def _create_invoke_ables(self, event_name: str, args, kwargs):
         if not self.__enabled or event_name not in self._subscribers:

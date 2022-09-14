@@ -22,7 +22,9 @@ class BlockRenderingManager:
         if name in self.block_states:
             return self.block_states[name]
 
-        data = await RESOURCE_MANAGER.read_json("assets/{}/blockstates/{}.json".format(*name.split(":")))
+        data = await RESOURCE_MANAGER.read_json(
+            "assets/{}/blockstates/{}.json".format(*name.split(":"))
+        )
         blockstate = await BlockStateFile.from_data(name, data)
         self.block_states[name] = blockstate
         return blockstate
@@ -37,13 +39,17 @@ class BlockRenderingManager:
         if ":" not in name:
             name = "minecraft:" + name
 
-        model = await BlockModel.load_from_file(name, "assets/{}/models/{}.json".format(*name.split(":")))
+        model = await BlockModel.load_from_file(
+            name, "assets/{}/models/{}.json".format(*name.split(":"))
+        )
         self.block_models[name] = model
         return model
 
     async def bake(self):
         for renderer in self.renderers:
-            renderer.block_state = await self.lookup_block_state_file(renderer.block_name)
+            renderer.block_state = await self.lookup_block_state_file(
+                renderer.block_name
+            )
 
         for blockstate in self.block_states.values():
             for model_name in blockstate.get_required_models():

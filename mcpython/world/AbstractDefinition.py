@@ -141,7 +141,9 @@ class AbstractDimension(ABC):
         block_update=True,
         create_chunk=True,
     ):
-        await (await self.get_chunk_for_position(x, y, z, create=create_chunk)).set_block(
+        await (
+            await self.get_chunk_for_position(x, y, z, create=create_chunk)
+        ).set_block(
             x,
             y,
             z,

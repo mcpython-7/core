@@ -84,7 +84,14 @@ class Section(AbstractSection):
         z -= cz
 
         if x < 0 or x > 15 or y < 0 or y > 15 or z < 0 or z > 15:
-            raise ValueError((x+cx, y+cy, z+cz), (x, y, z), (cx, cy, cz), await (await self.get_chunk()).get_position(), self.y, (x < 0 or x > 15, y < 0 or y > 15, z < 0 or z > 15))
+            raise ValueError(
+                (x + cx, y + cy, z + cz),
+                (x, y, z),
+                (cx, cy, cz),
+                await (await self.get_chunk()).get_position(),
+                self.y,
+                (x < 0 or x > 15, y < 0 or y > 15, z < 0 or z > 15),
+            )
 
         return self.blocks[x + y * 16 + z * 256]
 
@@ -164,7 +171,9 @@ class Section(AbstractSection):
             block_update = False
 
         await self.show_block(self.blocks[index])
-        await (await (await self.get_chunk()).get_dimension()).update_neighbor_visuals(blockstate.world_position)
+        await (await (await self.get_chunk()).get_dimension()).update_neighbor_visuals(
+            blockstate.world_position
+        )
 
         if block_update:
             await self.chunk.dimension.block_update_neighbors(
@@ -181,7 +190,9 @@ class Section(AbstractSection):
     async def hide_block(self, blockstate: BlockState):
         from mcpython.client.state.GameState import RENDERING_CONTAINER
 
-        await blockstate.block_type.BLOCK_RENDERER.remove_from_batch(blockstate, RENDERING_CONTAINER.normal_3d_batch)
+        await blockstate.block_type.BLOCK_RENDERER.remove_from_batch(
+            blockstate, RENDERING_CONTAINER.normal_3d_batch
+        )
 
     async def update_block_visual(self, blockstate: BlockState):
         await self.hide_block(blockstate)

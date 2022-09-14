@@ -69,9 +69,7 @@ class TextureAtlas:
         self.pyglet_texture = None
 
         self.textures: typing.Dict[str, TextureInfo] = {
-            "MISSING_TEXTURE": TextureInfo(
-                self, "MISSING_TEXTURE", MISSING_TEXTURE
-            )
+            "MISSING_TEXTURE": TextureInfo(self, "MISSING_TEXTURE", MISSING_TEXTURE)
         }
 
     def add_texture(self, name: str | None, texture: PIL.Image.Image) -> TextureInfo:

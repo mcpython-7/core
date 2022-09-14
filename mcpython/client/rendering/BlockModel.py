@@ -35,7 +35,7 @@ class BlockModel:
             start = element["from"]
             end = element["to"]
 
-            position = tuple((a + b) / 2 / 8 - .5 for a, b in zip(start, end))
+            position = tuple((a + b) / 2 / 8 - 0.5 for a, b in zip(start, end))
             size = tuple(abs(a - b) / 16 for a, b in zip(start, end))
 
             cube = CubeVertexCreator(size, position, ("MISSING_TEXTURE",) * 6)
@@ -91,7 +91,11 @@ class BlockModel:
         try:
             for cube in self.cubes:
                 cube.texture_paths = [
-                    "assets/{}/textures/{}.png".format(*self.lookup_texture(t).split(":")) if t is not None else "MISSING_TEXTURE"
+                    "assets/{}/textures/{}.png".format(
+                        *self.lookup_texture(t).split(":")
+                    )
+                    if t is not None
+                    else "MISSING_TEXTURE"
                     for t in cube.raw_textures
                 ]
                 await cube.setup()
@@ -112,7 +116,9 @@ class BlockModel:
         for cube in self.cubes:
             cube.bake()
 
-    async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
+    async def add_to_batch(
+        self, block: BlockState, batch: pyglet.graphics.Batch
+    ) -> list:
         if not self.can_be_rendered:
             raise RuntimeError(f"tried to render not render-able model {self.name}!")
 
@@ -136,7 +142,7 @@ class BlockModel:
             return self.lookup_texture(self.textures[texture])
 
         if texture.startswith("block/"):
-            return "minecraft:"+texture
+            return "minecraft:" + texture
 
         raise ValueError(texture)
 
@@ -154,8 +160,7 @@ class BlockStateFile:
 
             if isinstance(data, list):
                 instance.models += [
-                    await BlockStateFile.ModelLink.from_data(e)
-                    for e in data
+                    await BlockStateFile.ModelLink.from_data(e) for e in data
                 ]
 
             return instance
@@ -181,14 +186,23 @@ class BlockStateFile:
                 if isinstance(model, BlockStateFile.ModelLink):
                     await model.bake()
 
-        async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
+        async def add_to_batch(
+            self, block: BlockState, batch: pyglet.graphics.Batch
+        ) -> list:
             if not self.models:
                 return []
 
             return await random.choice(self.models).add_to_batch(block, batch)
 
         def get_model_names(self) -> typing.List[str]:
-            return self.model_names + sum((model.get_model_names() for model in self.models if isinstance(model, BlockStateFile.ModelLink)), [])
+            return self.model_names + sum(
+                (
+                    model.get_model_names()
+                    for model in self.models
+                    if isinstance(model, BlockStateFile.ModelLink)
+                ),
+                [],
+            )
 
     class MultipartCondition:
         @classmethod
@@ -196,7 +210,9 @@ class BlockStateFile:
             instance = cls()
             return instance
 
-        async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
+        async def add_to_batch(
+            self, block: BlockState, batch: pyglet.graphics.Batch
+        ) -> list:
             return []
 
         async def bake(self):
@@ -219,12 +235,18 @@ class BlockStateFile:
                 else:
                     key = {e.split("=")[0]: e.split("=")[1] for e in key.split(",")}
 
-                instance.variants.append((key, await BlockStateFile.ModelLink.from_data(model)))
+                instance.variants.append(
+                    (key, await BlockStateFile.ModelLink.from_data(model))
+                )
         elif "multipart" in data:
             for entry in data["multipart"]:
                 instance.multipart_items.append(
-                    (await BlockStateFile.MultipartCondition.from_data(entry.setdefault("when", {})),
-                     await BlockStateFile.ModelLink.from_data(entry["apply"]))
+                    (
+                        await BlockStateFile.MultipartCondition.from_data(
+                            entry.setdefault("when", {})
+                        ),
+                        await BlockStateFile.ModelLink.from_data(entry["apply"]),
+                    )
                 )
         else:
             raise ValueError
@@ -233,14 +255,14 @@ class BlockStateFile:
 
     def __init__(self):
         self.variants: typing.List[typing.Tuple[dict, BlockStateFile.ModelLink]] = []
-        self.multipart_items: typing.List[typing.Tuple[BlockStateFile.MultipartCondition, BlockStateFile.ModelLink]] = []
+        self.multipart_items: typing.List[
+            typing.Tuple[BlockStateFile.MultipartCondition, BlockStateFile.ModelLink]
+        ] = []
 
     def get_required_models(self) -> typing.List[str]:
-        return sum([
-            e[1].get_model_names() for e in self.variants
-        ], []) + sum([
-            e[1].get_model_names() for e in self.multipart_items
-        ], [])
+        return sum([e[1].get_model_names() for e in self.variants], []) + sum(
+            [e[1].get_model_names() for e in self.multipart_items], []
+        )
 
     async def bake(self):
         for _, model in self.variants:
@@ -249,7 +271,9 @@ class BlockStateFile:
         for _, model in self.multipart_items:
             await model.bake()
 
-    async def add_to_batch(self, block: BlockState, batch: pyglet.graphics.Batch) -> list:
+    async def add_to_batch(
+        self, block: BlockState, batch: pyglet.graphics.Batch
+    ) -> list:
         for key, model in self.variants:
             if key == block.block_state:
                 return await model.add_to_batch(block, batch)
@@ -261,4 +285,3 @@ class BlockStateFile:
                 data += model.add_to_batch(block, batch)
 
         return data
-
