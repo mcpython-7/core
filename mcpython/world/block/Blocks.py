@@ -20,3 +20,12 @@ DIAMOND_BLOCK = BLOCK_REGISTRY.register_lazy(
 ANCIENT_DEBRIS = BLOCK_REGISTRY.register_lazy(
     "minecraft:ancient_debris", lambda: Block().register_block_item()
 )
+ACACIA_SAPLING = BLOCK_REGISTRY.register_lazy(
+    "minecraft:acacia_sapling", lambda: Block().register_block_item()
+)
+ACACIA_LEAVES = BLOCK_REGISTRY.register_lazy(
+    "minecraft:acacia_leaves", lambda: Block().register_block_item()
+)
+BEACON = BLOCK_REGISTRY.register_lazy(
+    "minecraft:beacon", lambda: Block().register_block_item()
+)

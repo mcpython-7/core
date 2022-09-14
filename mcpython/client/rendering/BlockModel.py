@@ -1,4 +1,5 @@
 import random
+import traceback
 import typing
 from abc import ABC
 
@@ -87,13 +88,15 @@ class BlockModel:
         try:
             for cube in self.cubes:
                 cube.texture_paths = [
-                    "assets/{}/textures/{}.png".format(*self.lookup_texture(t).split(":"))
+                    "assets/{}/textures/{}.png".format(*self.lookup_texture(t).split(":")) if t is not None else "MISSING_TEXTURE"
                     for t in cube.raw_textures
                 ]
                 await cube.setup()
 
             self.can_be_rendered = True
         except ValueError:
+            # print(cube, self.name, cube.raw_textures, self.textures)
+            # traceback.print_exc()
             self.can_be_rendered = False
 
             for cube in self.cubes:
@@ -128,6 +131,9 @@ class BlockModel:
 
         if "#" + texture in self.textures:
             return self.lookup_texture(self.textures[texture])
+
+        if texture.startswith("block/"):
+            return "minecraft:"+texture
 
         raise ValueError(texture)
 

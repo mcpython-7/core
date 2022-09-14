@@ -20,3 +20,4 @@ B   [uuk]: fixed some issues around block rendering; now using no longer .obj fi
     [uuk]: added DIRT and DIAMOND block
     [uuk]: added model based block rendering
     [uuk]: added ANCIENT_DEBRIS block
+    [uuk]: added ACACIA_SAPLING, ACACIA_LEAVES and BEACON blocks (all not rendering correctly)

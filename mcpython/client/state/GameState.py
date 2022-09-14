@@ -40,6 +40,9 @@ class GameState(AbstractState):
         await dimension.set_block(0, 0, 1, "minecraft:coarse_dirt")
         await dimension.set_block(0, 0, -1, "minecraft:diamond_block")
         await dimension.set_block(1, 0, 1, "minecraft:ancient_debris")
+        await dimension.set_block(-1, 0, -1, "minecraft:acacia_sapling")
+        await dimension.set_block(-1, 0, 1, "minecraft:acacia_leaves")
+        await dimension.set_block(1, 0, -1, "minecraft:beacon")
 
     async def on_draw(self, dt: float):
         WINDOW.set_3d_world_view()
