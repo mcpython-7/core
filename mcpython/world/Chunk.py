@@ -79,7 +79,14 @@ class Section(AbstractSection):
 
         cx, cy, cz = (await self.get_range())[0]
 
-        return self.blocks[(x - cx) + (y - cy) * 16 + (z - cz) * 256]
+        x -= cx
+        y -= cy
+        z -= cz
+
+        if x < 0 or x > 15 or y < 0 or y > 15 or z < 0 or z > 15:
+            raise ValueError((x+cx, y+cy, z+cz), (x, y, z), (cx, cy, cz), await (await self.get_chunk()).get_position(), self.y, (x < 0 or x > 15, y < 0 or y > 15, z < 0 or z > 15))
+
+        return self.blocks[x + y * 16 + z * 256]
 
     async def get_block_relative(
         self, dx: typing.Tuple[int, int, int] | int, dy: int = None, dz: int = None

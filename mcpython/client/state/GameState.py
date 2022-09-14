@@ -34,11 +34,11 @@ class GameState(AbstractState):
         self.window_handler.subscribe("on_tick", self.on_tick)
 
         dimension = await WORLD.get_dimension("minecraft:overworld")
-        await dimension.create_chunk(0, 0)
-        await dimension.create_chunk(-1, 0)
         await dimension.set_block(-1, 0, 0, "minecraft:cobblestone")
         await dimension.set_block(0, 0, 0, "minecraft:stone")
         await dimension.set_block(1, 0, 0, "minecraft:dirt")
+        await dimension.set_block(0, 0, 1, "minecraft:coarse_dirt")
+        await dimension.set_block(0, 0, -1, "minecraft:diamond_block")
 
     async def on_draw(self, dt: float):
         WINDOW.set_3d_world_view()

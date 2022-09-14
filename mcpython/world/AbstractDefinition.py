@@ -78,7 +78,7 @@ class AbstractDimension(ABC):
         raise NotImplementedError
 
     async def get_chunk(
-        self, cx: typing.Tuple[int, int] | int, cz: int = None
+        self, cx: typing.Tuple[int, int] | int, cz: int = None, create=False
     ) -> "AbstractChunk":
         raise NotImplementedError
 
@@ -101,11 +101,12 @@ class AbstractDimension(ABC):
         x: typing.Tuple[int, int] | typing.Tuple[int, int, int] | int,
         y: int = None,
         z: int = None,
+        create=False,
     ):
         if isinstance(x, tuple):
-            return await self.get_chunk(x[0] // 16, x[-1] // 16)
+            return await self.get_chunk(x[0] // 16, x[-1] // 16, create=create)
 
-        return await self.get_chunk(x // 16, (z or y) // 16)
+        return await self.get_chunk(x // 16, (z or y) // 16, create=create)
 
     async def get_section_of_chunk(
         self, cx: typing.Tuple[int, int, int] | int, cy: int = None, cz: int = None
@@ -138,8 +139,9 @@ class AbstractDimension(ABC):
         force=False,
         player=None,
         block_update=True,
+        create_chunk=True,
     ):
-        await (await self.get_chunk_for_position(x, y, z)).set_block(
+        await (await self.get_chunk_for_position(x, y, z, create=create_chunk)).set_block(
             x,
             y,
             z,
@@ -222,11 +224,11 @@ class AbstractChunk(ABC):
         z: int = None,
     ):
         if isinstance(x, tuple):
-            return await self.get_section(x[1])
+            return await self.get_section(x[1] // 16)
         elif y is None:
-            return await self.get_section(x)
+            return await self.get_section(x // 16)
 
-        return await self.get_section(y)
+        return await self.get_section(y // 16)
 
     async def get_block(
         self, x: typing.Tuple[int, int, int] | int, y: int = None, z: int = None

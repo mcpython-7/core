@@ -8,6 +8,12 @@ STONE = BLOCK_REGISTRY.register_lazy(
 DIRT = BLOCK_REGISTRY.register_lazy(
     "minecraft:dirt", lambda: Block().register_block_item()
 )
+COARSE_DIRT = BLOCK_REGISTRY.register_lazy(
+    "minecraft:coarse_dirt", lambda: Block().register_block_item()
+)
 COBBLESTONE = BLOCK_REGISTRY.register_lazy(
     "minecraft:cobblestone", lambda: Block().register_block_item()
+)
+DIAMOND_BLOCK = BLOCK_REGISTRY.register_lazy(
+    "minecraft:diamond_block", lambda: Block().register_block_item()
 )

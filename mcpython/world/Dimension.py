@@ -24,12 +24,14 @@ class Dimension(AbstractDimension):
         return self.world
 
     async def get_chunk(
-        self, cx: typing.Tuple[int, int] | int, cz: int = None
+        self, cx: typing.Tuple[int, int] | int, cz: int = None, create=False
     ) -> Chunk:
         pos = (cx, cz) if cz is not None else cz
 
         if pos not in self.arrival_chunks:
-            raise ChunkDoesNotExistException(pos)
+            if not create:
+                raise ChunkDoesNotExistException(pos)
+            return await self.create_chunk(*pos)
 
         if pos not in self.chunks:
             await self.load_chunk_from_saves(pos)
