@@ -40,13 +40,15 @@ class BlockModel:
             # todo: parse rotation & shade
 
             for key, face in element["faces"].items():
-                # uv = face["uv"]  # todo: use
+                index = RENDERING_ORDER.index(key)
+
                 texture = face["texture"]
                 # todo: parse cull-face
                 # rotation = face["rotation"]  # todo: use by rotating some vertex data / uv data
                 # todo: parse tint index
 
-                cube.raw_textures[RENDERING_ORDER.index(key)] = texture
+                cube.raw_textures[index] = texture
+                cube.uvs[index] = tuple(face["uv"]) if "uv" in face else (0, 0, 1, 1)
 
             instance.cubes.append(cube)
 

@@ -49,7 +49,8 @@ class TextureInfo:
 
         raise ValueError("No space found!")
 
-    def prepare_tex_coords(self, coords: typing.List[int], part: int):
+    def prepare_tex_coords(self, coords: typing.List[int], part: int, uv=(0, 0, 1, 1)):
+        # todo: use uv
         step = 1 / self.atlas.size[0], 1 / self.atlas.size[1]
 
         for i, e in enumerate(coords[part * 12 : part * 12 + 12]):

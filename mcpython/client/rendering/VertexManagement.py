@@ -55,6 +55,7 @@ class CubeVertexCreator:
         self.offset = Vec3(*offset)
         self.texture_paths = textures
         self.texture_infos: typing.List[TextureInfo] = []
+        self.uvs: typing.List[typing.Tuple[float, float, float, float]] = [(0, 0, 1, 1)] * 6
 
         self.texture: Texture = None
         self.texture_group: TexturedMaterialGroup = None
@@ -90,7 +91,7 @@ class CubeVertexCreator:
         self.tex_coords = CUBE_TEX_COORDS.copy()
 
         for i, texture in enumerate(self.texture_infos):
-            texture.prepare_tex_coords(self.tex_coords, i)
+            texture.prepare_tex_coords(self.tex_coords, i, self.uvs[i])
 
     def add_to_batch(
         self,
