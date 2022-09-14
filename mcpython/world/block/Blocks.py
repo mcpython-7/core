@@ -17,3 +17,6 @@ COBBLESTONE = BLOCK_REGISTRY.register_lazy(
 DIAMOND_BLOCK = BLOCK_REGISTRY.register_lazy(
     "minecraft:diamond_block", lambda: Block().register_block_item()
 )
+ANCIENT_DEBRIS = BLOCK_REGISTRY.register_lazy(
+    "minecraft:ancient_debris", lambda: Block().register_block_item()
+)
