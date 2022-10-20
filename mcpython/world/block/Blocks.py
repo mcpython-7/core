@@ -13,4 +13,5 @@ ACACIA_SAPLING = BLOCK_REGISTRY.register_lazy("minecraft:acacia_sapling", lambda
 ACACIA_LEAVES = BLOCK_REGISTRY.register_lazy("minecraft:acacia_leaves", lambda: Block().register_block_item())
 BEACON = BLOCK_REGISTRY.register_lazy("minecraft:beacon", lambda: Block().register_block_item())
 GRASS_BLOCK = BLOCK_REGISTRY.register_lazy("minecraft:grass_block", lambda: SingleBlockStateBlock({"snowy": "false"}).register_block_item())
+OAK_SLAB = BLOCK_REGISTRY.register_lazy("minecraft:oak_slab", lambda: SingleBlockStateBlock({"type": "bottom"}).register_block_item())
 # fmt: on
