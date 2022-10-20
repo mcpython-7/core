@@ -11,7 +11,7 @@ from mcpython.world.block.BlockState import BlockState
 async def cast_into_world(dimension: AbstractDimension, position: typing.Tuple[float, float, float], direction: typing.Tuple[float, float, float], source=None) -> typing.Tuple[BlockState, typing.Tuple[float, float, float]] | None:
     position = Vec3(*position)
 
-    step = Vec3(*direction).normalize().scale(.3)
+    step = Vec3(*direction).normalize() * .3
 
     previous_other = normalize(*position), normalize(*position)
 

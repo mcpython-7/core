@@ -103,8 +103,8 @@ class CubeVertexCreator:
     ):
         count = len(CUBE_VERTEX_DEF)
 
-        pos = Vec3(*position) + self.offset.scale(scale)
-        delta = self.size.scale(scale / 2)
+        pos = Vec3(*position) + self.offset * scale
+        delta = self.size * (scale / 2)
 
         vertices = [pos + _inner_product(delta, e) for e in CUBE_VERTEX_DEF]
 
