@@ -34,7 +34,7 @@ class BlockState:
         self.nbt: typing.Dict[str, object] = {}
 
     def __repr__(self):
-        return f"BlockState(\"{self.block_type.NAME}\"{self.world_position}, nbt={self.nbt}, state={self.block_state})"
+        return f'BlockState("{self.block_type.NAME}"{self.world_position}, nbt={self.nbt}, state={self.block_state})'
 
     def with_state(self, state):
         self.block_state = state
@@ -94,7 +94,9 @@ class BlockState:
             self, player, hand, button, modifiers, itemstack
         )
 
-    async def check_collision(self, position: typing.Tuple[float, float, float], source: object = None) -> bool:
+    async def check_collision(
+        self, position: typing.Tuple[float, float, float], source: object = None
+    ) -> bool:
         return await self.block_type.check_collision(self, position, source)
 
 

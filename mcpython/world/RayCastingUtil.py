@@ -8,10 +8,15 @@ from mcpython.world.AbstractDefinition import ChunkDoesNotExistException
 from mcpython.world.block.BlockState import BlockState
 
 
-async def cast_into_world(dimension: AbstractDimension, position: typing.Tuple[float, float, float], direction: typing.Tuple[float, float, float], source=None) -> typing.Tuple[BlockState, typing.Tuple[float, float, float]] | None:
+async def cast_into_world(
+    dimension: AbstractDimension,
+    position: typing.Tuple[float, float, float],
+    direction: typing.Tuple[float, float, float],
+    source=None,
+) -> typing.Tuple[BlockState, typing.Tuple[float, float, float]] | None:
     position = Vec3(*position)
 
-    step = Vec3(*direction).normalize() * .3
+    step = Vec3(*direction).normalize() * 0.3
 
     previous_other = normalize(*position), normalize(*position)
 
@@ -39,4 +44,3 @@ async def cast_into_world(dimension: AbstractDimension, position: typing.Tuple[f
 
         if norm != previous_other[1]:
             previous_other = previous_other[1], norm
-

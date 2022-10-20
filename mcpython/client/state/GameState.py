@@ -141,11 +141,15 @@ class GameState(AbstractState):
 
     async def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
         vector = WINDOW.get_sight_vector()
-        dimension = await WORLD.get_dimension("minecraft:overworld")  # todo: make based on current player dim
+        dimension = await WORLD.get_dimension(
+            "minecraft:overworld"
+        )  # todo: make based on current player dim
 
         if button == mouse.RIGHT:
             # todo: add player as source
-            result = await cast_into_world(dimension, WORLD.current_render_position, vector)
+            result = await cast_into_world(
+                dimension, WORLD.current_render_position, vector
+            )
 
             if result is None:
                 print("no target!")
@@ -154,7 +158,9 @@ class GameState(AbstractState):
             blockstate, previous = result
 
             # todo: fill with data
-            if not blockstate.on_player_interaction(None, None, button, modifiers, None):
+            if not blockstate.on_player_interaction(
+                None, None, button, modifiers, None
+            ):
                 await dimension.set_block(*previous, "minecraft:stone")
             else:
                 print("handled!")

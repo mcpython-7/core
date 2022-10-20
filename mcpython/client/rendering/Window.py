@@ -216,7 +216,7 @@ class GameWindow(pyglet.window.Window):
             Mat4.from_translation(Vec3(*position))
             @ Mat4.from_rotation(rotation[0], Vec3(0, 1, 0))
             @ Mat4.from_rotation(
-                - rotation[1],
+                -rotation[1],
                 Vec3(
                     math.cos(math.radians(rotation[0])),
                     0,

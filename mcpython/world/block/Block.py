@@ -106,5 +106,10 @@ class Block(IRegistryEntry):
         """
         return False
 
-    async def check_collision(self, blockstate, position: typing.Tuple[float, float, float], source: object = None) -> bool:
+    async def check_collision(
+        self,
+        blockstate,
+        position: typing.Tuple[float, float, float],
+        source: object = None,
+    ) -> bool:
         return normalize(*position) == blockstate.world_position
