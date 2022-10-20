@@ -1,6 +1,7 @@
 import typing
 
 from mcpython.backend.Registry import IRegistryEntry, RegistryObject
+from mcpython.util.math import normalize
 
 
 class BlockUtil:
@@ -104,3 +105,6 @@ class Block(IRegistryEntry):
         :return: True if the event is handled, False otherwise
         """
         return False
+
+    async def check_collision(self, blockstate, position: typing.Tuple[float, float, float], source: object = None) -> bool:
+        return normalize(*position) == blockstate.world_position

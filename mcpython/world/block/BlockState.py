@@ -33,6 +33,9 @@ class BlockState:
         self.__blockstate_ref_cache = None
         self.nbt: typing.Dict[str, object] = {}
 
+    def __repr__(self):
+        return f"BlockState(\"{self.block_type.NAME}\"{self.world_position}, nbt={self.nbt}, state={self.block_state})"
+
     def with_state(self, state):
         self.block_state = state
 
@@ -85,11 +88,14 @@ class BlockState:
         await self.block_type.on_random_update()
 
     async def on_player_interaction(
-        self, blockstate, player, hand, button: int, modifiers: int, itemstack
+        self, player, hand, button: int, modifiers: int, itemstack
     ) -> bool:
         return await self.block_type.on_player_interaction(
-            blockstate, player, hand, button, modifiers, itemstack
+            self, player, hand, button, modifiers, itemstack
         )
+
+    async def check_collision(self, position: typing.Tuple[float, float, float], source: object = None) -> bool:
+        return await self.block_type.check_collision(self, position, source)
 
 
 Block.BLOCKSTATE_CLASS = BlockState

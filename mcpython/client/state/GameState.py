@@ -2,11 +2,13 @@ import math
 
 import pyglet
 from pyglet.window import key
+from pyglet.window import mouse
 
 from mcpython.client.state.AbstractState import AbstractState
 from mcpython.client.rendering.Window import WINDOW
 from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
 from mcpython.world.block.BlockState import BlockState
+from mcpython.world.RayCastingUtil import cast_into_world
 from mcpython.world.World import WORLD
 
 
@@ -34,6 +36,7 @@ class GameState(AbstractState):
     async def setup(self):
         self.window_handler.subscribe("on_draw", self.on_draw)
         self.window_handler.subscribe("on_tick", self.on_tick)
+        self.window_handler.subscribe("on_mouse_press", self.on_mouse_press)
 
         dimension = await WORLD.get_dimension("minecraft:overworld")
 
@@ -135,3 +138,23 @@ class GameState(AbstractState):
         WORLD.current_render_rotation[1] = max(
             min(WORLD.current_render_rotation[1], math.pi * 3 / 2), math.pi / 2
         )
+
+    async def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
+        vector = WINDOW.get_sight_vector()
+        dimension = await WORLD.get_dimension("minecraft:overworld")  # todo: make based on current player dim
+
+        if button == mouse.RIGHT:
+            # todo: add player as source
+            result = await cast_into_world(dimension, WORLD.current_render_position, vector)
+
+            if result is None:
+                print("no target!")
+                return
+
+            blockstate, previous = result
+
+            # todo: fill with data
+            if not blockstate.on_player_interaction(None, None, button, modifiers, None):
+                await dimension.set_block(*previous, "minecraft:stone")
+            else:
+                print("handled!")
