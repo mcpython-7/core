@@ -150,7 +150,7 @@ class BlockModel:
 class BlockStateFile:
     class ModelLink:
         @classmethod
-        async def from_data(cls, data: dict | list):
+        async def from_data(cls, data: dict | list) -> "BlockStateFile.ModelLink":
             model_names = []
 
             if isinstance(data, dict):
@@ -207,19 +207,24 @@ class BlockStateFile:
     class MultipartCondition:
         @classmethod
         async def from_data(cls, data: dict):
-            instance = cls()
+            instance = cls(BlockStateFile.ModelLink.from_data(data), when=data.setdefault("when", None))
             return instance
+
+        def __init__(self, model: "BlockStateFile.ModelLink", when: dict = None):
+            self.model = model
+            self.when = when
 
         async def add_to_batch(
             self, block: BlockState, batch: pyglet.graphics.Batch
         ) -> list:
-            return []
+            return await self.model.add_to_batch(block, batch)
 
         async def bake(self):
-            pass
+            await self.model.bake()
 
         def check_match(self, block: BlockState) -> bool:
-            return False
+            state = block.block_state
+            return self.when is None or all(key in state and state[key] == value for key, value in self.when.items())
 
     @classmethod
     async def from_data(cls, name: str, data: dict):
@@ -282,6 +287,6 @@ class BlockStateFile:
 
         for condition, model in self.multipart_items:
             if condition.check_match(block):
-                data += model.add_to_batch(block, batch)
+                data += await model.add_to_batch(block, batch)
 
         return data
