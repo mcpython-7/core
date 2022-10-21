@@ -21,8 +21,11 @@ local = os.path.dirname(__file__)
 with open(local + "/vertices.json") as f:
     CUBE_VERTEX_DEF = json.load(f)
     CUBE_VERTEX_DEF = [
-        Vec3(*CUBE_VERTEX_DEF[3 * i : 3 * i + 3])
-        for i in range(len(CUBE_VERTEX_DEF) // 3)
+        [
+            Vec3(*part[3 * i : 3 * i + 3])
+            for i in range(len(part) // 3)
+        ]
+        for part in CUBE_VERTEX_DEF
     ]
 
 
@@ -103,12 +106,12 @@ class CubeVertexCreator:
         batch: pyglet.graphics.Batch,
         scale=1.0,
     ):
-        count = len(CUBE_VERTEX_DEF)
+        enabled = (True,) * 6
+        count = len(CUBE_VERTEX_DEF[0]) * enabled.count(True)
 
         pos = Vec3(*position) + self.offset * scale
         delta = self.size * (scale / 2)
-
-        vertices = [pos + _inner_product(delta, e) for e in CUBE_VERTEX_DEF]
+        vertices = sum(([pos + _inner_product(delta, e) for e in part] for i, part in enumerate(CUBE_VERTEX_DEF) if enabled[i]), [])
 
         return self.texture_group.program.vertex_list(
             count,

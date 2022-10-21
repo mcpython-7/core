@@ -30,3 +30,4 @@ B   [uuk]: fixed non-full blocks rendering at wrong position
 B   [uuk]: fixed rendering order of faces
 B   [uuk]: fixed uv's not being copied to child models
     [uuk]: implemented correct uv rendering when "uv" is passed
+    [uuk]: refactored vertices.json
