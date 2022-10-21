@@ -27,3 +27,6 @@ B   [uuk]: fixed some issues around block rendering; now using no longer .obj fi
 B   [uuk]: fixed non-full blocks rendering at wrong position
     [uuk]: added oak slab as test block
     [uuk]: added oak stairs as a test block
+B   [uuk]: fixed rendering order of faces
+B   [uuk]: fixed uv's not being copied to child models
+    [uuk]: implemented correct uv rendering when "uv" is passed

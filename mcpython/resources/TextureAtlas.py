@@ -13,6 +13,14 @@ MISSING_TEXTURE = PIL.Image.new("RGBA", (16, 16), (255, 0, 0, 255))
 local = os.path.dirname(os.path.dirname(sys.argv[0]))
 
 
+# fmt: off
+UV_PART_ORDER = [
+    (1, 0), (1, 1), (0, 1),
+    (1, 0), (0, 1), (0, 0),
+]
+# fmt: on
+
+
 class TextureInfo:
     def __init__(self, atlas: "TextureAtlas", name: str, texture: PIL.Image.Image):
         self.atlas = atlas
@@ -48,13 +56,29 @@ class TextureInfo:
                         return x, y
 
     def prepare_tex_coords(self, coords: typing.List[int], part: int, uv=(0, 0, 1, 1)):
-        # todo: use uv
         step = 1 / self.atlas.size[0], 1 / self.atlas.size[1]
 
-        for i, e in enumerate(coords[part * 12 : part * 12 + 12]):
+        coord_section = coords[part * 12 : part * 12 + 12]
+
+        for i, e in enumerate(coord_section):
+            # What x/y offset on the texture is used?
             pos = self.real_location[i % 2]
 
-            coords[part * 12 + i] = (pos + e) * step[i % 2]
+            # Look up on what part of the face we are, either lower side (0) or upper side (1)
+            uv_entry = UV_PART_ORDER[i // 2][i % 2]
+
+            # Look up the uv coord based on the side and x or y
+            uv_part = uv[uv_entry * 2 + (i % 2)]
+
+            # What offset this corresponds to, - uv_entry such that a uv of 1 at upper side corresponds to an offset of 0
+            offset = (uv_part - uv_entry)
+
+            # Don't really know why this invert is needed, but seems like UV_PART_ORDER is slightly wrong in some cases
+            if (e == 0 and offset < 0) or (e == 1 and offset > 0):
+                offset = -offset
+
+            # Now insert the new uv into the array, by using the texture position, the texture coord info, and the offset by the uv multiplied by the inverse of the texture atlas size
+            coords[part * 12 + i] = (pos + e + offset) * step[i % 2]
 
 
 class TextureAtlas:

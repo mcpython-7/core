@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import typing
@@ -66,7 +67,8 @@ class CubeVertexCreator:
         self._had_setup = False
 
     async def copy(self, textures: typing.Iterable[str] = None):
-        instance = type(self)(self.size, self.offset, textures or self.texture_paths)
+        instance = type(self)(self.size, self.offset, tuple(textures) if textures else copy.deepcopy(self.texture_paths))
+        instance.uvs = self.uvs.copy()
         await instance.setup()
         return instance
 
@@ -93,7 +95,7 @@ class CubeVertexCreator:
         self.tex_coords = CUBE_TEX_COORDS.copy()
 
         for i, texture in enumerate(self.texture_infos):
-            texture.prepare_tex_coords(self.tex_coords, i, self.uvs[i])
+            texture.prepare_tex_coords(self.tex_coords, i, uv=self.uvs[i])
 
     def add_to_batch(
         self,

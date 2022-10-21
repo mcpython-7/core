@@ -52,7 +52,7 @@ class BlockModel:
                 # todo: parse tint index
 
                 cube.raw_textures[index] = texture
-                cube.uvs[index] = tuple(face["uv"]) if "uv" in face else (0, 0, 1, 1)
+                cube.uvs[index] = tuple(e / 16 for e in face["uv"]) if "uv" in face else (0, 0, 1, 1)
 
             instance.cubes.append(cube)
 
