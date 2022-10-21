@@ -25,3 +25,4 @@ B   [uuk]: fixed some issues around block rendering; now using no longer .obj fi
     [uuk]: implemented basic block state rendering
     [uuk]: added GRASS_BLOCK block (not rendering correctly)
 B   [uuk]: fixed non-full blocks rendering at wrong position
+    [uuk]: added oak slab as test block
