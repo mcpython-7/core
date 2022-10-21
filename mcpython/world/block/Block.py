@@ -19,7 +19,7 @@ class Block(IRegistryEntry):
     def __init__(self):
         pass
 
-    def get_all_valid_block_states(self) -> typing.List[dict]:
+    def get_all_valid_block_states(self) -> typing.List[dict | str]:
         return [{}]
 
     async def on_register(self):

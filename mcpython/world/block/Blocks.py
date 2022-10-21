@@ -2,6 +2,7 @@ from mcpython.world.block.Block import Block
 from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
 from mcpython.world.block.SingleBlockStateBlock import SingleBlockStateBlock
 from mcpython.world.block.SlabBlock import SlabBlock
+from mcpython.world.block.StairsBlocks import StairsBlock
 
 # fmt: off
 STONE = BLOCK_REGISTRY.register_lazy("minecraft:stone", lambda: Block().register_block_item())
@@ -15,4 +16,5 @@ ACACIA_LEAVES = BLOCK_REGISTRY.register_lazy("minecraft:acacia_leaves", lambda: 
 BEACON = BLOCK_REGISTRY.register_lazy("minecraft:beacon", lambda: Block().register_block_item())
 GRASS_BLOCK = BLOCK_REGISTRY.register_lazy("minecraft:grass_block", lambda: SingleBlockStateBlock({"snowy": "false"}).register_block_item())
 OAK_SLAB = BLOCK_REGISTRY.register_lazy("minecraft:oak_slab", lambda: SlabBlock().register_block_item())
+OAK_STAIRS = BLOCK_REGISTRY.register_lazy("minecraft:oak_stairs", lambda: StairsBlock().register_block_item())
 # fmt: on
