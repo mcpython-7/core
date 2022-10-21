@@ -1,6 +1,7 @@
 #version 330 core
 in vec3 vertices;
 in vec2 uvCoord;
+in vec3 position;
 
 out vec2 uvCoords;
 out vec3 vertex_position;

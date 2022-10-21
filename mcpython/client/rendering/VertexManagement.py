@@ -1,5 +1,6 @@
 import copy
 import json
+import math
 import os
 import typing
 
@@ -35,6 +36,16 @@ with open(local + "/tex_coords.json") as f:
 
 def _inner_product(a: Vec3, b: Vec3):
     return Vec3(a.x * b.x, a.y * b.y, a.z * b.z)
+
+
+def _rotate_point(point: Vec3, rotation: Vec3, center=Vec3(0, 0, 0)):
+    point -= center
+
+    return Vec3(
+        point[0] * math.cos(rotation[1]) - point[2] * math.sin(rotation[1]),
+        point[1],
+        point[2] * math.cos(rotation[1]) + point[0] * math.sin(rotation[1]),
+    ) + center
 
 
 class CubeVertexCreator:
@@ -105,13 +116,17 @@ class CubeVertexCreator:
         position: typing.Tuple[float, float, float],
         batch: pyglet.graphics.Batch,
         scale=1.0,
+        rotation=(0, 0, 0),
+        center=Vec3(0, 0, 0),
     ):
         enabled = (True,) * 6
         count = len(CUBE_VERTEX_DEF[0]) * enabled.count(True)
 
-        pos = Vec3(*position) + self.offset * scale
+        rotation = Vec3(*rotation)
+
+        pos = Vec3(*position)
         delta = self.size * (scale / 2)
-        vertices = sum(([pos + _inner_product(delta, e) for e in part] for i, part in enumerate(CUBE_VERTEX_DEF) if enabled[i]), [])
+        vertices = sum(([pos + _rotate_point(_inner_product(delta, e) + self.offset, rotation, center=center) for e in part] for i, part in enumerate(CUBE_VERTEX_DEF) if enabled[i]), [])
 
         return self.texture_group.program.vertex_list(
             count,

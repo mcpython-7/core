@@ -10,8 +10,8 @@ local = os.path.dirname(__file__)
 
 
 class TexturedMaterialGroup(BaseMaterialGroup):
-    default_vert_src = open(local + "/cube_vertex_shader.glsl").read()
-    default_frag_src = open(local + "/cube_fragment_shader.glsl").read()
+    default_vert_src = open(local + "/cube_vertex_shader.vsh").read()
+    default_frag_src = open(local + "/cube_fragment_shader.fsh").read()
 
     PROGRAM = ShaderProgram(
         Shader(default_vert_src, "vertex"), Shader(default_frag_src, "fragment")
