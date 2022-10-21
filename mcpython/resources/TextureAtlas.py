@@ -55,10 +55,10 @@ class TextureInfo:
                         self.real_location = x, y
                         return x, y
 
-    def prepare_tex_coords(self, coords: typing.List[int], part: int, uv=(0, 0, 1, 1)):
+    def prepare_tex_coords(self, coords: typing.List[typing.List[int]], part: int, uv=(0, 0, 1, 1)):
         step = 1 / self.atlas.size[0], 1 / self.atlas.size[1]
 
-        coord_section = coords[part * 12 : part * 12 + 12]
+        coord_section = coords[part]
 
         for i, e in enumerate(coord_section):
             # What x/y offset on the texture is used?
@@ -78,7 +78,7 @@ class TextureInfo:
                 offset = -offset
 
             # Now insert the new uv into the array, by using the texture position, the texture coord info, and the offset by the uv multiplied by the inverse of the texture atlas size
-            coords[part * 12 + i] = (pos + e + offset) * step[i % 2]
+            coord_section[i] = (pos + e + offset) * step[i % 2]
 
 
 class TextureAtlas:

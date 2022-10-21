@@ -95,7 +95,7 @@ class CubeVertexCreator:
         self.texture_group = TexturedMaterialGroup(
             self.MATERIAL, self.texture, parent=None
         )
-        self.tex_coords = CUBE_TEX_COORDS.copy()
+        self.tex_coords = copy.deepcopy(CUBE_TEX_COORDS)
 
         for i, texture in enumerate(self.texture_infos):
             texture.prepare_tex_coords(self.tex_coords, i, uv=self.uvs[i])
@@ -119,5 +119,5 @@ class CubeVertexCreator:
             batch,
             self.texture_group,
             vertices=("f", sum(map(tuple, vertices), tuple())),
-            uvCoord=("f", self.tex_coords),
+            uvCoord=("f", sum((e for i, e in enumerate(self.tex_coords) if enabled[i]), [])),
         )
