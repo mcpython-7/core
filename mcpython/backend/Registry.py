@@ -1,3 +1,4 @@
+import functools
 import typing
 from abc import ABC
 
@@ -5,6 +6,7 @@ from abc import ABC
 class IRegistryEntry(ABC):
     NAME: str = None
     REGISTRY: typing.Union[str, "Registry"] = None
+    IS_ENABLED = True
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -113,14 +115,20 @@ class Registry:
 
         self._lazy_inits.clear()
 
-    def lookup(self, obj: str | IRegistryEntry | RegistryObject) -> IRegistryEntry:
+    def lookup(self, obj: str | IRegistryEntry | RegistryObject, include_hidden=False) -> IRegistryEntry:
         if isinstance(obj, IRegistryEntry):
             return obj
         elif isinstance(obj, str):
             if obj in self._entries:
                 return self._entries[obj]
             elif obj in self._entries_without_namespace:
-                return self._entries_without_namespace[obj][-1]
+                if include_hidden:
+                    return self._entries_without_namespace[obj][-1]
+
+                for obj in reversed(self._entries_without_namespace[obj]):
+                    if obj.IS_ENABLED:
+                        return obj
+
             raise ValueError(obj)
 
         elif isinstance(obj, RegistryObject):
@@ -128,13 +136,16 @@ class Registry:
 
         raise ValueError(obj)
 
-    def lookup_optional(
+    def try_lookup(
         self, obj: str | IRegistryEntry | RegistryObject
     ) -> IRegistryEntry | None:
         try:
             return self.lookup(obj)
         except ValueError:
             pass
+
+    def lookup_lazy(self, obj: str | IRegistryEntry | RegistryObject, include_hidden=False) -> RegistryObject:
+        return RegistryObject(functools.partial(self.lookup, obj, include_hidden=include_hidden))
 
 
 REGISTRIES: typing.Dict[str, Registry] = {}
