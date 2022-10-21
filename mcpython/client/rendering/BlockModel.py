@@ -16,9 +16,9 @@ from mcpython.resources.ResourceManagement import MANAGER as RESOURCE_MANAGER
 RENDERING_ORDER = [
     "up",
     "down",
+    "east",
     "north",
     "south",
-    "east",
     "west",
 ]
 
