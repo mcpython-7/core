@@ -6,6 +6,8 @@ from PIL.PngImagePlugin import logger as _pil_logger
 
 local = os.path.dirname(os.path.dirname(__file__))
 
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 _async_log.logger.disabled = True
 _pil_logger.setLevel(logging.WARN)
 

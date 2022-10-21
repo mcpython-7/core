@@ -24,3 +24,4 @@ B   [uuk]: fixed some issues around block rendering; now using no longer .obj fi
     [uuk]: added debug world style world generation
     [uuk]: implemented basic block state rendering
     [uuk]: added GRASS_BLOCK block (not rendering correctly)
+B   [uuk]: fixed non-full blocks rendering at wrong position
