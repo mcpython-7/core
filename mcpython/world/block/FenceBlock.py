@@ -5,4 +5,4 @@ from mcpython.world.block.Block import Block
 
 class FenceBlock(Block):
     def get_all_valid_block_states(self) -> typing.List[dict]:
-        return [{"north": "true", "south": "true"}]
+        return [{"north": "true", "south": "false", "east": "true", "west": "false"}]

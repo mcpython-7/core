@@ -219,8 +219,8 @@ class BlockStateFile:
 
     class MultipartCondition:
         @classmethod
-        async def from_data(cls, data: dict):
-            instance = cls(BlockStateFile.ModelLink.from_data(data), when=data.setdefault("when", None))
+        async def from_data(cls, data: dict, when_data):
+            instance = cls(await BlockStateFile.ModelLink.from_data(data), when=when_data)
             return instance
 
         def __init__(self, model: "BlockStateFile.ModelLink", when: dict = None):
@@ -238,6 +238,9 @@ class BlockStateFile:
         def check_match(self, block: BlockState) -> bool:
             state = block.block_state
             return self.when is None or all(key in state and state[key] == value for key, value in self.when.items())
+
+        def get_model_names(self):
+            return self.model.get_model_names()
 
     @classmethod
     async def from_data(cls, name: str, data: dict):
@@ -259,12 +262,10 @@ class BlockStateFile:
         elif "multipart" in data:
             for entry in data["multipart"]:
                 instance.multipart_items.append(
-                    (
-                        await BlockStateFile.MultipartCondition.from_data(
-                            entry.setdefault("when", {})
-                        ),
-                        await BlockStateFile.ModelLink.from_data(entry["apply"]),
-                    )
+                    await BlockStateFile.MultipartCondition.from_data(
+                        entry["apply"],
+                        entry.setdefault("when", None),
+                    ),
                 )
         else:
             raise ValueError
@@ -273,20 +274,18 @@ class BlockStateFile:
 
     def __init__(self):
         self.variants: typing.List[typing.Tuple[dict, BlockStateFile.ModelLink]] = []
-        self.multipart_items: typing.List[
-            typing.Tuple[BlockStateFile.MultipartCondition, BlockStateFile.ModelLink]
-        ] = []
+        self.multipart_items: typing.List[BlockStateFile.MultipartCondition] = []
 
     def get_required_models(self) -> typing.List[str]:
         return sum([e[1].get_model_names() for e in self.variants], []) + sum(
-            [e[1].get_model_names() for e in self.multipart_items], []
+            [e.get_model_names() for e in self.multipart_items], []
         )
 
     async def bake(self):
         for _, model in self.variants:
             await model.bake()
 
-        for _, model in self.multipart_items:
+        for model in self.multipart_items:
             await model.bake()
 
     async def add_to_batch(
@@ -298,8 +297,8 @@ class BlockStateFile:
 
         data = []
 
-        for condition, model in self.multipart_items:
-            if condition.check_match(block):
+        for model in self.multipart_items:
+            if model.check_match(block):
                 data += await model.add_to_batch(block, batch)
 
         return data
