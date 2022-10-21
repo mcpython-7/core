@@ -36,7 +36,7 @@ class BlockModel:
             end = element["to"]
 
             size = tuple(abs(a - b) / 16 for a, b in zip(start, end))
-            position = tuple(.5 - (a + b) / 32 for a, b in zip(start, end))
+            position = tuple(0.5 - (a + b) / 32 for a, b in zip(start, end))
 
             cube = CubeVertexCreator(size, position, ("MISSING_TEXTURE",) * 6)
             cube.raw_textures = [None] * 6

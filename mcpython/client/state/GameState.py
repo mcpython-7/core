@@ -44,7 +44,13 @@ class GameState(AbstractState):
         block_with_states = sum(
             [
                 [
-                    BlockState(block).with_state(state if isinstance(state, dict) else {e.split("=")[0]: e.split("=")[1] for e in state.split(",")})
+                    BlockState(block).with_state(
+                        state
+                        if isinstance(state, dict)
+                        else {
+                            e.split("=")[0]: e.split("=")[1] for e in state.split(",")
+                        }
+                    )
                     for state in block.get_all_valid_block_states()
                 ]
                 for block in blocks
