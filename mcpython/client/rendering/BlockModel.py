@@ -65,6 +65,8 @@ class BlockModel:
         self.textures: typing.Dict[str, str] = {}
         self.cubes: typing.List[CubeVertexCreator] = []
 
+        self.rotation = 0, 0, 0
+
         self.can_be_rendered = False
         self.baked = False
 
@@ -117,7 +119,7 @@ class BlockModel:
             cube.bake()
 
     async def add_to_batch(
-        self, block: BlockState, batch: pyglet.graphics.Batch
+        self, block: BlockState, batch: pyglet.graphics.Batch, rotation: typing.Tuple[float, float, float]
     ) -> list:
         if not self.can_be_rendered:
             raise RuntimeError(f"tried to render not render-able model {self.name}!")
@@ -125,7 +127,7 @@ class BlockModel:
         data = []
 
         for cube in self.cubes:
-            data.append(cube.add_to_batch(block.world_position, batch))
+            data.append(cube.add_to_batch(block.world_position, batch, rotation=tuple(a + b for a, b in zip(self.rotation, rotation))))
 
         return data
 
@@ -151,17 +153,28 @@ class BlockStateFile:
     class ModelLink:
         @classmethod
         async def from_data(cls, data: dict | list) -> "BlockStateFile.ModelLink":
-            model_names = []
-
             if isinstance(data, dict):
-                model_names.append(data["model"])
+                instance = cls(data["model"])
 
-            instance = cls(*model_names)
+                rot = [0, 0, 0]
+                if "x" in data:
+                    rot[0] = data["x"]
+                if "y" in data:
+                    rot[1] = data["y"]
+                if "z" in data:
+                    rot[2] = data["z"]
 
-            if isinstance(data, list):
+                instance.rotation = tuple(rot)
+
+            elif isinstance(data, list):
+                instance = cls()
+
                 instance.models += [
                     await BlockStateFile.ModelLink.from_data(e) for e in data
                 ]
+
+            else:
+                instance = cls()
 
             return instance
 
@@ -187,12 +200,12 @@ class BlockStateFile:
                     await model.bake()
 
         async def add_to_batch(
-            self, block: BlockState, batch: pyglet.graphics.Batch
+            self, block: BlockState, batch: pyglet.graphics.Batch, rotation=(0, 0, 0)
         ) -> list:
             if not self.models:
                 return []
 
-            return await random.choice(self.models).add_to_batch(block, batch)
+            return await random.choice(self.models).add_to_batch(block, batch, rotation=tuple(a + b for a, b in zip(self.rotation, rotation)))
 
         def get_model_names(self) -> typing.List[str]:
             return self.model_names + sum(
@@ -240,9 +253,9 @@ class BlockStateFile:
                 else:
                     key = {e.split("=")[0]: e.split("=")[1] for e in key.split(",")}
 
-                instance.variants.append(
-                    (key, await BlockStateFile.ModelLink.from_data(model))
-                )
+                link = await BlockStateFile.ModelLink.from_data(model)
+                instance.variants.append((key, link))
+
         elif "multipart" in data:
             for entry in data["multipart"]:
                 instance.multipart_items.append(

@@ -38,14 +38,32 @@ def _inner_product(a: Vec3, b: Vec3):
     return Vec3(a.x * b.x, a.y * b.y, a.z * b.z)
 
 
-def _rotate_point(point: Vec3, rotation: Vec3, center=Vec3(0, 0, 0)):
-    point -= center
-
+def _rotate_x(p: Vec3, rot: float) -> Vec3:
     return Vec3(
-        point[0] * math.cos(rotation[1]) - point[2] * math.sin(rotation[1]),
-        point[1],
-        point[2] * math.cos(rotation[1]) + point[0] * math.sin(rotation[1]),
-    ) + center
+        p[0],
+        p[1] * math.cos(rot) - p[2] * math.sin(rot),
+        p[2] * math.cos(rot) + p[1] * math.sin(rot),
+    )
+
+
+def _rotate_y(p: Vec3, rot: float) -> Vec3:
+    return Vec3(
+        p[0] * math.cos(rot) - p[2] * math.sin(rot),
+        p[1],
+        p[2] * math.cos(rot) + p[0] * math.sin(rot),
+    )
+
+
+def _rotate_z(p: Vec3, rot: float) -> Vec3:
+    return Vec3(
+        p[0],
+        p[1] * math.cos(rot) - p[2] * math.sin(rot),
+        p[2] * math.cos(rot) + p[1] * math.sin(rot),
+    )
+
+
+def _rotate_point(point: Vec3, rotation: Vec3, center=Vec3(0, 0, 0)):
+    return _rotate_x(_rotate_y(_rotate_z(point - center, rotation[2]), rotation[1]), rotation[0]) + center
 
 
 class CubeVertexCreator:
@@ -122,7 +140,7 @@ class CubeVertexCreator:
         enabled = (True,) * 6
         count = len(CUBE_VERTEX_DEF[0]) * enabled.count(True)
 
-        rotation = Vec3(*rotation)
+        rotation = Vec3(*map(math.radians, rotation))
 
         pos = Vec3(*position)
         delta = self.size * (scale / 2)
