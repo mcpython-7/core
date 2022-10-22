@@ -11,6 +11,10 @@ class Item(IRegistryEntry):
     def __init__(self):
         self.maximum_stack_size = 64
 
+    def get_itemstack_renderer(self, itemstack):
+        import mcpython.inventory.ItemstackRenderer
+        return mcpython.inventory.ItemstackRenderer.DefaultItemstackRenderer
+
     def set_maximum_stack_size(self, stack_size: int):
         self.maximum_stack_size = stack_size
         return self
@@ -75,8 +79,11 @@ class Item(IRegistryEntry):
     ) -> bool:
         return False
 
-    def on_item_count_changed(self, itemstack, previous: int, new: int):
+    async def on_item_count_changed(self, itemstack, previous: int, new: int):
         pass
 
-    def on_itemstack_copied(self, source_stack, target_stack):
+    async def on_itemstack_copied(self, source_stack, target_stack):
         pass
+
+    async def compare_itemstack_data(self, itemstack_1, itemstack_2):
+        return itemstack_1.item_type == itemstack_2.item_type and itemstack_1.nbt == itemstack_2.nbt

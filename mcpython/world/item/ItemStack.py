@@ -13,7 +13,7 @@ class ItemStack:
     Class representing a stack of an item
     """
 
-    __slots__ = ("item_type", "count", "nbt")
+    __slots__ = ("item_type", "count", "nbt", "hidden_nbt")
 
     @classmethod
     def create_empty(cls):
@@ -26,15 +26,25 @@ class ItemStack:
 
         self.nbt: typing.Dict[str, typing.Any] = {}
 
-    def set_count(
+        # nbt data not used for comparing ItemStack's
+        self.hidden_nbt: typing.Dict[str, typing.Any] = {}
+
+    async def compare_data(self, other: "ItemStack") -> bool:
+        if self.item_type is None and other.item_type is None:
+            return True
+
+        return await self.item_type.compare_itemstack_data(self, other)
+
+    async def set_count(
         self, count: int, validate=True, raise_exception=False, call_event=True
-    ):
+    ) -> "ItemStack":
         if count < 0:
             if raise_exception:
                 raise InvalidItemCount(
                     f"Stack size {count} is less than 0, which is invalid"
                 )
             count = 0
+
         elif (
             validate
             and self.item_type is not None
@@ -49,19 +59,21 @@ class ItemStack:
 
         if self.item_type is None:
             self.count = 0
-            return
+            return self
 
         if count == 0:
-            self.clear()
-            return
+            await self.clear()
+            return self
 
         previous = self.count
         self.count = count
 
         if call_event:
-            self.item_type.on_item_count_changed(self, previous, self.count)
+            await self.item_type.on_item_count_changed(self, previous, self.count)
 
-    def add_count(self, count: int, validate=True, call_event=True) -> int:
+        return self
+
+    async def add_count(self, count: int, validate=True, call_event=True) -> int:
         if self.item_type is None:
             return 0
 
@@ -75,7 +87,7 @@ class ItemStack:
             self.count = new_count
 
             if call_event:
-                self.item_type.on_item_count_changed(self, previous_count, new_count)
+                await self.item_type.on_item_count_changed(self, previous_count, new_count)
 
             return count
 
@@ -83,10 +95,10 @@ class ItemStack:
             self.count = self.item_type.get_maximum_stack_size()
             return new_count - self.count
 
-        self.set_count(new_count, False, False, call_event)
+        await self.set_count(new_count, False, False, call_event)
         return count
 
-    def remove_count(self, count: int, validate=True, call_event=True) -> int:
+    async def remove_count(self, count: int, validate=True, call_event=True) -> int:
         if self.item_type is None:
             return 0
 
@@ -100,44 +112,48 @@ class ItemStack:
             self.count = new_count
 
             if call_event:
-                self.item_type.on_item_count_changed(self, previous_count, new_count)
+                await self.item_type.on_item_count_changed(self, previous_count, new_count)
 
             return count
 
         if new_count < 0:
-            self.clear(call_event=call_event)
+            await self.clear(call_event=call_event)
             return count + new_count
 
-        self.set_count(new_count, False, False, call_event)
+        await self.set_count(new_count, False, False, call_event)
         return count
 
-    def clear(self, call_event=True):
+    async def clear(self, call_event=True):
         if self.item_type is None:
             self.count = 0
-            return
+            return self
 
         if not call_event:
             self.count = 0
             self.item_type = None
-            return
+            return self
 
         previous_count = self.count
         self.count = 0
         previous_item_type = self.item_type
         self.item_type = None
-        previous_item_type.on_item_count_changed(self, previous_count, 0)
         self.nbt.clear()
+        self.hidden_nbt.clear()
+
+        await previous_item_type.on_item_count_changed(self, previous_count, 0)
         return self
 
-    def copy(self) -> "ItemStack":
+    async def copy(self) -> "ItemStack":
         itemstack = ItemStack(self.item_type, self.count)
         itemstack.nbt = copy.deepcopy(self.nbt)
-        self.item_type.on_itemstack_copied(self, itemstack)
+        itemstack.hidden_nbt = copy.deepcopy(self.hidden_nbt)
+        await self.item_type.on_itemstack_copied(self, itemstack)
         return itemstack
 
-    def copy_from(self, itemstack: "ItemStack"):
+    async def copy_from(self, itemstack: "ItemStack"):
         self.item_type = itemstack.item_type
         self.count = itemstack.count
         self.nbt = copy.deepcopy(itemstack.nbt)
-        self.item_type.on_itemstack_copied(itemstack, self)
+        self.hidden_nbt = copy.deepcopy(itemstack.hidden_nbt)
+        await self.item_type.on_itemstack_copied(itemstack, self)
         return self
