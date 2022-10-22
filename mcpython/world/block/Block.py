@@ -17,13 +17,34 @@ class Block(IRegistryEntry):
     BLOCK_RENDERER = None
 
     def __init__(self):
-        pass
+        self.is_breakable = True
+        self.hardness = self.blast_resistance = 0
+        self.map_color = 0, 0, 0
+        self.fuel_points = 0
+        self.is_burnable = False
 
     def set_breakable(self, flag: bool):
+        self.is_breakable = flag
+        return self
+
+    def set_hardness(self, hardness: float, blast_resistance=None):
+        self.hardness, self.blast_resistance = hardness, blast_resistance or hardness
+        return self
+
+    def set_map_color(self, map_color: typing.Tuple[int, int, int]):
+        self.map_color = map_color
+        return self
+
+    def make_fuel(self, fuel_points: int):
+        self.fuel_points = fuel_points
+        return self
+
+    def make_burnable(self):
+        self.is_burnable = True
         return self
 
     def get_all_valid_block_states(self) -> typing.List[dict | str]:
-        return [{}]
+        return [""]
 
     async def on_register(self):
         from mcpython.client.rendering.BlockRendering import BlockRenderer, MANAGER
