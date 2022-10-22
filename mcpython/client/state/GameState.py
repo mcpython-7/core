@@ -40,7 +40,7 @@ class GameState(AbstractState):
 
         dimension = await WORLD.get_dimension("minecraft:overworld")
 
-        blocks = list(sorted(BLOCK_REGISTRY._entries.values(), key=lambda e: e.NAME))
+        blocks = list(sorted(BLOCK_REGISTRY._entries.values(), key=lambda e: e.NAME, reverse=True))
         block_with_states = sum(
             [
                 [

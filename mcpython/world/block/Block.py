@@ -19,6 +19,9 @@ class Block(IRegistryEntry):
     def __init__(self):
         pass
 
+    def set_breakable(self, flag: bool):
+        return self
+
     def get_all_valid_block_states(self) -> typing.List[dict | str]:
         return [{}]
 
