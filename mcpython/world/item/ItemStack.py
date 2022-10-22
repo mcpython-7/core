@@ -2,6 +2,7 @@ import copy
 import typing
 
 from mcpython.world.item.Item import Item
+from mcpython.world.item.ItemManager import ITEM_REGISTRY
 
 
 class InvalidItemCount(Exception):
@@ -19,10 +20,12 @@ class ItemStack:
     def create_empty(cls):
         return cls(None, 0)
 
-    def __init__(self, item_type: Item | None, count: int):
+    def __init__(self, item_type: Item | str | None, count: int = None):
+        if isinstance(item_type, str):
+            item_type = ITEM_REGISTRY.lookup(item_type)
+
         self.item_type = item_type
-        self.count = count
-        self.set_count(count, call_event=False)
+        self.count = count if count is not None else (0 if item_type is None else 1)
 
         self.nbt: typing.Dict[str, typing.Any] = {}
 

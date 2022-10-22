@@ -27,8 +27,8 @@ class DefaultItemstackRenderer(AbstractItemstackRenderer):
         stack: ItemStack = await slot.get_underlying_itemstack()
         x, y = slot.get_rendering_position()
         return [
-            pyglet.text.Label("WIP", font_size=15, x=x, y=y),
-            pyglet.text.Label(stack.count, font_size=8, x=x+30, y=y-2)
+            pyglet.text.Label("WIP", font_size=15, x=x, y=y, color=(0, 0, 0, 255), batch=batch),
+            pyglet.text.Label(str(stack.count), font_size=8, x=x+30, y=y-2, color=(0, 0, 0, 255), batch=batch)
         ]
 
     @classmethod

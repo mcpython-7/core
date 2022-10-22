@@ -10,6 +10,7 @@ from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
 from mcpython.world.block.BlockState import BlockState
 from mcpython.world.RayCastingUtil import cast_into_world
 from mcpython.world.World import WORLD
+from mcpython.inventory.HotbarInventory import HotbarInventory
 
 
 class WorldRenderingContainer:
@@ -32,6 +33,8 @@ class GameState(AbstractState):
         self._rendering_container = RENDERING_CONTAINER = WorldRenderingContainer()
 
         self.position_label = pyglet.text.Label(color=(0, 0, 0, 255))
+
+        self.inventory: HotbarInventory = None
 
     async def setup(self):
         self.window_handler.subscribe("on_draw", self.on_draw)
@@ -70,6 +73,10 @@ class GameState(AbstractState):
                 continue
             break
 
+        await HotbarInventory.setup()
+        self.inventory = HotbarInventory.create()
+        await self.inventory.setup_rendering()
+
     async def on_draw(self, dt: float):
         WINDOW.set_3d_world_view()
 
@@ -83,6 +90,8 @@ class GameState(AbstractState):
         WINDOW.set_2d()
         pyglet.gl.glDisable(pyglet.gl.GL_DEPTH_TEST)
         pyglet.gl.glDisable(pyglet.gl.GL_CULL_FACE)
+
+        self.inventory.draw()
 
         self._rendering_container.overlay_batch.draw()
         self.position_label.draw()

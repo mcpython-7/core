@@ -15,7 +15,11 @@ class AbstractSlot:
         return 0, 0
 
     async def hide_slot(self):
-        if self.batch is None: return
+        if self.batch is None:
+            if self.rendering_data:
+                await self.renderer.delete_rendering_data(self, self.batch, self.rendering_data)
+
+            return
 
         if self.renderer:
             await self.renderer.delete_rendering_data(self, self.batch, self.rendering_data)
@@ -25,7 +29,7 @@ class AbstractSlot:
     async def update_rendering_state(self, new_renderer=False):
         stack = await self.get_underlying_itemstack()
 
-        if stack.count == 0:
+        if stack.count == 0 or self.batch is None:
             await self.hide_slot()
             return
 
