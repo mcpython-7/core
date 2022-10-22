@@ -38,8 +38,8 @@ class TextureInfo:
     def find_free(
         self, array: typing.List[typing.List[bool]]
     ) -> typing.Tuple[int, int]:
-        for x, row in enumerate(array[: -self.texture_quads[0]]):
-            for y, cell in enumerate(row[: -self.texture_quads[1]]):
+        for x, row in enumerate(array[: -self.texture_quads[0] + 1] if self.texture_quads[0] != 1 else array):
+            for y, cell in enumerate(row[: -self.texture_quads[1] + 1] if self.texture_quads[1] != 1 else row):
                 if cell is True:
                     for dx in range(self.texture_quads[0]):
                         for dy in range(self.texture_quads[1]):
