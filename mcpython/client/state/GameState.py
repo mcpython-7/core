@@ -1,6 +1,7 @@
 import math
 
 import pyglet
+from pyglet.math import Vec3
 from pyglet.window import key
 from pyglet.window import mouse
 
@@ -8,6 +9,7 @@ from mcpython.client.state.AbstractState import AbstractState
 from mcpython.client.rendering.Window import WINDOW
 from mcpython.world.block.BlockManagement import BLOCK_REGISTRY
 from mcpython.world.block.BlockState import BlockState
+from mcpython.world.collisions.BoundBox import collision_pass_ray
 from mcpython.world.RayCastingUtil import cast_into_world
 from mcpython.world.World import WORLD
 
@@ -155,21 +157,9 @@ class GameState(AbstractState):
         )  # todo: make based on current player dim
 
         if button == mouse.RIGHT:
-            # todo: add player as source
-            result = await cast_into_world(
-                dimension, WORLD.current_render_position, vector
-            )
+            position = WORLD.current_render_position
 
-            if result is None:
-                print("no target!")
-                return
+            block_state = await collision_pass_ray(dimension, Vec3(*position), Vec3(*vector))
 
-            blockstate, previous = result
-
-            # todo: fill with data
-            if not blockstate.on_player_interaction(
-                None, None, button, modifiers, None
-            ):
-                await dimension.set_block(*previous, "minecraft:stone")
-            else:
-                print("handled!")
+            if block_state:
+                print(block_state.block_type.NAME)
