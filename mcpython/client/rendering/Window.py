@@ -226,22 +226,24 @@ class GameWindow(pyglet.window.Window):
         )
 
     def get_sight_vector(self):
-        """
+        """6
         Returns the current line of sight vector indicating the direction
         the player is looking.
         todo: move to player or some util system
         """
         x, y = WORLD.current_render_rotation
 
+        print(x, y)
+
         # y ranges from -90 to 90, or -pi/2 to pi/2, so m ranges from 0 to 1 and
         # is 1 when looking ahead parallel to the ground and 0 when looking
         # straight up or down.
-        m = math.cos(math.radians(y))
+        m = math.cos(y)
         # dy ranges from -1 to 1 and is -1 when looking straight down and 1 when
         # looking straight up.
-        dy = math.sin(math.radians(y))
-        dx = math.cos(math.radians(x - 90)) * m
-        dz = math.sin(math.radians(x - 90)) * m
+        dy = math.sin(y)
+        dx = math.cos(x - math.pi / 2) * m
+        dz = math.sin(x - math.pi / 2) * m
         return dx, -dy, dz
 
 

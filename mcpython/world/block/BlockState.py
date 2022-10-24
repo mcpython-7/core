@@ -3,6 +3,8 @@ from mcpython.world.block.Block import Block
 from mcpython.backend.Registry import RegistryObject
 import random
 
+from mcpython.world.collisions.BoundBox import AbstractBoundingElement
+
 
 class BlockState:
     __slots__ = (
@@ -13,6 +15,7 @@ class BlockState:
         "__previous_blockstate",
         "__blockstate_ref_cache",
         "nbt",
+        "__bounding_box",
     )
 
     _RANDOM = random.Random()
@@ -32,6 +35,15 @@ class BlockState:
         self.__previous_blockstate = {}
         self.__blockstate_ref_cache = None
         self.nbt: typing.Dict[str, object] = {}
+        self.__bounding_box = None
+
+    def get_bounding_box(self):
+        return self.__bounding_box or self.block_type.BOUNDING_BOX
+
+    def set_bounding_box(self, box: AbstractBoundingElement):
+        self.__bounding_box = box
+
+    bounding_box = property(get_bounding_box, set_bounding_box)
 
     def __repr__(self):
         return f'BlockState("{self.block_type.NAME}"{self.world_position}, nbt={self.nbt}, state={self.block_state})'

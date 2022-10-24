@@ -1,7 +1,10 @@
 import typing
 
+from pyglet.math import Vec3
+
 from mcpython.backend.Registry import IRegistryEntry, RegistryObject
 from mcpython.util.math import normalize
+from mcpython.world.collisions.BoundBox import BoundingBox
 
 
 class BlockUtil:
@@ -15,6 +18,8 @@ class Block(IRegistryEntry):
     BLOCKSTATE_CLASS = None  # Reference to a BlockState-like class
     BLOCK_ITEM_INSTANCE: RegistryObject = None
     BLOCK_RENDERER = None
+
+    BOUNDING_BOX = BoundingBox(Vec3(1, 1, 1))
 
     def __init__(self):
         self.is_breakable = True
