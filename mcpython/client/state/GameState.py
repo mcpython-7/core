@@ -47,9 +47,12 @@ class GameState(AbstractState):
                     BlockState(block).with_state(
                         state
                         if isinstance(state, dict)
-                        else {
-                            e.split("=")[0]: e.split("=")[1] for e in state.split(",")
-                        }
+                        else (
+                            {
+                                e.split("=")[0]: e.split("=")[1] for e in state.split(",")
+                            }
+                            if state != "" else {}
+                        )
                     )
                     for state in block.get_all_valid_block_states()
                 ]
@@ -90,7 +93,7 @@ class GameState(AbstractState):
         pyglet.gl.glClear(pyglet.gl.GL_DEPTH_BUFFER_BIT)
 
     async def on_tick(self, dt: float):
-        speed = 0.5 if not WINDOW.key_handler[key.LCTRL] else 2
+        speed = 0.5 if not WINDOW.key_handler[key.LCTRL] else 6
 
         rotation = WORLD.current_render_rotation
 
