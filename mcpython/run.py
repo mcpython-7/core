@@ -233,7 +233,7 @@ def sectorize(position: tuple[float, float, float]) -> tuple[int, int]:
     return x, z
 
 
-class Model(object):
+class World:
 
     def __init__(self):
 
@@ -612,7 +612,7 @@ class Window(pyglet.window.Window):
         ]
 
         # Instance of the model that handles the world.
-        self.model = Model()
+        self.world = World()
 
         # The label that is displayed in the top left of the canvas.
         self.label = pyglet.text.Label(
@@ -704,12 +704,12 @@ class Window(pyglet.window.Window):
             The change in time since the last call.
 
         """
-        self.model.process_queue()
+        self.world.process_queue()
         sector = sectorize(self.position)
         if sector != self.sector:
-            self.model.change_sectors(self.sector, sector)
+            self.world.change_sectors(self.sector, sector)
             if self.sector is None:
-                self.model.process_entire_queue()
+                self.world.process_entire_queue()
             self.sector = sector
         m = 8
         dt = min(dt, 0.2)
@@ -781,7 +781,7 @@ class Window(pyglet.window.Window):
                     op = list(np)
                     op[1] -= dy
                     op[i] += face[i]
-                    if tuple(op) not in self.model.world:
+                    if tuple(op) not in self.world.world:
                         continue
                     p[i] -= (d - pad) * face[i]
                     if face == (0, -1, 0) or face == (0, 1, 0):
@@ -811,7 +811,7 @@ class Window(pyglet.window.Window):
         """
         if self.exclusive:
             vector = self.get_sight_vector()
-            block, previous = self.model.hit_test(self.position, vector)
+            block, previous = self.world.hit_test(self.position, vector)
 
             if (button == mouse.RIGHT) or (
                 (button == mouse.LEFT) and (modifiers & key.MOD_CTRL)
@@ -819,13 +819,13 @@ class Window(pyglet.window.Window):
 
                 # ON OSX, control + left click = right click.
                 if previous:
-                    self.model.add_block(previous, self.block)
+                    self.world.add_block(previous, self.block)
 
             elif button == pyglet.window.mouse.LEFT and block:
-                texture = self.model.world[block]
+                texture = self.world.world[block]
 
                 if texture != STONE:
-                    self.model.remove_block(block)
+                    self.world.remove_block(block)
 
         else:
             self.set_exclusive_mouse(True)
@@ -936,7 +936,7 @@ class Window(pyglet.window.Window):
         """Called by pyglet to draw the canvas."""
         self.clear()
         self.set_3d()
-        self.model.batch.draw()
+        self.world.batch.draw()
         self.draw_focused_block()
         self.set_2d()
         self.draw_label()
@@ -948,7 +948,7 @@ class Window(pyglet.window.Window):
 
         """
         vector = self.get_sight_vector()
-        block = self.model.hit_test(self.position, vector)[0]
+        block = self.world.hit_test(self.position, vector)[0]
         if block:
             x, y, z = block
             vertex_data = cube_line_vertices(x, y, z, 0.51)
@@ -959,12 +959,12 @@ class Window(pyglet.window.Window):
         """Draw the label in the top left of the screen."""
         x, y, z = self.position
         self.label.text = "%02d (%.2f, %.2f, %.2f) %d / %d" % (
-            (-1 if True else pyglet.clock.get_fps()),
+            pyglet.clock.get_frequency(),
             x,
             y,
             z,
-            len(self.model._shown),
-            len(self.model.world),
+            len(self.world._shown),
+            len(self.world.world),
         )
         self.label.draw()
 
