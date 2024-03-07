@@ -800,9 +800,9 @@ class Window(pyglet.window.Window):
                     self.world.add_block(previous, self.block)
 
             elif button == pyglet.window.mouse.LEFT and block:
-                texture = self.world.world[block]
+                instance = self.world.world[block]
 
-                if texture != Stone:
+                if instance.BREAKABLE:
                     self.world.remove_block(block)
 
         else:

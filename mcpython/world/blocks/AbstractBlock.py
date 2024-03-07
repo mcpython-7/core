@@ -31,6 +31,7 @@ def tex_coords(
 class AbstractBlock(abc.ABC):
     NAME: str | None = None
     TEXTURE_COORDINATES: list[float] | None = None
+    BREAKABLE = True
 
     def __init__(self, position: tuple[int, int, int]):
         self.position = position
@@ -57,3 +58,4 @@ class Bricks(AbstractBlock):
 class Stone(AbstractBlock):
     NAME = "minecraft:stone"
     TEXTURE_COORDINATES = tex_coords((2, 1), (2, 1), (2, 1))
+    BREAKABLE = False
