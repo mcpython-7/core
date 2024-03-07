@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import os.path
-import sys
 import math
-import random
 import time
 
 from collections import deque
@@ -11,7 +8,7 @@ from collections import deque
 import pyglet.graphics.shader
 from pyglet import image
 from pyglet.gl import *
-from pyglet.graphics import TextureGroup, ShaderGroup
+from pyglet.graphics import TextureGroup
 from pyglet.math import Mat4, Vec3
 from pyglet.window import key, mouse
 import pyglet.model.codecs.obj
@@ -96,6 +93,7 @@ matgroup = pyglet.model.TexturedMaterialGroup(
     shader,
     pyglet.resource.texture("texture.png"),
 )
+matgroup_black_line = pyglet.graphics.ShaderGroup(pyglet.graphics.get_default_shader())
 
 
 def cube_vertices(x, y, z, n):
@@ -125,6 +123,31 @@ def cube_vertices(x, y, z, n):
         # Back
         x+n, y-n, z-n, x-n, y-n, z-n, x-n, y+n, z-n,  # Triangle 1
         x+n, y-n, z-n, x-n, y+n, z-n, x+n, y+n, z-n   # Triangle 2
+    ]
+    # fmt: on
+
+
+def cube_line_vertices(x, y, z, n):
+    """Return the vertices of the cube at position x, y, z with size 2*n."""
+    # fmt: off
+    return [
+        # Top
+        x-n, y+n, z-n, x-n, y+n, z+n,  # Line 1
+        x-n, y+n, z+n, x+n, y+n, z+n,  # Line 2
+        x+n, y+n, z+n, x+n, y+n, z-n,  # Line 3
+        x+n, y+n, z-n, x-n, y+n, z-n,  # Line 4
+
+        # Bottom
+        x-n, y-n, z-n, x-n, y-n, z+n,  # Line 1
+        x-n, y-n, z+n, x+n, y-n, z+n,  # Line 2
+        x+n, y-n, z+n, x+n, y-n, z-n,  # Line 3
+        x+n, y-n, z-n, x-n, y-n, z-n,  # Line 4
+
+        # Vertical lines connecting top and bottom
+        x-n, y+n, z-n, x-n, y-n, z-n,  # Line 1
+        x-n, y+n, z+n, x-n, y-n, z+n,  # Line 2
+        x+n, y+n, z+n, x+n, y-n, z+n,  # Line 3
+        x+n, y+n, z-n, x+n, y-n, z-n   # Line 4
     ]
     # fmt: on
 
@@ -540,7 +563,16 @@ class Window(pyglet.window.Window):
         self.sector = None
 
         # The crosshairs at the center of the screen.
-        self.reticle = None
+        self.reticle: tuple[pyglet.shapes.Line, pyglet.shapes.Line] | None = None
+        self.focused_block_batch = pyglet.graphics.Batch()
+        self.focused_block = pyglet.graphics.get_default_shader().vertex_list(
+            24,
+            GL_LINES,
+            self.focused_block_batch,
+            matgroup_black_line,
+            position=("f", cube_line_vertices(0, 0, 0, 0.51)),
+            colors=("f", (0, 0, 0, 255) * 24),
+        )
 
         # Velocity in the y (upward) direction.
         self.dy = 0
@@ -869,9 +901,10 @@ class Window(pyglet.window.Window):
         x, y = self.width // 2, self.height // 2
         n = 10
 
-        # self.reticle = pyglet.graphics.vertex_list(4,
-        #     ('v2i', (x - n, y, x + n, y, x, y - n, x, y + n))
-        # )
+        self.reticle = (
+            pyglet.shapes.Line(x - n, y, x + n, y, color=(0, 0, 0, 255), width=2),
+            pyglet.shapes.Line(x, y - n, x, y + n, color=(0, 0, 0, 255), width=2),
+        )
 
     def set_2d(self):
         """Configure OpenGL to draw in 2d.
@@ -881,16 +914,7 @@ class Window(pyglet.window.Window):
         width, height = self.get_size()
         self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
         self.view = Mat4()
-
-        # width, height = self.get_size()
         glDisable(GL_DEPTH_TEST)
-        # viewport = self.get_viewport_size()
-        # glViewport(0, 0, max(1, viewport[0]), max(1, viewport[1]))
-        # glMatrixMode(GL_PROJECTION)
-        # glLoadIdentity()
-        # glOrtho(0, max(1, width), 0, max(1, height), -1, 1)
-        # glMatrixMode(GL_MODELVIEW)
-        # glLoadIdentity()
 
     def set_3d(self):
         """Configure OpenGL to draw in 3d.3
@@ -903,21 +927,7 @@ class Window(pyglet.window.Window):
         position = Vec3(*self.position)
         vector = Vec3(*self.get_sight_vector())
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
-
-        # width, height = self.get_size()
         glEnable(GL_DEPTH_TEST)
-        # viewport = self.get_viewport_size()
-        # glViewport(0, 0, max(1, viewport[0]), max(1, viewport[1]))
-        # glMatrixMode(GL_PROJECTION)
-        # glLoadIdentity()
-        # gluPerspective(65.0, width / float(height), 0.1, 60.0)
-        # glMatrixMode(GL_MODELVIEW)
-        # glLoadIdentity()
-        # x, y = self.rotation
-        # glRotatef(x, 0, 1, 0)
-        # glRotatef(-y, math.cos(math.radians(x)), 0, math.sin(math.radians(x)))
-        # x, y, z = self.position
-        # glTranslatef(-x, -y, -z)
 
     def on_draw(self):
         """Called by pyglet to draw the canvas.
@@ -939,15 +949,13 @@ class Window(pyglet.window.Window):
         todo
 
         """
-        # vector = self.get_sight_vector()
-        # block = self.model.hit_test(self.position, vector)[0]
-        # if block:
-        #     x, y, z = block
-        #     vertex_data = cube_vertices(x, y, z, 0.51)
-        #     glColor3d(0, 0, 0)
-        #     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-        #     pyglet.graphics.draw(24, GL_QUADS, ('v3f/static', vertex_data))
-        #     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        vector = self.get_sight_vector()
+        block = self.model.hit_test(self.position, vector)[0]
+        if block:
+            x, y, z = block
+            vertex_data = cube_line_vertices(x, y, z, 0.51)
+            self.focused_block.set_attribute_data("position", vertex_data)
+            self.focused_block_batch.draw()
 
     def draw_label(self):
         """Draw the label in the top left of the screen."""
@@ -966,8 +974,8 @@ class Window(pyglet.window.Window):
         """Draw the crosshairs in the center of the screen.
         todo
         """
-        # glColor3d(0, 0, 0)
-        # self.reticle.draw(GL_LINES)
+        self.reticle[0].draw()
+        self.reticle[1].draw()
 
 
 def setup_fog():

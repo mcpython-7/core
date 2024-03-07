@@ -1,0 +1,6 @@
+
+
+Started with the clone from https://github.com/fogleman/Minecraft,
+porting it forward for pyglet 2.0
+(currently disabled: fog)
+
