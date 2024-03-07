@@ -82,7 +82,6 @@ void main()
 shader = pyglet.gl.current_context.create_program(
     (default_vert_src, "vertex"), (default_frag_src, "fragment")
 )
-pyglet.model.get_default_textured_shader = lambda: shader
 
 matgroup = pyglet.model.TexturedMaterialGroup(
     pyglet.model.Material(
@@ -403,24 +402,15 @@ class Model(object):
         x, y, z = position
         vertex_data = cube_vertices(x, y, z, 0.5)
         texture_data = list(texture)
-        mg = pyglet.model.TexturedMaterialGroup(
-            matgroup.material,
-            matgroup.program,
-            matgroup.texture,
-            parent=matgroup.parent,
-        )
         vertex = shader.vertex_list(
             36,
             GL_TRIANGLES,
             self.batch,
-            mg,
+            matgroup,
             position=("f", vertex_data),
             tex_coords=("f", texture_data),
         )
-        self._shown[position] = model = pyglet.model.Model([vertex], [mg], self.batch)
-        model.matrix = Mat4.from_translation(
-            Vec3(-position[0] - 5, -position[1] - 3, -position[2] - 5)
-        )
+        self._shown[position] = vertex
 
     def hide_block(self, position, immediate=True):
         """Hide the block at the given `position`. Hiding does not remove the
