@@ -224,14 +224,6 @@ class World:
         # This defines all the blocks that are currently in the world.
         self.world: dict[tuple[int, int, int], AbstractBlock] = {}
 
-        # Same mapping as `world` but only contains blocks that are shown.
-        self.shown: dict[tuple[int, int, int], AbstractBlock] = {}
-
-        # Mapping from position to a pyglet `VertextList` for all shown blocks.
-        self._shown: dict[
-            tuple[int, int, int], pyglet.graphics.vertexdomain.VertexList
-        ] = {}
-
         # Mapping from sector to a list of positions inside that sector.
         self.sectors: dict[tuple[int, int], list[tuple[int, int, int]]] = {}
 
@@ -339,11 +331,13 @@ class World:
         """
         if position in self.world:
             self.remove_block(position, immediate)
-        self.world[position] = block_type(position)
+
+        instance = block_type(position)
+        self.world[position] = instance
         self.sectors.setdefault(sectorize(position), []).append(position)
         if immediate:
             if self.exposed(position):
-                self.show_block(position)
+                self.show_block(instance)
             self.check_neighbors(position)
 
     def remove_block(self, position: tuple[int, int, int], immediate=True):
@@ -357,11 +351,12 @@ class World:
             Whether or not to immediately remove block from canvas.
 
         """
+        instance = self.world[position]
         del self.world[position]
         self.sectors[sectorize(position)].remove(position)
         if immediate:
-            if position in self.shown:
-                self.hide_block(position)
+            if instance.shown:
+                self.hide_block(instance)
             self.check_neighbors(position)
 
     def check_neighbors(self, position: tuple[int, int, int]):
@@ -376,14 +371,15 @@ class World:
             key = (x + dx, y + dy, z + dz)
             if key not in self.world:
                 continue
+            instance = self.world[key]
             if self.exposed(key):
-                if key not in self.shown:
-                    self.show_block(key)
+                if not instance.shown:
+                    self.show_block(instance)
             else:
-                if key in self.shown:
-                    self.hide_block(key)
+                if instance.shown:
+                    self.hide_block(instance)
 
-    def show_block(self, position: tuple[int, int, int], immediate=True):
+    def show_block(self, instance: AbstractBlock, immediate=True):
         """Show the block at the given `position`. This method assumes the
         block has already been added with add_block()
 
@@ -395,14 +391,13 @@ class World:
             Whether or not to show the block immediately.
 
         """
-        instance = self.world[position]
-        self.shown[position] = instance
+        instance.shown = True
         if immediate:
-            self._show_block(position, instance)
+            self._show_block(instance)
         else:
-            self._enqueue(self._show_block, position, instance)
+            self._enqueue(self._show_block, instance)
 
-    def _show_block(self, position: tuple[int, int, int], instance: AbstractBlock):
+    def _show_block(self, instance: AbstractBlock):
         """Private implementation of the `show_block()` method.
 
         Parameters
@@ -413,7 +408,7 @@ class World:
             The block instance
 
         """
-        x, y, z = position
+        x, y, z = instance.position
         vertex_data = cube_vertices(x, y, z, 0.5)
         texture_data = list(instance.TEXTURE_COORDINATES)
         vertex = shader.vertex_list(
@@ -424,9 +419,9 @@ class World:
             position=("f", vertex_data),
             tex_coords=("f", texture_data),
         )
-        self._shown[position] = vertex
+        instance.vertex_data = vertex
 
-    def hide_block(self, position: tuple[int, int, int], immediate=True):
+    def hide_block(self, instance: AbstractBlock, immediate=True):
         """Hide the block at the given `position`. Hiding does not remove the
         block from the world.
 
@@ -438,15 +433,16 @@ class World:
             Whether or not to immediately remove the block from the canvas.
 
         """
-        self.shown.pop(position)
+        instance.shown = False
         if immediate:
-            self._hide_block(position)
+            self._hide_block(instance)
         else:
-            self._enqueue(self._hide_block, position)
+            self._enqueue(self._hide_block, instance)
 
-    def _hide_block(self, position: tuple[int, int, int]):
+    def _hide_block(self, instance: AbstractBlock):
         """Private implementation of the 'hide_block()` method."""
-        self._shown.pop(position).delete()
+        instance.vertex_data.delete()
+        instance.vertex_data = None
 
     def show_sector(self, sector: tuple[int, int]):
         """Ensure all blocks in the given sector that should be shown are
@@ -454,8 +450,9 @@ class World:
 
         """
         for position in self.sectors.get(sector, []):
-            if position not in self.shown and self.exposed(position):
-                self.show_block(position, False)
+            instance = self.world[position]
+            if not instance.shown and self.exposed(position):
+                self.show_block(instance, False)
 
     def hide_sector(self, sector: tuple[int, int]):
         """Ensure all blocks in the given sector that should be hidden are
@@ -463,8 +460,9 @@ class World:
 
         """
         for position in self.sectors.get(sector, []):
-            if position in self.shown:
-                self.hide_block(position, False)
+            instance = self.world[position]
+            if instance.shown:
+                self.hide_block(instance, False)
 
     def change_sectors(self, before: tuple[int, int], after: tuple[int, int]):
         """Move from sector `before` to sector `after`. A sector is a
@@ -723,7 +721,7 @@ class Window(pyglet.window.Window):
         x, y, z = self.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
         self.position = (x, y, z)
 
-    def collide(self, position: tuple[float, float, float], height: float):
+    def collide(self, position: tuple[float, float, float], height: int):
         """Checks to see if the player at the given `position` and `height`
         is colliding with any blocks in the world.
 
@@ -936,12 +934,11 @@ class Window(pyglet.window.Window):
     def draw_label(self):
         """Draw the label in the top left of the screen."""
         x, y, z = self.position
-        self.label.text = "%02d (%.2f, %.2f, %.2f) %d / %d" % (
+        self.label.text = "%02d (%.2f, %.2f, %.2f) %d" % (
             pyglet.clock.get_frequency(),
             x,
             y,
             z,
-            len(self.world._shown),
             len(self.world.world),
         )
         self.label.draw()

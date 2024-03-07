@@ -1,5 +1,7 @@
 import abc
 
+import pyglet.graphics.vertexdomain
+
 
 def tex_coord(x: int, y: int, n=4) -> tuple[float, ...]:
     """Return the bounding vertices of the texture square."""
@@ -35,6 +37,8 @@ class AbstractBlock(abc.ABC):
 
     def __init__(self, position: tuple[int, int, int]):
         self.position = position
+        self.shown = False
+        self.vertex_data: pyglet.graphics.vertexdomain.VertexList | None = None
 
     def __repr__(self):
         return f"{self.__class__.__name__}{self.position}"
