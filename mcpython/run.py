@@ -15,6 +15,14 @@ from pyglet.math import Mat4, Vec3
 from pyglet.window import key, mouse
 import pyglet.model.codecs.obj
 
+from mcpython.world.blocks.AbstractBlock import (
+    AbstractBlock,
+    GrassBlock,
+    Sand,
+    Bricks,
+    Stone,
+)
+
 pyglet.image.Texture.default_min_filter = GL_NEAREST
 pyglet.image.Texture.default_mag_filter = GL_NEAREST
 
@@ -154,39 +162,8 @@ def cube_line_vertices(x: float, y: float, z: float, n: float) -> list[float]:
     # fmt: on
 
 
-def tex_coord(x: int, y: int, n=4) -> tuple[float, ...]:
-    """Return the bounding vertices of the texture square."""
-    m = 1.0 / n
-    dx = x * m
-    dy = y * m
-    # fmt: off
-    return (
-        dx, dy, dx + m, dy, dx + m, dy + m,  # Triangle 1
-        dx, dy, dx + m, dy + m, dx, dy + m,  # Triangle 2
-    )
-    # fmt: on
-
-
-def tex_coords(
-    top: tuple[int, int], bottom: tuple[int, int], side: tuple[int, int], n=4
-) -> list[float]:
-    """Return a list of the texture squares for the top, bottom and side."""
-    top = tex_coord(*top, n=n)
-    bottom = tex_coord(*bottom, n=n)
-    side = tex_coord(*side, n=n)
-    result = []
-    result.extend(top)
-    result.extend(bottom)
-    result.extend(side * 4)
-    return result
-
-
 TEXTURE_PATH = "texture.png"
 
-GRASS = tex_coords((1, 0), (0, 1), (0, 0))
-SAND = tex_coords((1, 1), (1, 1), (1, 1))
-BRICK = tex_coords((2, 0), (2, 0), (2, 0))
-STONE = tex_coords((2, 1), (2, 1), (2, 1))
 
 FACES = [
     (0, 1, 0),
@@ -245,10 +222,10 @@ class World:
 
         # A mapping from position to the texture of the block at that position.
         # This defines all the blocks that are currently in the world.
-        self.world: dict[tuple[int, int, int], typing.Any] = {}
+        self.world: dict[tuple[int, int, int], AbstractBlock] = {}
 
         # Same mapping as `world` but only contains blocks that are shown.
-        self.shown: dict[tuple[int, int, int], typing.Any] = {}
+        self.shown: dict[tuple[int, int, int], AbstractBlock] = {}
 
         # Mapping from position to a pyglet `VertextList` for all shown blocks.
         self._shown: dict[
@@ -272,12 +249,12 @@ class World:
         for x in range(-n, n + 1, s):
             for z in range(-n, n + 1, s):
                 # create a layer stone a grass everywhere.
-                self.add_block((x, y - 2, z), GRASS, immediate=False)
-                self.add_block((x, y - 3, z), STONE, immediate=False)
+                self.add_block((x, y - 2, z), GrassBlock, immediate=False)
+                self.add_block((x, y - 3, z), Stone, immediate=False)
                 if x in (-n, n) or z in (-n, n):
                     # create outer walls.
                     for dy in range(-2, 3):
-                        self.add_block((x, y + dy, z), STONE, immediate=False)
+                        self.add_block((x, y + dy, z), Stone, immediate=False)
 
         # generate the hills randomly
         o = n - 10
@@ -288,7 +265,7 @@ class World:
             h = random.randint(1, 6)  # height of the hill
             s = random.randint(4, 8)  # 2 * s is the side length of the hill
             d = 1  # how quickly to taper off the hills
-            t = random.choice([GRASS, SAND, BRICK])
+            t = random.choice([GrassBlock, Sand, Bricks])
             for y in range(c, c + h):
                 for x in range(a - s, a + s + 1):
                     for z in range(b - s, b + s + 1):
@@ -343,7 +320,10 @@ class World:
         return False
 
     def add_block(
-        self, position: tuple[int, int, int], texture: list[float], immediate=True
+        self,
+        position: tuple[int, int, int],
+        block_type: type[AbstractBlock],
+        immediate=True,
     ):
         """Add a block with the given `texture` and `position` to the world.
 
@@ -351,16 +331,15 @@ class World:
         ----------
         position : tuple of len 3
             The (x, y, z) position of the block to add.
-        texture : list of len 3
-            The coordinates of the texture squares. Use `tex_coords()` to
-            generate.
+        block_type :
+            The block type to use
         immediate : bool
             Whether or not to draw the block immediately.
 
         """
         if position in self.world:
             self.remove_block(position, immediate)
-        self.world[position] = texture
+        self.world[position] = block_type(position)
         self.sectors.setdefault(sectorize(position), []).append(position)
         if immediate:
             if self.exposed(position):
@@ -416,28 +395,27 @@ class World:
             Whether or not to show the block immediately.
 
         """
-        texture = self.world[position]
-        self.shown[position] = texture
+        instance = self.world[position]
+        self.shown[position] = instance
         if immediate:
-            self._show_block(position, texture)
+            self._show_block(position, instance)
         else:
-            self._enqueue(self._show_block, position, texture)
+            self._enqueue(self._show_block, position, instance)
 
-    def _show_block(self, position: tuple[int, int, int], texture: list[float]):
+    def _show_block(self, position: tuple[int, int, int], instance: AbstractBlock):
         """Private implementation of the `show_block()` method.
 
         Parameters
         ----------
         position : tuple of len 3
             The (x, y, z) position of the block to show.
-        texture : list of len 3
-            The coordinates of the texture squares. Use `tex_coords()` to
-            generate.
+        instance:
+            The block instance
 
         """
         x, y, z = position
         vertex_data = cube_vertices(x, y, z, 0.5)
-        texture_data = list(texture)
+        texture_data = list(instance.TEXTURE_COORDINATES)
         vertex = shader.vertex_list(
             36,
             GL_TRIANGLES,
@@ -592,7 +570,7 @@ class Window(pyglet.window.Window):
         self.dy = 0
 
         # A list of blocks the player can place. Hit num keys to cycle.
-        self.inventory = [BRICK, GRASS, SAND]
+        self.inventory = [Bricks, GrassBlock, Sand]
 
         # The current block the user can place. Hit num keys to cycle.
         self.block = self.inventory[0]
@@ -824,7 +802,7 @@ class Window(pyglet.window.Window):
             elif button == pyglet.window.mouse.LEFT and block:
                 texture = self.world.world[block]
 
-                if texture != STONE:
+                if texture != Stone:
                     self.world.remove_block(block)
 
         else:
