@@ -16,8 +16,8 @@ from pyglet.math import Mat4, Vec3
 from pyglet.window import key, mouse
 import pyglet.model.codecs.obj
 
-pyglet.image.Texture.default_min_filter = GL_LINEAR
-pyglet.image.Texture.default_mag_filter = GL_LINEAR
+pyglet.image.Texture.default_min_filter = GL_NEAREST
+pyglet.image.Texture.default_mag_filter = GL_NEAREST
 
 pyglet.resource.path.append("../cache/assets.zip")
 
