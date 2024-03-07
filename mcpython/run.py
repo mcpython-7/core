@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import random
 import time
+import typing
 
 from collections import deque
 
@@ -97,7 +98,7 @@ matgroup = pyglet.model.TexturedMaterialGroup(
 matgroup_black_line = pyglet.graphics.ShaderGroup(pyglet.graphics.get_default_shader())
 
 
-def cube_vertices(x, y, z, n):
+def cube_vertices(x: float, y: float, z: float, n: float) -> list[float]:
     """Return the vertices of the cube at position x, y, z with size 2*n."""
     # fmt: off
     return [
@@ -128,7 +129,7 @@ def cube_vertices(x, y, z, n):
     # fmt: on
 
 
-def cube_line_vertices(x, y, z, n):
+def cube_line_vertices(x: float, y: float, z: float, n: float) -> list[float]:
     """Return the vertices of the cube at position x, y, z with size 2*n."""
     # fmt: off
     return [
@@ -153,7 +154,7 @@ def cube_line_vertices(x, y, z, n):
     # fmt: on
 
 
-def tex_coord(x, y, n=4):
+def tex_coord(x: int, y: int, n=4) -> tuple[float, ...]:
     """Return the bounding vertices of the texture square."""
     m = 1.0 / n
     dx = x * m
@@ -166,11 +167,13 @@ def tex_coord(x, y, n=4):
     # fmt: on
 
 
-def tex_coords(top, bottom, side):
+def tex_coords(
+    top: tuple[int, int], bottom: tuple[int, int], side: tuple[int, int], n=4
+) -> list[float]:
     """Return a list of the texture squares for the top, bottom and side."""
-    top = tex_coord(*top)
-    bottom = tex_coord(*bottom)
-    side = tex_coord(*side)
+    top = tex_coord(*top, n=n)
+    bottom = tex_coord(*bottom, n=n)
+    side = tex_coord(*side, n=n)
     result = []
     result.extend(top)
     result.extend(bottom)
@@ -195,7 +198,7 @@ FACES = [
 ]
 
 
-def normalize(position):
+def normalize(position: tuple[float, float, float]) -> tuple[int, int, int]:
     """Accepts `position` of arbitrary precision and returns the block
     containing that position.
 
@@ -210,10 +213,10 @@ def normalize(position):
     """
     x, y, z = position
     x, y, z = (int(round(x)), int(round(y)), int(round(z)))
-    return (x, y, z)
+    return x, y, z
 
 
-def sectorize(position):
+def sectorize(position: tuple[float, float, float]) -> tuple[int, int]:
     """Returns a tuple representing the sector for the given `position`.
 
     Parameters
@@ -227,7 +230,7 @@ def sectorize(position):
     """
     x, y, z = normalize(position)
     x, y, z = x // SECTOR_SIZE, y // SECTOR_SIZE, z // SECTOR_SIZE
-    return (x, 0, z)
+    return x, z
 
 
 class Model(object):
@@ -242,16 +245,18 @@ class Model(object):
 
         # A mapping from position to the texture of the block at that position.
         # This defines all the blocks that are currently in the world.
-        self.world = {}
+        self.world: dict[tuple[int, int, int], typing.Any] = {}
 
         # Same mapping as `world` but only contains blocks that are shown.
-        self.shown = {}
+        self.shown: dict[tuple[int, int, int], typing.Any] = {}
 
         # Mapping from position to a pyglet `VertextList` for all shown blocks.
-        self._shown = {}
+        self._shown: dict[
+            tuple[int, int, int], pyglet.graphics.vertexdomain.VertexList
+        ] = {}
 
         # Mapping from sector to a list of positions inside that sector.
-        self.sectors = {}
+        self.sectors: dict[tuple[int, int], list[tuple[int, int, int]]] = {}
 
         # Simple function queue implementation. The queue is populated with
         # _show_block() and _hide_block() calls
@@ -294,7 +299,12 @@ class Model(object):
                         self.add_block((x, y, z), t, immediate=False)
                 s -= d  # decrement side length so hills taper off
 
-    def hit_test(self, position, vector, max_distance=8):
+    def hit_test(
+        self,
+        position: tuple[int, int, int],
+        vector: tuple[float, float, float],
+        max_distance=8,
+    ) -> tuple[tuple[int, int, int], tuple[int, int, int]] | tuple[None, None]:
         """Line of sight search from current position. If a block is
         intersected it is returned, along with the block previously in the line
         of sight. If no block is found, return None, None.
@@ -321,7 +331,7 @@ class Model(object):
             x, y, z = x + dx / m, y + dy / m, z + dz / m
         return None, None
 
-    def exposed(self, position):
+    def exposed(self, position: tuple[int, int, int]) -> bool:
         """Returns False is given `position` is surrounded on all 6 sides by
         blocks, True otherwise.
 
@@ -332,7 +342,9 @@ class Model(object):
                 return True
         return False
 
-    def add_block(self, position, texture, immediate=True):
+    def add_block(
+        self, position: tuple[int, int, int], texture: list[float], immediate=True
+    ):
         """Add a block with the given `texture` and `position` to the world.
 
         Parameters
@@ -355,7 +367,7 @@ class Model(object):
                 self.show_block(position)
             self.check_neighbors(position)
 
-    def remove_block(self, position, immediate=True):
+    def remove_block(self, position: tuple[int, int, int], immediate=True):
         """Remove the block at the given `position`.
 
         Parameters
@@ -373,7 +385,7 @@ class Model(object):
                 self.hide_block(position)
             self.check_neighbors(position)
 
-    def check_neighbors(self, position):
+    def check_neighbors(self, position: tuple[int, int, int]):
         """Check all blocks surrounding `position` and ensure their visual
         state is current. This means hiding blocks that are not exposed and
         ensuring that all exposed blocks are shown. Usually used after a block
@@ -392,7 +404,7 @@ class Model(object):
                 if key in self.shown:
                     self.hide_block(key)
 
-    def show_block(self, position, immediate=True):
+    def show_block(self, position: tuple[int, int, int], immediate=True):
         """Show the block at the given `position`. This method assumes the
         block has already been added with add_block()
 
@@ -411,7 +423,7 @@ class Model(object):
         else:
             self._enqueue(self._show_block, position, texture)
 
-    def _show_block(self, position, texture):
+    def _show_block(self, position: tuple[int, int, int], texture: list[float]):
         """Private implementation of the `show_block()` method.
 
         Parameters
@@ -436,7 +448,7 @@ class Model(object):
         )
         self._shown[position] = vertex
 
-    def hide_block(self, position, immediate=True):
+    def hide_block(self, position: tuple[int, int, int], immediate=True):
         """Hide the block at the given `position`. Hiding does not remove the
         block from the world.
 
@@ -454,11 +466,11 @@ class Model(object):
         else:
             self._enqueue(self._hide_block, position)
 
-    def _hide_block(self, position):
+    def _hide_block(self, position: tuple[int, int, int]):
         """Private implementation of the 'hide_block()` method."""
         self._shown.pop(position).delete()
 
-    def show_sector(self, sector):
+    def show_sector(self, sector: tuple[int, int]):
         """Ensure all blocks in the given sector that should be shown are
         drawn to the canvas.
 
@@ -467,7 +479,7 @@ class Model(object):
             if position not in self.shown and self.exposed(position):
                 self.show_block(position, False)
 
-    def hide_sector(self, sector):
+    def hide_sector(self, sector: tuple[int, int]):
         """Ensure all blocks in the given sector that should be hidden are
         removed from the canvas.
 
@@ -476,14 +488,14 @@ class Model(object):
             if position in self.shown:
                 self.hide_block(position, False)
 
-    def change_sectors(self, before, after):
+    def change_sectors(self, before: tuple[int, int], after: tuple[int, int]):
         """Move from sector `before` to sector `after`. A sector is a
         contiguous x, y sub-region of world. Sectors are used to speed up
         world rendering.
 
         """
-        before_set = set()
-        after_set = set()
+        before_set: set[tuple[int, int]] = set()
+        after_set: set[tuple[int, int]] = set()
         pad = 4
         for dx in range(-pad, pad + 1):
             for dy in [0]:  # range(-pad, pad + 1):
@@ -491,11 +503,12 @@ class Model(object):
                     if dx**2 + dy**2 + dz**2 > (pad + 1) ** 2:
                         continue
                     if before:
-                        x, y, z = before
-                        before_set.add((x + dx, y + dy, z + dz))
+                        x, z = before
+                        before_set.add((x + dx, z + dz))
                     if after:
-                        x, y, z = after
-                        after_set.add((x + dx, y + dy, z + dz))
+                        x, z = after
+                        after_set.add((x + dx, z + dz))
+
         show = after_set - before_set
         hide = before_set - after_set
         for sector in show:
@@ -503,7 +516,7 @@ class Model(object):
         for sector in hide:
             self.hide_sector(sector)
 
-    def _enqueue(self, func, *args):
+    def _enqueue(self, func: typing.Callable, *args):
         """Add `func` to the internal queue."""
         self.queue.append((func, args))
 
@@ -617,7 +630,7 @@ class Window(pyglet.window.Window):
         # TICKS_PER_SEC. This is the main game event loop.
         pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
 
-    def set_exclusive_mouse(self, exclusive):
+    def set_exclusive_mouse(self, exclusive: bool):
         """If `exclusive` is True, the game will capture the mouse, if False
         the game will ignore the mouse.
 
@@ -625,7 +638,7 @@ class Window(pyglet.window.Window):
         super(Window, self).set_exclusive_mouse(exclusive)
         self.exclusive = exclusive
 
-    def get_sight_vector(self):
+    def get_sight_vector(self) -> tuple[float, float, float]:
         """Returns the current line of sight vector indicating the direction
         the player is looking.
 
@@ -640,9 +653,9 @@ class Window(pyglet.window.Window):
         dy = math.sin(math.radians(y))
         dx = math.cos(math.radians(x - 90)) * m
         dz = math.sin(math.radians(x - 90)) * m
-        return (dx, dy, dz)
+        return dx, dy, dz
 
-    def get_motion_vector(self):
+    def get_motion_vector(self) -> tuple[float, float, float]:
         """Returns the current motion vector indicating the velocity of the
         player.
 
@@ -679,9 +692,9 @@ class Window(pyglet.window.Window):
             dy = 0.0
             dx = 0.0
             dz = 0.0
-        return (dx, dy, dz)
+        return dx, dy, dz
 
-    def update(self, dt):
+    def update(self, dt: float):
         """This method is scheduled to be called repeatedly by the pyglet
         clock.
 
@@ -703,7 +716,7 @@ class Window(pyglet.window.Window):
         for _ in range(m):
             self._update(dt / m)
 
-    def _update(self, dt):
+    def _update(self, dt: float):
         """Private implementation of the `update()` method. This is where most
         of the motion logic lives, along with gravity and collision detection.
 
@@ -732,7 +745,7 @@ class Window(pyglet.window.Window):
         x, y, z = self.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
         self.position = (x, y, z)
 
-    def collide(self, position, height):
+    def collide(self, position: tuple[float, float, float], height: float):
         """Checks to see if the player at the given `position` and `height`
         is colliding with any blocks in the world.
 
@@ -779,7 +792,7 @@ class Window(pyglet.window.Window):
 
         return tuple(p)
 
-    def on_mouse_press(self, x, y, button, modifiers):
+    def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
         """Called when a mouse button is pressed. See pyglet docs for button
         amd modifier mappings.
 
@@ -817,7 +830,7 @@ class Window(pyglet.window.Window):
         else:
             self.set_exclusive_mouse(True)
 
-    def on_mouse_motion(self, x, y, dx, dy):
+    def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
         """Called when the player moves the mouse.
 
         Parameters
@@ -836,7 +849,7 @@ class Window(pyglet.window.Window):
             y = max(-90, min(90, y))
             self.rotation = (x, y)
 
-    def on_key_press(self, symbol, modifiers):
+    def on_key_press(self, symbol: int, modifiers: int):
         """Called when the player presses a key. See pyglet docs for key
         mappings.
 
@@ -867,7 +880,7 @@ class Window(pyglet.window.Window):
             index = (symbol - self.num_keys[0]) % len(self.inventory)
             self.block = self.inventory[index]
 
-    def on_key_release(self, symbol, modifiers):
+    def on_key_release(self, symbol: int, modifiers: int):
         """Called when the player releases a key. See pyglet docs for key
         mappings.
 
@@ -888,17 +901,12 @@ class Window(pyglet.window.Window):
         elif symbol == key.D:
             self.strafe[1] -= 1
 
-    def on_resize(self, width, height):
-        """Called when the window is resized to a new `width` and `height`.
-        todo
-
-        """
+    def on_resize(self, width: int, height: int):
+        """Called when the window is resized to a new `width` and `height`."""
         super().on_resize(width, height)
         # label
         self.label.y = height - 10
         # reticle
-        if self.reticle:
-            self.reticle.delete()
         x, y = self.width // 2, self.height // 2
         n = 10
 
@@ -908,20 +916,14 @@ class Window(pyglet.window.Window):
         )
 
     def set_2d(self):
-        """Configure OpenGL to draw in 2d.
-        todo
-
-        """
+        """Configure OpenGL to draw in 2d."""
         width, height = self.get_size()
         self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
         self.view = Mat4()
         glDisable(GL_DEPTH_TEST)
 
     def set_3d(self):
-        """Configure OpenGL to draw in 3d.3
-        todo
-
-        """
+        """Configure OpenGL to draw in 3d.3"""
         self.projection = Mat4.perspective_projection(
             self.aspect_ratio, z_near=0.1, z_far=100, fov=45
         )
@@ -931,13 +933,9 @@ class Window(pyglet.window.Window):
         glEnable(GL_DEPTH_TEST)
 
     def on_draw(self):
-        """Called by pyglet to draw the canvas.
-        todo
-
-        """
+        """Called by pyglet to draw the canvas."""
         self.clear()
         self.set_3d()
-        # glColor3d(1, 1, 1)
         self.model.batch.draw()
         self.draw_focused_block()
         self.set_2d()
@@ -947,7 +945,6 @@ class Window(pyglet.window.Window):
     def draw_focused_block(self):
         """Draw black edges around the block that is currently under the
         crosshairs.
-        todo
 
         """
         vector = self.get_sight_vector()
@@ -972,9 +969,7 @@ class Window(pyglet.window.Window):
         self.label.draw()
 
     def draw_reticle(self):
-        """Draw the crosshairs in the center of the screen.
-        todo
-        """
+        """Draw the crosshairs in the center of the screen."""
         self.reticle[0].draw()
         self.reticle[1].draw()
 
