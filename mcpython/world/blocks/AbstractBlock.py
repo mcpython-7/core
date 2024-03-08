@@ -9,6 +9,7 @@ dirt = atlas.add_image_from_path("minecraft:block/dirt")
 stone = atlas.add_image_from_path("minecraft:block/stone")
 sand = atlas.add_image_from_path("minecraft:block/sand")
 bricks = atlas.add_image_from_path("minecraft:block/bricks")
+bedrock = atlas.add_image_from_path("minecraft:block/bedrock")
 
 
 def textured_cube(
@@ -50,7 +51,7 @@ class AbstractBlock(abc.ABC):
         return f"{self.__class__.__name__}{self.position}"
 
 
-class DIRT(AbstractBlock):
+class Dirt(AbstractBlock):
     NAME = "minecraft:dirt"
     TEXTURE_COORDINATES = textured_cube(dirt)
 
@@ -68,4 +69,9 @@ class Bricks(AbstractBlock):
 class Stone(AbstractBlock):
     NAME = "minecraft:stone"
     TEXTURE_COORDINATES = textured_cube(stone)
+
+
+class Bedrock(AbstractBlock):
+    NAME = "minecraft:bedrock"
+    TEXTURE_COORDINATES = textured_cube(bedrock)
     BREAKABLE = False

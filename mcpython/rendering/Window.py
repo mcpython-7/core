@@ -18,7 +18,7 @@ from mcpython.config import (
 )
 from mcpython.rendering.util import matgroup_black_line, cube_line_vertices, FACES
 from mcpython.world.World import World
-from mcpython.world.blocks.AbstractBlock import Bricks, DIRT, Sand
+from mcpython.world.blocks.AbstractBlock import Bricks, Dirt, Sand, Stone
 from mcpython.world.util import sectorize, normalize
 
 
@@ -72,7 +72,7 @@ class Window(pyglet.window.Window):
         self.dy = 0
 
         # A list of blocks the player can place. Hit num keys to cycle.
-        self.inventory = [Bricks, DIRT, Sand]
+        self.inventory = [Bricks, Dirt, Sand, Stone]
 
         # The current block the user can place. Hit num keys to cycle.
         self.block = self.inventory[0]
