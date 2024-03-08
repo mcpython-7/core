@@ -30,8 +30,10 @@ from mcpython.world.blocks.AbstractBlock import (
 
 
 class World:
+    INSTANCE: World = None
 
     def __init__(self):
+        World.INSTANCE = self
 
         # A Batch is a collection of vertex lists for batched rendering.
         self.batch = pyglet.graphics.Batch()
@@ -57,12 +59,16 @@ class World:
         for x in range(-n, n + 1, s):
             for z in range(-n, n + 1, s):
                 # create a layer stone a grass everywhere.
-                self.add_block((x, y - 2, z), Dirt, immediate=False)
-                self.add_block((x, y - 3, z), Bedrock, immediate=False)
+                self.add_block((x, y - 2, z), Dirt, immediate=False, block_update=False)
+                self.add_block(
+                    (x, y - 3, z), Bedrock, immediate=False, block_update=False
+                )
                 if x in (-n, n) or z in (-n, n):
                     # create outer walls.
                     for dy in range(-2, 3):
-                        self.add_block((x, y + dy, z), Bedrock, immediate=False)
+                        self.add_block(
+                            (x, y + dy, z), Bedrock, immediate=False, block_update=False
+                        )
 
         # generate the hills randomly
         o = n - 10
@@ -81,7 +87,9 @@ class World:
                             continue
                         if (x - 0) ** 2 + (z - 0) ** 2 < 5**2:
                             continue
-                        self.add_block((x, y, z), t, immediate=False)
+                        self.add_block(
+                            (x, y, z), t, immediate=False, block_update=False
+                        )
                 s -= d  # decrement side length so hills taper off
 
     def hit_test(
@@ -130,7 +138,7 @@ class World:
     def add_block(
         self,
         position: tuple[int, int, int],
-        block_type: type[AbstractBlock],
+        block_type: type[AbstractBlock] | AbstractBlock,
         immediate=True,
         block_update=True,
     ):
@@ -149,7 +157,12 @@ class World:
         if position in self.world:
             self.remove_block(position, immediate)
 
-        instance = block_type(position)
+        if isinstance(block_type, AbstractBlock):
+            instance = block_type
+            instance.position = position
+        else:
+            instance = block_type(position)
+
         self.world[position] = instance
         self.sectors.setdefault(sectorize(position), []).append(position)
         if immediate:

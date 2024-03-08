@@ -77,6 +77,42 @@ class Sand(AbstractBlock):
     NAME = "minecraft:sand"
     TEXTURE_COORDINATES = textured_cube(sand)
 
+    def __init__(self, position):
+        super().__init__(position)
+        self.falling = False
+
+    def on_block_updated(self):
+        from mcpython.world.World import World
+
+        if (
+            self.position[0],
+            self.position[1] - 1,
+            self.position[2],
+        ) not in World.INSTANCE.world:
+            pyglet.clock.schedule_once(self.fall, 0.5)
+            self.falling = True
+
+    def fall(self, _):
+        from mcpython.world.World import World
+
+        self.falling = False
+
+        if (
+            World.INSTANCE.world.get(self.position, None) is self
+            and (
+                self.position[0],
+                self.position[1] - 1,
+                self.position[2],
+            )
+            not in World.INSTANCE.world
+        ):
+            World.INSTANCE.remove_block(self.position, block_update=False)
+            old_pos = self.position
+            World.INSTANCE.add_block(
+                (self.position[0], self.position[1] - 1, self.position[2]), self
+            )
+            World.INSTANCE.send_block_update(old_pos)
+
 
 class Bricks(AbstractBlock):
     NAME = "minecraft:bricks"
