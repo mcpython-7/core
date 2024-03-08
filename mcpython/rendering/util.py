@@ -55,7 +55,63 @@ matgroup = pyglet.model.TexturedMaterialGroup(
     shader,
     atlas.get_texture(),
 )
-matgroup_black_line = pyglet.graphics.ShaderGroup(pyglet.graphics.get_default_shader())
+
+black_line_vert_src = """#version 330 core
+in vec3 position;
+in vec2 tex_coords;
+in vec4 colors;
+
+out vec2 texture_coords;
+out vec3 vertex_position;
+out vec4 coloring;
+
+uniform WindowBlock
+{
+    mat4 projection;
+    mat4 view;
+} window;
+
+uniform mat4 model;
+
+void main()
+{
+    vec4 pos = window.view * model * vec4(position, 1.0);
+    gl_Position = window.projection * pos;
+
+    vertex_position = pos.xyz;
+    texture_coords = tex_coords;
+    coloring = colors;
+}
+"""
+black_line_frag_src = """#version 330 core
+in vec2 texture_coords;
+in vec3 vertex_position;
+in vec4 coloring;
+out vec4 final_colors;
+
+uniform sampler2D our_texture;
+
+void main()
+{
+    final_colors = coloring;
+}
+"""
+black_line_shader = pyglet.gl.current_context.create_program(
+    (black_line_vert_src, "vertex"), (black_line_frag_src, "fragment")
+)
+matgroup_black_line = pyglet.model.TexturedMaterialGroup(
+    pyglet.model.Material(
+        "XY",
+        [1.0, 1.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0, 1.0],
+        [1.0, 1.0, 1.0, 1.0],
+        [0.0, 0.0, 0.0, 1.0],
+        100,
+        "texture.png",
+    ),
+    black_line_shader,
+    atlas.get_texture(),
+)
 
 
 def cube_vertices(x: float, y: float, z: float, n: float) -> list[float]:

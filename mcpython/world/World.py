@@ -220,7 +220,7 @@ class World:
         """
         x, y, z = instance.position
         vertex_data = cube_vertices(x, y, z, 0.5)
-        texture_data = list(instance.TEXTURE_COORDINATES)
+        texture_data = instance.TEXTURE_COORDINATES
         vertex = shader.vertex_list(
             36,
             GL_TRIANGLES,

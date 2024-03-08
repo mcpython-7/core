@@ -329,7 +329,8 @@ class Window(pyglet.window.Window):
             x, y = self.rotation
             x, y = x + dx * m, y + dy * m
 
-            y = max(-90.0, min(90.0, y))
+            # y = max(-90.0, min(90.0, y))
+            y = max(-89.9, min(89.9, y))
 
             self.rotation = (x, y)
 
