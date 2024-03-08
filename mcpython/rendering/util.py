@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pyglet
+from mcpython.world.blocks.AbstractBlock import atlas
 
 default_vert_src = """#version 330 core
 in vec3 position;
@@ -52,7 +53,7 @@ matgroup = pyglet.model.TexturedMaterialGroup(
         "texture.png",
     ),
     shader,
-    pyglet.resource.texture("texture.png"),
+    atlas.get_texture(),
 )
 matgroup_black_line = pyglet.graphics.ShaderGroup(pyglet.graphics.get_default_shader())
 

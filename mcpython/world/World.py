@@ -15,7 +15,7 @@ from mcpython.rendering.util import shader, matgroup, cube_vertices, TEXTURE_PAT
 from mcpython.world.util import normalize, sectorize
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
-    GrassBlock,
+    DIRT,
     Stone,
     Sand,
     Bricks,
@@ -53,7 +53,7 @@ class World:
         for x in range(-n, n + 1, s):
             for z in range(-n, n + 1, s):
                 # create a layer stone a grass everywhere.
-                self.add_block((x, y - 2, z), GrassBlock, immediate=False)
+                self.add_block((x, y - 2, z), DIRT, immediate=False)
                 self.add_block((x, y - 3, z), Stone, immediate=False)
                 if x in (-n, n) or z in (-n, n):
                     # create outer walls.
@@ -69,7 +69,7 @@ class World:
             h = random.randint(1, 6)  # height of the hill
             s = random.randint(4, 8)  # 2 * s is the side length of the hill
             d = 1  # how quickly to taper off the hills
-            t = random.choice([GrassBlock, Sand, Bricks])
+            t = random.choice([DIRT, Sand, Bricks])
             for y in range(c, c + h):
                 for x in range(a - s, a + s + 1):
                     for z in range(b - s, b + s + 1):
