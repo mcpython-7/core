@@ -6,6 +6,8 @@ import math
 import PIL.Image
 import pyglet
 
+from mcpython.resources.ResourceManager import ResourceManager
+
 
 class AtlasReference:
     def __init__(
@@ -47,9 +49,14 @@ class TextureAtlas:
         self._cache: dict[str, AtlasReference] = {}
 
     def add_image_from_path(self, path: str) -> AtlasReference:
+        # <namespace>:<file>.png
+        if ":" in path:
+            path = "assets/{}/textures/{}.png".format(*path.split(":"))
+
         if path in self._cache:
             return self._cache[path]
-        reference = self.add_image(PIL.Image.open(path))  # todo: do a real load here!
+
+        reference = self.add_image(ResourceManager.load_pillow_image(path))
         self._cache[path] = reference
         return reference
 

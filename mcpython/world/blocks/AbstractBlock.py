@@ -5,10 +5,10 @@ from mcpython.rendering.TextureAtlas import TextureAtlas, AtlasReference
 
 
 atlas = TextureAtlas()
-dirt = atlas.add_image_from_path("dirt.png")
-stone = atlas.add_image_from_path("stone.png")
-sand = atlas.add_image_from_path("sand.png")
-bricks = atlas.add_image_from_path("bricks.png")
+dirt = atlas.add_image_from_path("minecraft:block/dirt")
+stone = atlas.add_image_from_path("minecraft:block/stone")
+sand = atlas.add_image_from_path("minecraft:block/sand")
+bricks = atlas.add_image_from_path("minecraft:block/bricks")
 
 
 def textured_cube(
