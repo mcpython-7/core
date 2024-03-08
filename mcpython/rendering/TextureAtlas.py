@@ -7,6 +7,7 @@ import PIL.Image
 import pyglet
 
 from mcpython.resources.ResourceManager import ResourceManager
+from mcpython import config
 
 
 class AtlasReference:
@@ -106,5 +107,5 @@ class TextureAtlas:
         raise RuntimeError("no more space!")
 
     def get_texture(self):
-        self.image.save("tmp.png")
-        return pyglet.image.load("tmp.png").get_texture()
+        self.image.save(config.TMP.joinpath("atlas.png"))
+        return pyglet.image.load(config.TMP.joinpath("atlas.png")).get_texture()

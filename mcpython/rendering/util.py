@@ -114,7 +114,6 @@ def cube_line_vertices(x: float, y: float, z: float, n: float) -> list[float]:
     # fmt: on
 
 
-TEXTURE_PATH = "texture.png"
 FACES = [
     (0, 1, 0),
     (0, -1, 0),

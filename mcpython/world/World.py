@@ -11,7 +11,7 @@ from pyglet.gl import GL_TRIANGLES
 from pyglet.graphics import TextureGroup
 
 from mcpython.config import TICKS_PER_SEC
-from mcpython.rendering.util import shader, matgroup, cube_vertices, TEXTURE_PATH, FACES
+from mcpython.rendering.util import shader, matgroup, cube_vertices, FACES
 from mcpython.world.util import normalize, sectorize
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
@@ -29,9 +29,6 @@ class World:
 
         # A Batch is a collection of vertex lists for batched rendering.
         self.batch = pyglet.graphics.Batch()
-
-        # A TextureGroup manages an OpenGL texture.
-        self.group = TextureGroup(image.load(TEXTURE_PATH).get_texture())
 
         # A mapping from position to the texture of the block at that position.
         # This defines all the blocks that are currently in the world.
