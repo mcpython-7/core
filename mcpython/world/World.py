@@ -9,6 +9,7 @@ import pyglet
 from pyglet import image
 from pyglet.gl import GL_TRIANGLES
 from pyglet.graphics import TextureGroup
+from pyglet.math import Vec3
 
 from mcpython.config import TICKS_PER_SEC
 from mcpython.rendering.util import (
@@ -85,8 +86,8 @@ class World:
 
     def hit_test(
         self,
-        position: tuple[int, int, int],
-        vector: tuple[float, float, float],
+        position: Vec3,
+        vector: Vec3,
         max_distance=8,
     ) -> tuple[tuple[int, int, int], tuple[int, int, int]] | tuple[None, None]:
         """Line of sight search from current position. If a block is
@@ -131,6 +132,7 @@ class World:
         position: tuple[int, int, int],
         block_type: type[AbstractBlock],
         immediate=True,
+        block_update=True,
     ):
         """Add a block with the given `texture` and `position` to the world.
 
@@ -154,8 +156,18 @@ class World:
             if self.exposed(position):
                 self.show_block(instance)
             self.check_neighbors(position)
+        instance.on_block_added()
 
-    def remove_block(self, position: tuple[int, int, int], immediate=True):
+        if block_update:
+            instance.on_block_updated()
+            self.send_block_update(position)
+
+    def remove_block(
+        self,
+        position: tuple[int, int, int],
+        immediate=True,
+        block_update=True,
+    ):
         """Remove the block at the given `position`.
 
         Parameters
@@ -173,6 +185,9 @@ class World:
             if instance.shown:
                 self.hide_block(instance)
             self.check_neighbors(position)
+        instance.on_block_removed()
+        if block_update:
+            self.send_block_update(position)
 
     def check_neighbors(self, position: tuple[int, int, int]):
         """Check all blocks surrounding `position` and ensure their visual
@@ -193,6 +208,15 @@ class World:
             else:
                 if instance.shown:
                     self.hide_block(instance)
+
+    def send_block_update(self, position: tuple[int, int, int]):
+        x, y, z = position
+        for dx, dy, dz in FACES:
+            key = (x + dx, y + dy, z + dz)
+            if key not in self.world:
+                continue
+            instance = self.world[key]
+            instance.on_block_updated()
 
     def show_block(self, instance: AbstractBlock, immediate=True):
         """Show the block at the given `position`. This method assumes the

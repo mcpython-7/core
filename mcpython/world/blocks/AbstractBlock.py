@@ -47,6 +47,23 @@ class AbstractBlock(abc.ABC):
         self.shown = False
         self.vertex_data: pyglet.graphics.vertexdomain.VertexList | None = None
 
+    def on_block_added(self):
+        pass
+
+    def on_block_removed(self):
+        pass
+
+    def on_block_updated(self):
+        pass
+
+    def on_block_interaction(self, button: int, modifiers: int) -> bool:
+        """
+        Called when the block is interacted with.
+        'button' and 'modifiers' are the mouse buttons pressed.
+        Should return 'True' if the normal logic should NOT continue.
+        """
+        return False
+
     def __repr__(self):
         return f"{self.__class__.__name__}{self.position}"
 

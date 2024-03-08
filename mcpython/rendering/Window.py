@@ -297,13 +297,18 @@ class Window(pyglet.window.Window):
             if (button == mouse.RIGHT) or (
                 (button == mouse.LEFT) and (modifiers & key.MOD_CTRL)
             ):
-
+                if block in self.world.world and self.world.world[block].on_block_interaction(button, modifiers):
+                    return
+                
                 # ON OSX, control + left click = right click.
                 if previous:
                     self.world.add_block(previous, self.block)
 
             elif button == pyglet.window.mouse.LEFT and block:
                 instance = self.world.world[block]
+
+                if block in self.world.world and self.world.world[block].on_block_interaction(button, modifiers):
+                    return
 
                 if instance.BREAKABLE:
                     self.world.remove_block(block)
