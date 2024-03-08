@@ -70,18 +70,29 @@ class TextureAtlas:
             if free_size[0] >= blocks[0] and free_size[1] >= blocks[1]:
                 self.free_slots.pop(i)
                 reference = AtlasReference(self, location, size)
-                self.free_slots.append(
-                    (
-                        (location[0] + blocks[0], location[1]),
-                        (free_size[0] - blocks[0], free_size[1]),
+                if free_size[0] > blocks[0]:
+                    self.free_slots.append(
+                        (
+                            (location[0] + blocks[0], location[1]),
+                            (free_size[0] - blocks[0], free_size[1]),
+                        )
                     )
-                )
-                self.free_slots.append(
-                    (
-                        (location[0], location[1] + blocks[1]),
-                        (blocks[0], free_size[1] - blocks[1]),
+                    if free_size[1] - blocks[1]:
+                        self.free_slots.append(
+                            (
+                                (location[0], location[1] + blocks[1]),
+                                (blocks[0], free_size[1] - blocks[1]),
+                            )
+                        )
+
+                elif free_size[1] - blocks[1]:
+                    self.free_slots.append(
+                        (
+                            (location[0], location[1] + blocks[1]),
+                            (free_size[0], free_size[1] - blocks[1]),
+                        )
                     )
-                )
+
                 self.free_slots.sort(key=lambda x: x[1][0] * x[1][1])
                 self.image.paste(
                     image,
