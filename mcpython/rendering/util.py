@@ -32,6 +32,7 @@ def create_shader_group(
 
 
 DEFAULT_BLOCK_SHADER, DEFAULT_BLOCK_GROUP = create_shader_group("default_block_shader")
+COLORED_BLOCK_SHADER, COLORED_BLOCK_GROUP = create_shader_group("colored_block_shader")
 COLORED_LINE_SHADER, COLORED_LINE_GROUP = create_shader_group("colored_outline_shader")
 
 
