@@ -16,7 +16,7 @@ from mcpython.config import (
     PLAYER_HEIGHT,
     JUMP_SPEED,
 )
-from mcpython.rendering.util import matgroup_black_line, cube_line_vertices, FACES
+from mcpython.rendering.util import COLORED_LINE_GROUP, cube_line_vertices, FACES
 from mcpython.world.World import World
 from mcpython.world.blocks.AbstractBlock import Bricks, Dirt, Sand, Stone
 from mcpython.world.util import sectorize, normalize
@@ -63,7 +63,7 @@ class Window(pyglet.window.Window):
             24,
             GL_LINES,
             self.focused_block_batch,
-            matgroup_black_line,
+            COLORED_LINE_GROUP,
             position=("f", cube_line_vertices(0, 0, 0, 0.51)),
             colors=("f", (0, 0, 0, 255) * 24),
         )

@@ -1,117 +1,38 @@
 from __future__ import annotations
 
+import pathlib
+
 import pyglet
 from mcpython.world.blocks.AbstractBlock import atlas
 
-default_vert_src = """#version 330 core
-in vec3 position;
-in vec2 tex_coords;
 
-out vec2 texture_coords;
-out vec3 vertex_position;
+def create_shader_group(
+    name: str,
+) -> tuple[pyglet.graphics.Shader, pyglet.model.TexturedMaterialGroup]:
+    path = pathlib.Path(__file__).parent
+    vertex_file = path.joinpath("shaders", f"{name}_vertex.glsl")
+    fragment_file = path.joinpath("shaders", f"{name}_fragment.glsl")
 
-uniform WindowBlock
-{
-    mat4 projection;
-    mat4 view;
-} window;
+    shader = pyglet.gl.current_context.create_program(
+        (vertex_file.read_text(), "vertex"), (fragment_file.read_text(), "fragment")
+    )
+    return shader, pyglet.model.TexturedMaterialGroup(
+        pyglet.model.Material(
+            "XY",
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 1.0],
+            100,
+            "texture.png",
+        ),
+        shader,
+        atlas.get_texture(),
+    )
 
-uniform mat4 model;
 
-void main()
-{
-    vec4 pos = window.view * model * vec4(position, 1.0);
-    gl_Position = window.projection * pos;
-
-    vertex_position = pos.xyz;
-    texture_coords = tex_coords;
-}
-"""
-default_frag_src = """#version 330 core
-in vec2 texture_coords;
-in vec3 vertex_position;
-out vec4 final_colors;
-
-uniform sampler2D our_texture;
-
-void main()
-{
-    final_colors = (texture(our_texture, texture_coords));
-}
-"""
-shader = pyglet.gl.current_context.create_program(
-    (default_vert_src, "vertex"), (default_frag_src, "fragment")
-)
-matgroup = pyglet.model.TexturedMaterialGroup(
-    pyglet.model.Material(
-        "XY",
-        [1.0, 1.0, 1.0, 1.0],
-        [1.0, 1.0, 1.0, 1.0],
-        [1.0, 1.0, 1.0, 1.0],
-        [0.0, 0.0, 0.0, 1.0],
-        100,
-        "texture.png",
-    ),
-    shader,
-    atlas.get_texture(),
-)
-
-black_line_vert_src = """#version 330 core
-in vec3 position;
-in vec2 tex_coords;
-in vec4 colors;
-
-out vec2 texture_coords;
-out vec3 vertex_position;
-out vec4 coloring;
-
-uniform WindowBlock
-{
-    mat4 projection;
-    mat4 view;
-} window;
-
-uniform mat4 model;
-
-void main()
-{
-    vec4 pos = window.view * model * vec4(position, 1.0);
-    gl_Position = window.projection * pos;
-
-    vertex_position = pos.xyz;
-    texture_coords = tex_coords;
-    coloring = colors;
-}
-"""
-black_line_frag_src = """#version 330 core
-in vec2 texture_coords;
-in vec3 vertex_position;
-in vec4 coloring;
-out vec4 final_colors;
-
-uniform sampler2D our_texture;
-
-void main()
-{
-    final_colors = coloring;
-}
-"""
-black_line_shader = pyglet.gl.current_context.create_program(
-    (black_line_vert_src, "vertex"), (black_line_frag_src, "fragment")
-)
-matgroup_black_line = pyglet.model.TexturedMaterialGroup(
-    pyglet.model.Material(
-        "XY",
-        [1.0, 1.0, 1.0, 1.0],
-        [1.0, 1.0, 1.0, 1.0],
-        [1.0, 1.0, 1.0, 1.0],
-        [0.0, 0.0, 0.0, 1.0],
-        100,
-        "texture.png",
-    ),
-    black_line_shader,
-    atlas.get_texture(),
-)
+DEFAULT_BLOCK_SHADER, DEFAULT_BLOCK_GROUP = create_shader_group("default_block_shader")
+COLORED_LINE_SHADER, COLORED_LINE_GROUP = create_shader_group("colored_outline_shader")
 
 
 def cube_vertices(x: float, y: float, z: float, n: float) -> list[float]:

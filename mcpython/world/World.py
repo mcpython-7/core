@@ -11,7 +11,12 @@ from pyglet.gl import GL_TRIANGLES
 from pyglet.graphics import TextureGroup
 
 from mcpython.config import TICKS_PER_SEC
-from mcpython.rendering.util import shader, matgroup, cube_vertices, FACES
+from mcpython.rendering.util import (
+    DEFAULT_BLOCK_SHADER,
+    DEFAULT_BLOCK_GROUP,
+    cube_vertices,
+    FACES,
+)
 from mcpython.world.util import normalize, sectorize
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
@@ -221,11 +226,11 @@ class World:
         x, y, z = instance.position
         vertex_data = cube_vertices(x, y, z, 0.5)
         texture_data = instance.TEXTURE_COORDINATES
-        vertex = shader.vertex_list(
+        vertex = DEFAULT_BLOCK_SHADER.vertex_list(
             36,
             GL_TRIANGLES,
             self.batch,
-            matgroup,
+            DEFAULT_BLOCK_GROUP,
             position=("f", vertex_data),
             tex_coords=("f", texture_data),
         )
