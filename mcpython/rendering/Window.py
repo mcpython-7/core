@@ -3,7 +3,14 @@ from __future__ import annotations
 import math
 
 import pyglet
-from pyglet.gl import GL_LINES, glDisable, GL_DEPTH_TEST, glEnable
+from pyglet.gl import (
+    GL_LINES,
+    glDisable,
+    GL_DEPTH_TEST,
+    glEnable,
+    glClear,
+    GL_DEPTH_BUFFER_BIT,
+)
 from pyglet.math import Vec3, Mat4
 from pyglet.window import key, mouse
 
@@ -109,6 +116,15 @@ class Window(pyglet.window.Window):
         # This call schedules the `update()` method to be called
         # TICKS_PER_SEC. This is the main game event loop.
         pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
+
+        import mcpython.world.blocks.AbstractBlock
+
+        self.stone_block_batch = pyglet.graphics.Batch()
+        self.stone_block_vetex = (
+            mcpython.world.blocks.AbstractBlock.Stone.STATE_FILE.create_vertex_list(
+                self.stone_block_batch, (0, 0, 0), {}
+            )
+        )
 
     def set_exclusive_mouse(self, exclusive: bool):
         """If `exclusive` is True, the game will capture the mouse, if False
@@ -426,6 +442,15 @@ class Window(pyglet.window.Window):
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
         glEnable(GL_DEPTH_TEST)
 
+    def set_preview_3d(self):
+        self.projection = Mat4.perspective_projection(
+            self.aspect_ratio, z_near=0.1, z_far=100, fov=45
+        )
+        self.view = Mat4.look_at(
+            Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0)
+        ) @ Mat4.from_translation(Vec3(-3, -3, 0))
+        glEnable(GL_DEPTH_TEST)
+
     def on_draw(self):
         """Called by pyglet to draw the canvas."""
         self.clear()
@@ -435,6 +460,10 @@ class Window(pyglet.window.Window):
         self.set_2d()
         self.draw_label()
         self.draw_reticle()
+
+        # glClear(GL_DEPTH_BUFFER_BIT)
+        # self.set_preview_3d()
+        # self.stone_block_batch.draw()
 
     def draw_focused_block(self):
         """Draw black edges around the block that is currently under the
