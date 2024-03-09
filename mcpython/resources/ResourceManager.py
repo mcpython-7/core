@@ -64,7 +64,7 @@ class _ResourceManager:
             if source.exists(file):
                 return source.load_raw(file)
 
-        raise FileNotFoundError
+        raise FileNotFoundError(file)
 
     def load_text(self, file: str, encoding="utf-8") -> str:
         return self.load_raw(file).decode(encoding)

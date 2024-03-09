@@ -3,7 +3,18 @@ from __future__ import annotations
 import pathlib
 
 import pyglet
-from mcpython.world.blocks.AbstractBlock import atlas
+from pyglet.math import Vec3
+
+from mcpython.rendering.BlockModels import _TEXTURE_ATLAS
+
+
+_GROUPS: list[pyglet.model.TexturedMaterialGroup] = []
+
+
+def update_texture_atlas_references():
+    _TEXTURE_ATLAS.refresh()
+    for group in _GROUPS:
+        group.texture = _TEXTURE_ATLAS.get_texture()
 
 
 def create_shader_group(
@@ -16,7 +27,7 @@ def create_shader_group(
     shader = pyglet.gl.current_context.create_program(
         (vertex_file.read_text(), "vertex"), (fragment_file.read_text(), "fragment")
     )
-    return shader, pyglet.model.TexturedMaterialGroup(
+    group = pyglet.model.TexturedMaterialGroup(
         pyglet.model.Material(
             "XY",
             [1.0, 1.0, 1.0, 1.0],
@@ -27,8 +38,11 @@ def create_shader_group(
             "texture.png",
         ),
         shader,
-        atlas.get_texture(),
+        _TEXTURE_ATLAS.get_texture(),
     )
+    _GROUPS.append(group)
+
+    return shader, group
 
 
 DEFAULT_BLOCK_SHADER, DEFAULT_BLOCK_GROUP = create_shader_group("default_block_shader")
@@ -36,33 +50,35 @@ COLORED_BLOCK_SHADER, COLORED_BLOCK_GROUP = create_shader_group("colored_block_s
 COLORED_LINE_SHADER, COLORED_LINE_GROUP = create_shader_group("colored_outline_shader")
 
 
-def cube_vertices(x: float, y: float, z: float, n: float) -> list[float]:
+def cube_vertices(center: Vec3, size: Vec3) -> list[float]:
+    x, y, z = center
+    nx, ny, nz = size
     """Return the vertices of the cube at position x, y, z with size 2*n."""
     # fmt: off
     return [
         # Top
-        x-n, y+n, z-n, x-n, y+n, z+n, x+n, y+n, z+n,  # Triangle 1
-        x-n, y+n, z-n, x+n, y+n, z+n, x+n, y+n, z-n,  # Triangle 2
+        x-nx, y+ny, z-nz, x-nx, y+ny, z+nz, x+nx, y+ny, z+nz,  # Triangle 1
+        x-nx, y+ny, z-nz, x+nx, y+ny, z+nz, x+nx, y+ny, z-nz,  # Triangle 2
 
         # Bottom
-        x-n, y-n, z-n, x+n, y-n, z-n, x+n, y-n, z+n,  # Triangle 1
-        x-n, y-n, z-n, x+n, y-n, z+n, x-n, y-n, z+n,  # Triangle 2
+        x-nx, y-ny, z-nz, x+nx, y-ny, z-nz, x+nx, y-ny, z+nz,  # Triangle 1
+        x-nx, y-ny, z-nz, x+nx, y-ny, z+nz, x-nx, y-ny, z+nz,  # Triangle 2
 
         # Left
-        x-n, y-n, z-n, x-n, y-n, z+n, x-n, y+n, z+n,  # Triangle 1
-        x-n, y-n, z-n, x-n, y+n, z+n, x-n, y+n, z-n,  # Triangle 2
+        x-nx, y-ny, z-nz, x-nx, y-ny, z+nz, x-nx, y+ny, z+nz,  # Triangle 1
+        x-nx, y-ny, z-nz, x-nx, y+ny, z+nz, x-nx, y+ny, z-nz,  # Triangle 2
 
         # Right
-        x+n, y-n, z+n, x+n, y-n, z-n, x+n, y+n, z-n,  # Triangle 1
-        x+n, y-n, z+n, x+n, y+n, z-n, x+n, y+n, z+n,  # Triangle 2
+        x+nx, y-ny, z+nz, x+nx, y-ny, z-nz, x+nx, y+ny, z-nz,  # Triangle 1
+        x+nx, y-ny, z+nz, x+nx, y+ny, z-nz, x+nx, y+ny, z+nz,  # Triangle 2
 
         # Front
-        x-n, y-n, z+n, x+n, y-n, z+n, x+n, y+n, z+n,  # Triangle 1
-        x-n, y-n, z+n, x+n, y+n, z+n, x-n, y+n, z+n,  # Triangle 2
+        x-nx, y-ny, z+nz, x+nx, y-ny, z+nz, x+nx, y+ny, z+nz,  # Triangle 1
+        x-nx, y-ny, z+nz, x+nx, y+ny, z+nz, x-nx, y+ny, z+nz,  # Triangle 2
 
         # Back
-        x+n, y-n, z-n, x-n, y-n, z-n, x-n, y+n, z-n,  # Triangle 1
-        x+n, y-n, z-n, x-n, y+n, z-n, x+n, y+n, z-n   # Triangle 2
+        x+nx, y-ny, z-nz, x-nx, y-ny, z-nz, x-nx, y+ny, z-nz,  # Triangle 1
+        x+nx, y-ny, z-nz, x-nx, y+ny, z-nz, x+nx, y+ny, z-nz   # Triangle 2
     ]
     # fmt: on
 

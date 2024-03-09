@@ -48,6 +48,7 @@ class TextureAtlas:
             ((0, 0), start_size)
         ]
         self._cache: dict[str, AtlasReference] = {}
+        self._texture_cache = None
 
     def add_image_from_path(self, path: str) -> AtlasReference:
         # <namespace>:<file>.png
@@ -102,10 +103,20 @@ class TextureAtlas:
                         (self.size[1] - location[1] - 1) * self.block_size[1],
                     ),
                 )
+                self._texture_cache = None
                 return reference
 
         raise RuntimeError("no more space!")
 
     def get_texture(self):
+        if self._texture_cache:
+            return self._texture_cache
+
         self.image.save(config.TMP.joinpath("atlas.png"))
-        return pyglet.image.load(config.TMP.joinpath("atlas.png")).get_texture()
+        self._texture_cache = pyglet.image.load(
+            config.TMP.joinpath("atlas.png")
+        ).get_texture()
+        return self._texture_cache
+
+    def refresh(self):
+        self._texture_cache = None
