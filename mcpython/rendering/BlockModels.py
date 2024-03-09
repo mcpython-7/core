@@ -3,6 +3,7 @@ from __future__ import annotations
 import abc
 import copy
 import functools
+import random
 import typing
 
 import pyglet.graphics
@@ -209,14 +210,19 @@ class BlockState:
     ):
         self.models = models
 
+        if len(models) == 1:
+            self.get_model = lambda _: self.models[0]
+        else:
+            weights = [m[-1] for m in self.models]
+            self.get_model = lambda _: random.choices(self.models, weights, k=1)[0]
+
     def get_required_models(self) -> list[str]:
         return list(map(lambda e: e[0], self.models))
 
     def get_model(
         self, position: tuple[int, int, int]
     ) -> tuple[str, BlockModel | None, int, int, int, bool, int]:
-        # todo: decide which one to use!
-        return self.models[0]
+        raise RuntimeError
 
     def bake(self):
         self.models = [
