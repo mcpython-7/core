@@ -1,5 +1,5 @@
 
-pyglet==2.0.12
+pyglet==2.0.14
 pillow==10.2.0
 requests==2.31.0
 aiofiles==23.2.1

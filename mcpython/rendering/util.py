@@ -5,7 +5,7 @@ import pathlib
 import pyglet
 from pyglet.math import Vec3
 
-from mcpython.rendering.BlockModels import _TEXTURE_ATLAS
+from mcpython.rendering.Models import _TEXTURE_ATLAS
 
 
 _GROUPS: list[pyglet.model.TexturedMaterialGroup] = []

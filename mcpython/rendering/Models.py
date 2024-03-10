@@ -25,7 +25,7 @@ def _parse_stringfieid_blockstate(string: str) -> dict[str, str]:
     )
 
 
-def _try_resolve_texture(model: BlockModel, element: dict, face: str) -> str | None:
+def _try_resolve_texture(model: Model, element: dict, face: str) -> str | None:
     if face not in element["faces"]:
         return
     return model.resolve_texture_name(element["faces"][face]["texture"])
@@ -42,11 +42,11 @@ def _textured_cube(
     return result
 
 
-class BlockModel:
-    _MODEL_CACHE: dict[str, BlockModel] = {}
+class Model:
+    _MODEL_CACHE: dict[str, Model] = {}
 
     @classmethod
-    def by_name(cls, name: str) -> BlockModel:
+    def by_name(cls, name: str) -> Model:
         if name in cls._MODEL_CACHE:
             return cls._MODEL_CACHE[name]
 
@@ -60,7 +60,7 @@ class BlockModel:
         return model
 
     @classmethod
-    def by_data(cls, name: str, data: dict) -> BlockModel:
+    def by_data(cls, name: str, data: dict) -> Model:
         model = cls(name)
 
         if "parent" in data:
@@ -121,7 +121,7 @@ class BlockModel:
 
     def __init__(self, name: str):
         self.parent_name: str | None = None
-        self.parent: BlockModel | None = None
+        self.parent: Model | None = None
         self.texture_table: dict[str, str] = {}
 
         self.elements: list[
@@ -186,6 +186,27 @@ class BlockModel:
 
         return count, vertex, texture
 
+    def create_vertex_list(
+        self,
+        batch: pyglet.graphics.Batch,
+        position: tuple[int, int, int],
+    ):
+        from mcpython.rendering.util import (
+            DEFAULT_BLOCK_SHADER,
+            DEFAULT_BLOCK_GROUP,
+        )
+
+        count, vertex_data, texture_data = self.get_rendering_data(position)
+
+        return DEFAULT_BLOCK_SHADER.vertex_list(
+            count,
+            GL_TRIANGLES,
+            batch,
+            DEFAULT_BLOCK_GROUP,
+            position=("f", vertex_data),
+            tex_coords=("f", texture_data),
+        )
+
 
 class BlockState:
     @classmethod
@@ -206,7 +227,7 @@ class BlockState:
         return cls(models)
 
     def __init__(
-        self, models: list[tuple[str, BlockModel | None, int, int, int, bool, int]]
+        self, models: list[tuple[str, Model | None, int, int, int, bool, int]]
     ):
         self.models = models
 
@@ -221,12 +242,12 @@ class BlockState:
 
     def get_model(
         self, position: tuple[int, int, int]
-    ) -> tuple[str, BlockModel | None, int, int, int, bool, int]:
+    ) -> tuple[str, Model | None, int, int, int, bool, int]:
         raise RuntimeError
 
     def bake(self):
         self.models = [
-            (name, model or BlockModel.by_name(name), x, y, z, uvlock, weight)
+            (name, model or Model.by_name(name), x, y, z, uvlock, weight)
             for name, model, x, y, z, uvlock, weight in self.models
         ]
         for _, model, *__ in self.models:
@@ -310,7 +331,7 @@ class BlockStateFile:
 
     def get_models(
         self, position: tuple[int, int, int], state: dict[str, str]
-    ) -> typing.Iterator[tuple[str, BlockModel | None, int, int, int, bool, int]]:
+    ) -> typing.Iterator[tuple[str, Model | None, int, int, int, bool, int]]:
         if self.variants:
             for case, variant in self.variants:
                 if all(state.get(key) == value for key, value in case.items()):

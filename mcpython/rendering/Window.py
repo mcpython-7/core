@@ -23,6 +23,8 @@ from mcpython.config import (
     PLAYER_HEIGHT,
     JUMP_SPEED,
 )
+from mcpython.containers.AbstractContainer import CONTAINER_STACK
+from mcpython.containers.PlayerInventoryContainer import PlayerInventoryContainer
 from mcpython.rendering.util import COLORED_LINE_GROUP, cube_line_vertices, FACES
 from mcpython.world.World import World
 from mcpython.world.blocks.AbstractBlock import Bricks, Dirt, Sand, Stone
@@ -117,14 +119,8 @@ class Window(pyglet.window.Window):
         # TICKS_PER_SEC. This is the main game event loop.
         pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
 
-        import mcpython.world.blocks.AbstractBlock
-
-        self.stone_block_batch = pyglet.graphics.Batch()
-        self.stone_block_vetex = (
-            mcpython.world.blocks.AbstractBlock.Stone.STATE_FILE.create_vertex_list(
-                self.stone_block_batch, (0, 0, 0), {}
-            )
-        )
+        self.player_inventory = PlayerInventoryContainer()
+        self.inventory_scale = 2
 
     def set_exclusive_mouse(self, exclusive: bool):
         """If `exclusive` is True, the game will capture the mouse, if False
@@ -333,7 +329,15 @@ class Window(pyglet.window.Window):
                 if instance.BREAKABLE:
                     self.world.remove_block(block)
 
-        else:
+            return
+
+        rx = (x - self.get_size()[0] / 2) / self.inventory_scale
+        ry = (y - self.get_size()[1] / 2) / self.inventory_scale
+        for container in CONTAINER_STACK:
+            if container.on_mouse_press(rx, ry, button, modifiers):
+                return
+
+        if not self.player_inventory.open:
             self.set_exclusive_mouse(True)
 
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
@@ -373,19 +377,37 @@ class Window(pyglet.window.Window):
         """
         if symbol == key.W:
             self.strafe[0] -= 1
+
         elif symbol == key.S:
             self.strafe[0] += 1
+
         elif symbol == key.A:
             self.strafe[1] -= 1
+
         elif symbol == key.D:
             self.strafe[1] += 1
+
         elif symbol == key.SPACE:
             if self.dy == 0:
                 self.dy = JUMP_SPEED
+
         elif symbol == key.ESCAPE:
-            self.set_exclusive_mouse(False)
+            if self.player_inventory.open:
+                self.player_inventory.hide_container()
+
+            self.set_exclusive_mouse(not self.exclusive)
+
+        elif symbol == key.E:
+            if self.player_inventory.open:
+                self.set_exclusive_mouse(True)
+                self.player_inventory.hide_container()
+            else:
+                self.set_exclusive_mouse(False)
+                self.player_inventory.show_container()
+
         elif symbol == key.TAB:
             self.flying = not self.flying
+
         elif symbol in self.num_keys:
             index = (symbol - self.num_keys[0]) % len(self.inventory)
             self.block = self.inventory[index]
@@ -432,6 +454,14 @@ class Window(pyglet.window.Window):
         self.view = Mat4()
         glDisable(GL_DEPTH_TEST)
 
+    def set_2d_centered_for_inventory(self):
+        width, height = self.get_size()
+        self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
+        self.view = Mat4.from_translation(
+            Vec3(width / 2, height / 2, 0)
+        ) @ Mat4.from_scale(Vec3(self.inventory_scale, self.inventory_scale, 1))
+        glDisable(GL_DEPTH_TEST)
+
     def set_3d(self):
         """Configure OpenGL to draw in 3d.3"""
         self.projection = Mat4.perspective_projection(
@@ -442,13 +472,18 @@ class Window(pyglet.window.Window):
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
         glEnable(GL_DEPTH_TEST)
 
-    def set_preview_3d(self):
+    def set_preview_3d(self, offset: Vec3):
         self.projection = Mat4.perspective_projection(
             self.aspect_ratio, z_near=0.1, z_far=100, fov=45
         )
-        self.view = Mat4.look_at(
-            Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0)
-        ) @ Mat4.from_translation(Vec3(-3, -3, 0))
+
+        glClear(GL_DEPTH_BUFFER_BIT)
+        self.view = (
+            Mat4.look_at(Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0))
+            @ Mat4.from_scale(Vec3(0.1, 0.1, 0.1))
+            @ Mat4.from_translation(offset / 20)
+        )
+
         glEnable(GL_DEPTH_TEST)
 
     def on_draw(self):
@@ -461,9 +496,14 @@ class Window(pyglet.window.Window):
         self.draw_label()
         self.draw_reticle()
 
-        # glClear(GL_DEPTH_BUFFER_BIT)
-        # self.set_preview_3d()
-        # self.stone_block_batch.draw()
+        self.draw_inventory()
+
+    def draw_inventory(self):
+        glClear(GL_DEPTH_BUFFER_BIT)
+
+        self.set_2d_centered_for_inventory()
+        for container in CONTAINER_STACK:
+            container.draw(self)
 
     def draw_focused_block(self):
         """Draw black edges around the block that is currently under the

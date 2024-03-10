@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import io
 import zipfile
 import pathlib
 import json
 import PIL.Image
 import pyglet
+
+from mcpython.config import TMP
 
 
 class AbstractResourceSource:
@@ -81,6 +85,54 @@ class _ResourceManager:
     def load_pyglet_image(self, file: str) -> pyglet.image.AbstractImage:
         stream = io.BytesIO(self.load_raw(file))
         return pyglet.image.load(file, stream)
+
+    def load_image(self, file: str) -> ImageWrapper:
+        data = self.load_raw(file)
+        return ImageWrapper(file, data)
+
+
+class ImageWrapper:
+    def __init__(
+        self,
+        file: str,
+        data: bytes = None,
+        pyglet_image: pyglet.image.AbstractImage = None,
+        pillow_image: PIL.Image.Image = None,
+    ):
+        self._pillow_image = pillow_image
+        self._pyglet_image = pyglet_image
+        self.file = file
+        self._data = data
+
+    def get_region(self, start: tuple[int, int], end: tuple[int, int]) -> ImageWrapper:
+        image = self.to_pillow().crop(start + end)
+        image.save(f"{TMP}/tmp.png")
+        return ImageWrapper(self.file, pillow_image=image)
+
+    def get_data(self) -> bytes:
+        if not self._data:
+            buffer = io.BytesIO()
+            buffer.name = self.file
+            if self._pyglet_image:
+                self._pyglet_image.save(self.file, buffer)
+            else:
+                self._pillow_image.save(buffer)
+            self._data = buffer.getvalue()
+        return self._data
+
+    def to_pyglet(self) -> pyglet.image.AbstractImage:
+        if not self._pyglet_image:
+            self._pyglet_image = pyglet.image.load(
+                self.file, io.BytesIO(self.get_data())
+            )
+
+        return self._pyglet_image
+
+    def to_pillow(self) -> PIL.Image.Image:
+        if not self._pillow_image:
+            self._pillow_image = PIL.Image.open(io.BytesIO(self.get_data()))
+
+        return self._pillow_image
 
 
 ResourceManager = _ResourceManager()

@@ -6,7 +6,7 @@ import typing
 import pyglet.graphics.vertexdomain
 from mcpython.rendering.TextureAtlas import TextureAtlas, AtlasReference
 
-from mcpython.rendering.BlockModels import BlockStateFile
+from mcpython.rendering.Models import BlockStateFile
 
 
 # atlas = TextureAtlas()
