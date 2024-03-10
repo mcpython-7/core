@@ -1,9 +1,9 @@
 #version 330 core
 in vec3 position;
+in vec2 render_offset;
 in vec2 tex_coords;
 
 out vec2 texture_coords;
-out vec3 vertex_position;
 
 uniform WindowBlock
 {
@@ -15,9 +15,8 @@ uniform mat4 model;
 
 void main()
 {
-    vec4 pos = window.view * model * vec4(position, 1.0);
-    gl_Position = window.projection * pos;
+    gl_Position = window.projection * model * window.view * vec4(position, 1.0);
+    gl_Position.xy += render_offset; // Adding screen offset in pixels
 
-    vertex_position = pos.xyz;
     texture_coords = tex_coords;
 }

@@ -8,7 +8,7 @@ import typing
 
 import pyglet.graphics
 from pyglet.gl import GL_TRIANGLES
-from pyglet.math import Vec3
+from pyglet.math import Vec3, Vec2
 
 from mcpython.resources.ResourceManager import ResourceManager
 from mcpython.rendering.TextureAtlas import TextureAtlas, AtlasReference
@@ -190,6 +190,7 @@ class Model:
         self,
         batch: pyglet.graphics.Batch,
         position: tuple[int, int, int],
+        offset: Vec2 = Vec2(0, 0),
     ):
         from mcpython.rendering.util import (
             DEFAULT_BLOCK_SHADER,
@@ -205,6 +206,7 @@ class Model:
             DEFAULT_BLOCK_GROUP,
             position=("f", vertex_data),
             tex_coords=("f", texture_data),
+            render_offset=("f", tuple(offset) * count),
         )
 
 

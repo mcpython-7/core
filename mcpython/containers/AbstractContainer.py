@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 import pyglet.graphics
-from pyglet.math import Mat4, Vec3
+from pyglet.math import Mat4, Vec3, Vec4, Vec2
 
 from mcpython.containers.ItemStack import ItemStack
 
@@ -20,13 +20,12 @@ class Slot:
         self.slot_vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
 
     def draw(self, window: Window):
-        window.set_preview_3d(
-            -Vec3(
-                self.container.visual_size[0] - self.relative_position[0],
-                self.container.visual_size[1] - self.relative_position[1],
-                0,
-            )
+        offset = Vec3(
+            self.relative_position[0] - self.container.visual_size[0] / 2,
+            self.relative_position[1] - self.container.visual_size[1] / 2,
+            0,
         )
+        window.set_preview_3d(offset, Vec3(*self.container.visual_size))
         self.slot_batch.draw()
         window.set_2d_centered_for_inventory()
 
@@ -39,11 +38,35 @@ class Slot:
         self.itemstack = stack
 
         if self.itemstack.item is not None:
+            from mcpython.rendering.Window import Window
+
+            width, height = Window.INSTANCE.get_size()
+
+            x = self.relative_position[0] - self.container.visual_size[0] / 2
+            y = self.relative_position[1] - self.container.visual_size[1] / 2
+            # print(x, y, width, height)
+
             self.slot_vertex_data.append(
-                self.itemstack.item.MODEL.create_vertex_list(self.slot_batch, (0, 0, 0))
+                self.itemstack.item.MODEL.create_vertex_list(
+                    self.slot_batch,
+                    (0, 0, 0),
+                    offset=Vec2(
+                        x / width * 12.5,
+                        y / height * 12.5,
+                    ),
+                ),
             )
 
         return self
+
+    def on_resize(self, width: int, height: int):
+        if self.slot_vertex_data:
+            x = self.relative_position[0] - self.container.visual_size[0] / 2
+            y = self.relative_position[1] - self.container.visual_size[1] / 2
+            for item in self.slot_vertex_data:
+                item.set_attribute_data(
+                    "render_offset", (x / width * 12.5, y / height * 12.5) * item.count
+                )
 
 
 class Container:
@@ -91,6 +114,10 @@ class Container:
             -self.visual_size[0] / 2 <= x <= self.visual_size[0] / 2
             and -self.visual_size[1] / 2 <= y <= self.visual_size[1] / 2
         )
+
+    def on_resize(self, width: int, height: int):
+        for slot in self.slots:
+            slot.on_resize(width, height)
 
 
 CONTAINER_STACK: list[Container] = []

@@ -32,9 +32,11 @@ from mcpython.world.util import sectorize, normalize
 
 
 class Window(pyglet.window.Window):
+    INSTANCE: Window = None
 
     def __init__(self, *args, **kwargs):
         super(Window, self).__init__(*args, **kwargs)
+        Window.INSTANCE = self
 
         # Whether or not the window exclusively captures the mouse.
         self.exclusive = False
@@ -447,6 +449,9 @@ class Window(pyglet.window.Window):
             pyglet.shapes.Line(x, y - n, x, y + n, color=(0, 0, 0, 255), width=2),
         )
 
+        for container in CONTAINER_STACK:
+            container.on_resize(width, height)
+
     def set_2d(self):
         """Configure OpenGL to draw in 2d."""
         width, height = self.get_size()
@@ -472,16 +477,23 @@ class Window(pyglet.window.Window):
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
         glEnable(GL_DEPTH_TEST)
 
-    def set_preview_3d(self, offset: Vec3):
+    def set_preview_3d(self, offset: Vec3, box_size: Vec3):
+        width, height = self.get_size()
+        # self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
         self.projection = Mat4.perspective_projection(
             self.aspect_ratio, z_near=0.1, z_far=100, fov=45
         )
 
+        # don't know why this is needed, but we need it here...
+        extra_scale = self.get_size()[1] / 600
+
         glClear(GL_DEPTH_BUFFER_BIT)
         self.view = (
-            Mat4.look_at(Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0))
-            @ Mat4.from_scale(Vec3(0.1, 0.1, 0.1))
-            @ Mat4.from_translation(offset / 20)
+            Mat4()
+            @ Mat4.look_at(Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0))
+            @ Mat4.from_scale(Vec3(0.08, 0.08, 0.08) / extra_scale)
+            # @ Mat4.from_translation(new_offset)
+            # @ Mat4.from_translation(new_offset)
         )
 
         glEnable(GL_DEPTH_TEST)
