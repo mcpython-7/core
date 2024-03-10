@@ -23,7 +23,7 @@ from mcpython.config import (
     PLAYER_HEIGHT,
     JUMP_SPEED,
 )
-from mcpython.containers.AbstractContainer import CONTAINER_STACK
+from mcpython.containers.AbstractContainer import CONTAINER_STACK, Slot
 from mcpython.containers.PlayerInventoryContainer import PlayerInventoryContainer
 from mcpython.rendering.util import COLORED_LINE_GROUP, cube_line_vertices, FACES
 from mcpython.world.World import World
@@ -37,6 +37,8 @@ class Window(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
         super(Window, self).__init__(*args, **kwargs)
         Window.INSTANCE = self
+
+        self.mouse_position = 0, 0
 
         # Whether or not the window exclusively captures the mouse.
         self.exclusive = False
@@ -123,6 +125,7 @@ class Window(pyglet.window.Window):
 
         self.player_inventory = PlayerInventoryContainer()
         self.inventory_scale = 2
+        self.moving_player_slot = Slot(self.player_inventory, (0, 0))
 
     def set_exclusive_mouse(self, exclusive: bool):
         """If `exclusive` is True, the game will capture the mouse, if False
@@ -335,8 +338,14 @@ class Window(pyglet.window.Window):
 
         rx = (x - self.get_size()[0] / 2) / self.inventory_scale
         ry = (y - self.get_size()[1] / 2) / self.inventory_scale
+
         for container in CONTAINER_STACK:
-            if container.on_mouse_press(rx, ry, button, modifiers):
+            if container.on_mouse_press(
+                rx + container.visual_size[0] / 2,
+                ry + container.visual_size[1] / 2,
+                button,
+                modifiers,
+            ):
                 return
 
         if not self.player_inventory.open:
@@ -364,6 +373,11 @@ class Window(pyglet.window.Window):
             y = max(-89.9, min(89.9, y))
 
             self.rotation = (x, y)
+
+        self.mouse_position = x, y
+
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        self.mouse_position = x, y
 
     def on_key_press(self, symbol: int, modifiers: int):
         """Called when the player presses a key. See pyglet docs for key
@@ -493,7 +507,6 @@ class Window(pyglet.window.Window):
             @ Mat4.look_at(Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0))
             @ Mat4.from_scale(Vec3(0.08, 0.08, 0.08) / extra_scale)
             # @ Mat4.from_translation(new_offset)
-            # @ Mat4.from_translation(new_offset)
         )
 
         glEnable(GL_DEPTH_TEST)
@@ -516,6 +529,16 @@ class Window(pyglet.window.Window):
         self.set_2d_centered_for_inventory()
         for container in CONTAINER_STACK:
             container.draw(self)
+
+        x, y = self.mouse_position
+        rx = (x - self.get_size()[0] / 2) / self.inventory_scale
+        ry = (y - self.get_size()[1] / 2) / self.inventory_scale
+        self.moving_player_slot.relative_position = (
+            rx + self.player_inventory.visual_size[0] / 2,
+            ry + self.player_inventory.visual_size[1] / 2,
+        )
+        self.moving_player_slot.on_resize(*self.get_size())
+        self.moving_player_slot.draw(self)
 
     def draw_focused_block(self):
         """Draw black edges around the block that is currently under the
