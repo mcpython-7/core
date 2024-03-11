@@ -7,10 +7,6 @@ class ItemStack:
 
     EMPTY: ItemStack = None
 
-    @classmethod
-    def empty(cls):
-        return cls.EMPTY
-
     def __init__(self, item: type[AbstractItem] | None, count=1):
         self._item = item if count != 0 else None
         self._count = count if item is not None else 0

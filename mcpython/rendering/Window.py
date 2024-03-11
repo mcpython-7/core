@@ -35,7 +35,6 @@ from mcpython.rendering.util import (
     off_axis_projection_matrix,
 )
 from mcpython.world.World import World
-from mcpython.world.blocks.AbstractBlock import Bricks, Dirt, Sand, Stone
 from mcpython.world.util import sectorize, normalize
 
 
@@ -91,12 +90,6 @@ class Window(pyglet.window.Window):
 
         # Velocity in the y (upward) direction.
         self.dy = 0
-
-        # A list of blocks the player can place. Hit num keys to cycle.
-        self.inventory = [Bricks, Dirt, Sand, Stone]
-
-        # The current block the user can place. Hit num keys to cycle.
-        self.block = self.inventory[0]
 
         # Convenience list of num keys.
         self.num_keys = [
@@ -332,7 +325,11 @@ class Window(pyglet.window.Window):
 
                 # ON OSX, control + left click = right click.
                 if previous:
-                    self.world.add_block(previous, self.block)
+                    stack = self.player_inventory.get_selected_itemstack()
+
+                    if not stack.is_empty():
+                        if block := stack.item.create_block_to_be_placed(stack):
+                            self.world.add_block(previous, block)
 
             elif button == pyglet.window.mouse.LEFT and block:
                 instance = self.world.world[block]
@@ -436,7 +433,6 @@ class Window(pyglet.window.Window):
         elif symbol in self.num_keys:
             index = symbol - self.num_keys[0]
             self.player_inventory.selected_slot = index
-            self.block = self.inventory[index % len(self.inventory)]
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.player_inventory.selected_slot = int(

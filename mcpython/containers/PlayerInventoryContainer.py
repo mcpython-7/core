@@ -7,7 +7,7 @@ import pyglet.sprite
 from mcpython.containers.AbstractContainer import Container, Slot, SlotRenderCopy
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.resources.ResourceManager import ResourceManager
-from mcpython.world.items.AbstractItem import Stone, Dirt
+from mcpython.world.items.AbstractItem import ITEMS
 
 if typing.TYPE_CHECKING:
     from mcpython.rendering.Window import Window
@@ -29,7 +29,7 @@ class PlayerInventoryContainer(Container):
                 Slot(
                     self,
                     (8 + 18 * i, 8),
-                ).set_stack(ItemStack(Dirt))
+                )
                 for i in range(9)
             ]
             + [
@@ -54,7 +54,14 @@ class PlayerInventoryContainer(Container):
                 for i in range(9)
             ]
         )
+
+        for slot, item in zip(self.slots, ITEMS):
+            slot.set_stack(ItemStack(item))
+
         self.selected_slot = 0
+
+    def get_selected_itemstack(self) -> ItemStack:
+        return self.slots[self.selected_slot].itemstack
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:
         if not super().on_mouse_press(x, y, button, modifiers):
