@@ -439,14 +439,15 @@ class Window(pyglet.window.Window):
         elif symbol == key.TAB:
             self.flying = not self.flying
 
-        elif symbol in self.num_keys:
+        elif symbol in self.num_keys and self.exclusive:
             index = symbol - self.num_keys[0]
             self.player_inventory.selected_slot = index
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        self.player_inventory.selected_slot = int(
-            (self.player_inventory.selected_slot - scroll_y) % 9
-        )
+        if self.exclusive:
+            self.player_inventory.selected_slot = int(
+                (self.player_inventory.selected_slot - scroll_y) % 9
+            )
 
     def on_key_release(self, symbol: int, modifiers: int):
         """Called when the player releases a key. See pyglet docs for key
