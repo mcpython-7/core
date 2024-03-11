@@ -109,7 +109,6 @@ class Window(pyglet.window.Window):
             key._7,
             key._8,
             key._9,
-            key._0,
         ]
 
         # Instance of the model that handles the world.
@@ -435,8 +434,14 @@ class Window(pyglet.window.Window):
             self.flying = not self.flying
 
         elif symbol in self.num_keys:
-            index = (symbol - self.num_keys[0]) % len(self.inventory)
-            self.block = self.inventory[index]
+            index = symbol - self.num_keys[0]
+            self.player_inventory.selected_slot = index
+            self.block = self.inventory[index % len(self.inventory)]
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        self.player_inventory.selected_slot = int(
+            (self.player_inventory.selected_slot - scroll_y) % 9
+        )
 
     def on_key_release(self, symbol: int, modifiers: int):
         """Called when the player releases a key. See pyglet docs for key

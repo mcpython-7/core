@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+import typing
+
+import pyglet.sprite
+
 from mcpython.containers.AbstractContainer import Container, Slot, SlotRenderCopy
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.resources.ResourceManager import ResourceManager
 from mcpython.world.items.AbstractItem import Stone, Dirt
+
+if typing.TYPE_CHECKING:
+    from mcpython.rendering.Window import Window
 
 
 class PlayerInventoryContainer(Container):
@@ -66,6 +73,11 @@ class HotbarContainer(Container):
                 "assets/minecraft/textures/gui/sprites/hud/hotbar.png"
             ).to_pyglet(),
         )
+        self.hotbar_selection = ResourceManager.load_image(
+            "assets/minecraft/textures/gui/sprites/hud/hotbar_selection.png"
+        ).to_pyglet()
+        self.hotbar_selection_sprite = pyglet.sprite.Sprite(self.hotbar_selection)
+
         self.player_inventory = player_inventory
         self.render_anchor = (0.5, 0.1)
         self.render_offset = (0, 0)
@@ -75,3 +87,9 @@ class HotbarContainer(Container):
             SlotRenderCopy(self, (3 + 20 * i, 15), player_inventory.slots[i])
             for i in range(9)
         ]
+
+    def draw(self, window: Window):
+        super().draw(window)
+        pos = self.slots[self.player_inventory.selected_slot]._calculate_offset(window)
+        self.hotbar_selection_sprite.position = (pos.x - 5, pos.y - 5, 0)
+        self.hotbar_selection_sprite.draw()
