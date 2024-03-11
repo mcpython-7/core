@@ -325,10 +325,15 @@ class Window(pyglet.window.Window):
                 ].on_block_interaction(stack, button, modifiers):
                     return
 
+                if not stack.is_empty() and stack.item.on_block_interaction(
+                    self.world.world.get(block, None), button, modifiers
+                ):
+                    return
+
                 # ON OSX, control + left click = right click.
                 if previous and not stack.is_empty():
-                        if block := stack.item.create_block_to_be_placed(stack):
-                            self.world.add_block(previous, block)
+                    if block := stack.item.create_block_to_be_placed(stack):
+                        self.world.add_block(previous, block)
 
             elif button == pyglet.window.mouse.LEFT and block:
                 instance = self.world.world[block]
@@ -336,6 +341,11 @@ class Window(pyglet.window.Window):
                 if block in self.world.world and self.world.world[
                     block
                 ].on_block_interaction(stack, button, modifiers):
+                    return
+
+                if not stack.is_empty() and stack.item.on_block_interaction(
+                    self.world.world.get(block, None), button, modifiers
+                ):
                     return
 
                 if instance.BREAKABLE:

@@ -39,7 +39,9 @@ class AbstractBlock(abc.ABC):
     def on_block_updated(self):
         pass
 
-    def on_block_interaction(self, itemstack: ItemStack, button: int, modifiers: int) -> bool:
+    def on_block_interaction(
+        self, itemstack: ItemStack, button: int, modifiers: int
+    ) -> bool:
         """
         Called when the block is interacted with.
         'button' and 'modifiers' are the mouse buttons pressed.

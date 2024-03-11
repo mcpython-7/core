@@ -36,6 +36,17 @@ class AbstractItem:
     def on_slot_insert(cls, slot: Slot):
         pass
 
+    @classmethod
+    def on_block_interaction(
+        cls, block: AbstractBlock.AbstractBlock | None, button: int, modifiers: int
+    ) -> bool:
+        """
+        Called when the item is used to interact with a block (None if no block is targeted).
+        'button' and 'modifiers' are the mouse buttons pressed.
+        Should return 'True' if the normal logic should NOT continue.
+        """
+        return False
+
 
 def create_item_for_block(
     block: type[AbstractBlock.AbstractBlock],
