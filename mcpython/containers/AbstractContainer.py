@@ -14,7 +14,12 @@ if typing.TYPE_CHECKING:
 
 
 class Slot:
-    def __init__(self, container: Container, relative_position: tuple[int, int]):
+    def __init__(
+        self,
+        container: Container,
+        relative_position: tuple[int, int],
+        enable_interaction=True,
+    ):
         self.container = container
         self._relative_position = relative_position
         self._itemstack: ItemStack = ItemStack.EMPTY
@@ -22,6 +27,7 @@ class Slot:
         self.slot_vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
         self.number_label = pyglet.text.Label(font_size=4)
         self.update_position(relative_position)
+        self.enable_interaction = enable_interaction
 
     @property
     def itemstack(self):
@@ -32,31 +38,45 @@ class Slot:
         return self._relative_position
 
     def update_position(self, relative_position: tuple[float, float]):
+        from mcpython.rendering.Window import Window
+
+        window = Window.INSTANCE
+
         self._relative_position = relative_position
-        self.number_label.position = (
-            relative_position[0]
-            + 14
-            - self.container.visual_size[0] / 2
-            - self.number_label.content_width,
-            relative_position[1] + 1 - self.container.visual_size[1] / 2,
-            0,
-        )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}@{self._relative_position}({self._itemstack})"
+        return f"{self.__class__.__name__}@{self._relative_position}({self.itemstack})"
 
-    def draw(self, window: Window):
-        offset = Vec3(
-            self._relative_position[0] - self.container.visual_size[0] / 2,
-            self._relative_position[1] - self.container.visual_size[1] / 2,
-            0,
-        )
+    def draw(self, window: Window, offset: Vec3 = None):
+        if not offset:
+            offset = self._calculate_offset(window)
+
         window.set_preview_3d(offset + Vec3(8, 7, 0))
         self.slot_batch.draw()
-        window.set_2d_centered_for_inventory()
+        window.set_2d_centered_for_inventory(self.container)
 
-        if not self._itemstack.is_empty():
+        if not self.itemstack.is_empty():
+            self.number_label.position = (
+                offset[0] + 14 - self.number_label.content_width,
+                offset[1],
+                0,
+            )
             self.number_label.draw()
+
+    def _calculate_offset(self, window: Window):
+        return Vec3(
+            self._relative_position[0]
+            - self.container.visual_size[0] / 2
+            + (self.container.render_anchor[0] - 0.5)
+            * window.get_size()[0]
+            / window.inventory_scale,
+            self._relative_position[1]
+            - self.container.visual_size[1] / 2
+            + (self.container.render_anchor[1] - 0.5)
+            * window.get_size()[1]
+            / window.inventory_scale,
+            0,
+        )
 
     def set_stack(self, stack: ItemStack | None) -> typing.Self:
         if self.slot_vertex_data:
@@ -74,7 +94,6 @@ class Slot:
 
             x = self._relative_position[0] - self.container.visual_size[0] / 2
             y = self._relative_position[1] - self.container.visual_size[1] / 2
-            # print(x, y, width, height)
 
             self.slot_vertex_data.append(
                 self._itemstack.item.MODEL.create_vertex_list(
@@ -99,11 +118,14 @@ class Slot:
         return self
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:
+        if not self.enable_interaction:
+            return False
+
         from mcpython.rendering.Window import Window
 
         moving_slot = Window.INSTANCE.moving_player_slot
 
-        if self._itemstack.is_empty():
+        if self.itemstack.is_empty():
             if moving_slot.itemstack.is_empty():
                 return False
 
@@ -119,43 +141,74 @@ class Slot:
             return True
 
         if moving_slot.itemstack.is_empty():
-            if self._itemstack.is_empty():
+            if self.itemstack.is_empty():
                 return False
 
             if button == mouse.LEFT:
-                moving_slot.set_stack(self._itemstack)
+                moving_slot.set_stack(self.itemstack)
                 self.set_stack(ItemStack.EMPTY)
                 return True
 
             if button == mouse.RIGHT:
-                transfer_amount = math.floor(self._itemstack.count / 2)
-                self.set_stack(self._itemstack.add_amount(-transfer_amount))
-                moving_slot.set_stack(self._itemstack.set_amount(transfer_amount))
+                transfer_amount = math.floor(self.itemstack.count / 2)
+                self.set_stack(self.itemstack.add_amount(-transfer_amount))
+                moving_slot.set_stack(self.itemstack.set_amount(transfer_amount))
                 return True
 
-        if moving_slot.itemstack.is_compatible(self._itemstack):
+        if moving_slot.itemstack.is_compatible(self.itemstack):
             if button == mouse.LEFT:
                 transfer_amount = min(
-                    self._itemstack.item.MAX_STACK_SIZE - self._itemstack.count,
+                    self.itemstack.item.MAX_STACK_SIZE - self.itemstack.count,
                     moving_slot.itemstack.count,
                 )
                 if transfer_amount == 0:
                     return True
 
-                self.set_stack(self._itemstack.add_amount(transfer_amount))
+                self.set_stack(self.itemstack.add_amount(transfer_amount))
                 moving_slot.set_stack(
                     moving_slot.itemstack.add_amount(-transfer_amount)
                 )
                 return True
 
             if button == mouse.RIGHT:
-                if self._itemstack.count < self._itemstack.item.MAX_STACK_SIZE:
-                    self.set_stack(self._itemstack.add_amount(1))
+                if self.itemstack.count < self.itemstack.item.MAX_STACK_SIZE:
+                    self.set_stack(self.itemstack.add_amount(1))
                     moving_slot.set_stack(moving_slot.itemstack.add_amount(-1))
 
                 return True
 
         return False
+
+
+class SlotRenderCopy(Slot):
+    def __init__(
+        self,
+        container: Container,
+        relative_position: tuple[int, int],
+        mirror: Slot,
+        enable_interaction=True,
+    ):
+        super().__init__(
+            container, relative_position, enable_interaction=enable_interaction
+        )
+        self._mirror = mirror
+
+    @property
+    def itemstack(self):
+        return self._mirror.itemstack
+
+    def set_stack(self, stack: ItemStack | None) -> typing.Self:
+        self._mirror.set_stack(stack)
+        return self
+
+    def draw(self, window: Window, offset: Vec3 = None):
+        if not offset:
+            offset = self._calculate_offset(window)
+
+        pos = self._mirror.relative_position
+        self._mirror.update_position(self._relative_position)
+        self._mirror.draw(window, offset)
+        self._mirror.update_position(pos)
 
 
 class Container:
@@ -165,6 +218,9 @@ class Container:
         self.visual_size = visual_size
         self.slots: list[Slot] = []
         self.texture = texture
+        self.render_offset = (0, 0)
+        self.render_anchor = (0.5, 0.5)
+        self.image_anchor = (0.5, 0.5)
 
         if texture:
             self.sprite = pyglet.sprite.Sprite(self.texture)
@@ -175,11 +231,23 @@ class Container:
 
         self.open = False
 
+    def window_to_relative_world(
+        self, coord: tuple[float, float], win_size: tuple[int, int], scale: float
+    ) -> tuple[float, float]:
+        x, y = coord
+        x -= win_size[0] * self.render_anchor[0]
+        y -= win_size[1] * self.render_anchor[1]
+        x /= scale
+        y /= scale
+        x += self.render_offset[0] + self.visual_size[0] / 2
+        y += self.render_offset[1] + self.visual_size[1] / 2
+        return x, y
+
     def draw(self, window: Window):
         if self.sprite:
             self.sprite.position = (
-                -self.visual_size[0] / 2,
-                -self.visual_size[1] / 2,
+                -self.visual_size[0] * self.image_anchor[0],
+                -self.visual_size[1] * self.image_anchor[1],
                 0,
             )
             self.sprite.draw()

@@ -23,8 +23,11 @@ from mcpython.config import (
     PLAYER_HEIGHT,
     JUMP_SPEED,
 )
-from mcpython.containers.AbstractContainer import CONTAINER_STACK, Slot
-from mcpython.containers.PlayerInventoryContainer import PlayerInventoryContainer
+from mcpython.containers.AbstractContainer import CONTAINER_STACK, Slot, Container
+from mcpython.containers.PlayerInventoryContainer import (
+    PlayerInventoryContainer,
+    HotbarContainer,
+)
 from mcpython.rendering.util import (
     COLORED_LINE_GROUP,
     cube_line_vertices,
@@ -128,8 +131,12 @@ class Window(pyglet.window.Window):
         # TICKS_PER_SEC. This is the main game event loop.
         pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
 
-        self.player_inventory = PlayerInventoryContainer()
         self.inventory_scale = 2
+
+        self.player_inventory = PlayerInventoryContainer()
+        self.hotbar = HotbarContainer(self.player_inventory)
+        self.hotbar.show_container()
+
         self.moving_player_slot = Slot(self.player_inventory, (0, 0))
 
     def set_exclusive_mouse(self, exclusive: bool):
@@ -341,14 +348,11 @@ class Window(pyglet.window.Window):
 
             return
 
-        rx = (x - self.get_size()[0] / 2) / self.inventory_scale
-        ry = (y - self.get_size()[1] / 2) / self.inventory_scale
-
         for container in CONTAINER_STACK:
-            print(rx, ry, container.visual_size)
             if container.on_mouse_press(
-                rx + container.visual_size[0] / 2,
-                ry + container.visual_size[1] / 2,
+                *container.window_to_relative_world(
+                    (x, y), self.get_size(), self.inventory_scale
+                ),
                 button,
                 modifiers,
             ):
@@ -479,11 +483,15 @@ class Window(pyglet.window.Window):
         self.view = Mat4()
         glDisable(GL_DEPTH_TEST)
 
-    def set_2d_centered_for_inventory(self):
+    def set_2d_centered_for_inventory(self, container: Container):
         width, height = self.get_size()
         self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
         self.view = Mat4.from_translation(
-            Vec3(width / 2, height / 2, 0)
+            Vec3(
+                width * container.render_anchor[0],
+                height * container.render_anchor[1],
+                0,
+            )
         ) @ Mat4.from_scale(Vec3(self.inventory_scale, self.inventory_scale, 1))
         glDisable(GL_DEPTH_TEST)
 
@@ -535,18 +543,18 @@ class Window(pyglet.window.Window):
     def draw_inventory(self):
         glClear(GL_DEPTH_BUFFER_BIT)
 
-        self.set_2d_centered_for_inventory()
         for container in CONTAINER_STACK:
+            self.set_2d_centered_for_inventory(container)
             container.draw(self)
 
         if self.player_inventory.open:
-            x, y = self.mouse_position
-            rx = (x - self.get_size()[0] / 2) / self.inventory_scale
-            ry = (y - self.get_size()[1] / 2) / self.inventory_scale
+            self.set_2d_centered_for_inventory(self.player_inventory)
+
             self.moving_player_slot.update_position(
-                (
-                    rx + self.player_inventory.visual_size[0] / 2 - 8,
-                    ry + self.player_inventory.visual_size[1] / 2 - 7,
+                self.player_inventory.window_to_relative_world(
+                    (self.mouse_position[0] - 8, self.mouse_position[1] - 7),
+                    self.get_size(),
+                    self.inventory_scale,
                 )
             )
             self.moving_player_slot.draw(self)

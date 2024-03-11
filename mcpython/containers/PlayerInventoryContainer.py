@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from mcpython.containers.AbstractContainer import Container, Slot
+from mcpython.containers.AbstractContainer import Container, Slot, SlotRenderCopy
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.resources.ResourceManager import ResourceManager
 from mcpython.world.items.AbstractItem import Stone, Dirt
@@ -47,6 +47,7 @@ class PlayerInventoryContainer(Container):
                 for i in range(9)
             ]
         )
+        self.selected_slot = 0
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:
         if not super().on_mouse_press(x, y, button, modifiers):
@@ -55,3 +56,22 @@ class PlayerInventoryContainer(Container):
         print(x, y)
 
         return True
+
+
+class HotbarContainer(Container):
+    def __init__(self, player_inventory: PlayerInventoryContainer):
+        super().__init__(
+            (182, 22),
+            ResourceManager.load_image(
+                "assets/minecraft/textures/gui/sprites/hud/hotbar.png"
+            ).to_pyglet(),
+        )
+        self.player_inventory = player_inventory
+        self.render_anchor = (0.5, 0.1)
+        self.render_offset = (0, 0)
+        self.image_anchor = (0.5, 0)
+
+        self.slots = [
+            SlotRenderCopy(self, (3 + 20 * i, 15), player_inventory.slots[i])
+            for i in range(9)
+        ]
