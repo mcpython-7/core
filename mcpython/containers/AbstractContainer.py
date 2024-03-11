@@ -136,6 +136,15 @@ class Slot:
                 moving_slot.set_stack(moving_slot.itemstack.add_amount(-1))
                 return True
 
+            elif button == mouse.MIDDLE:
+                if not moving_slot.itemstack.is_empty():
+                    self.set_stack(
+                        moving_slot.itemstack.set_amount(
+                            moving_slot.itemstack.item.MAX_STACK_SIZE
+                        )
+                    )
+                return True
+
             return True
 
         if moving_slot.itemstack.is_empty():
@@ -151,6 +160,13 @@ class Slot:
                 transfer_amount = math.floor(self.itemstack.count / 2)
                 self.set_stack(self.itemstack.add_amount(-transfer_amount))
                 moving_slot.set_stack(self.itemstack.set_amount(transfer_amount))
+                return True
+
+            elif button == mouse.MIDDLE:
+                if not self.itemstack.is_empty():
+                    moving_slot.set_stack(
+                        self.itemstack.set_amount(self.itemstack.item.MAX_STACK_SIZE)
+                    )
                 return True
 
         if moving_slot.itemstack.is_compatible(self.itemstack):
