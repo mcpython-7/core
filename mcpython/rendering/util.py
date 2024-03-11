@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import math
 import pathlib
 
 import pyglet
-from pyglet.math import Vec3
+from pyglet.math import Vec3, Mat4
 
 from mcpython.rendering.Models import _TEXTURE_ATLAS
 
@@ -135,3 +136,52 @@ def setup_fog():
     # # the denser the fog in the fog range.
     # glFogf(GL_FOG_START, 20.0)
     # glFogf(GL_FOG_END, 60.0)
+
+
+def off_axis_projection_matrix(
+    aspect: float,
+    z_near: float,
+    z_far: float,
+    fov: float = 60,
+    off_center_x: float = 0,
+    off_center_y: float = 0,
+    size=(0, 0),
+) -> Mat4:
+    # tan_half_fov = math.tan(fov * math.pi / 360)
+    # top = z_near * tan_half_fov
+    # bottom = -top
+    # right = top * aspect
+    # left = -right
+
+    # left += off_center_x
+    # right += off_center_x
+    # top += off_center_y
+    # bottom += off_center_y
+
+    xy_max = z_near * math.tan(fov * math.pi / 360)
+    y_min = -xy_max
+    x_min = -xy_max
+
+    width = xy_max - x_min
+    height = xy_max - y_min
+    depth = z_far - z_near
+    q = -(z_far + z_near) / depth
+    qn = -2 * z_far * z_near / depth
+
+    w = 2 * z_near / width
+    w = w / aspect
+    h = 2 * z_near / height
+
+    # fmt: off
+    return Mat4((w, 0, 0, 0,
+                 0, h, 0, 0,
+                 -3.6*off_center_x/size[0], -3.6*off_center_y/size[1], q, -1,
+                 0, 0, qn, 0))
+    # fmt: on
+
+    # fmt: off
+    # return Mat4((2 * z_near / (right - left), 0, 0, 0,
+    #              0, 2 * z_near / (top - bottom), 0, 0,
+    #              0, 2 * 1 / (top - bottom), -(z_far + z_near) / (z_far - z_near), -1,
+    #              0, 0, -2*z_far*z_near/(z_far - z_near), 0))
+    # fmt: on

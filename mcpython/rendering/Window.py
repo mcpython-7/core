@@ -25,7 +25,12 @@ from mcpython.config import (
 )
 from mcpython.containers.AbstractContainer import CONTAINER_STACK, Slot
 from mcpython.containers.PlayerInventoryContainer import PlayerInventoryContainer
-from mcpython.rendering.util import COLORED_LINE_GROUP, cube_line_vertices, FACES
+from mcpython.rendering.util import (
+    COLORED_LINE_GROUP,
+    cube_line_vertices,
+    FACES,
+    off_axis_projection_matrix,
+)
 from mcpython.world.World import World
 from mcpython.world.blocks.AbstractBlock import Bricks, Dirt, Sand, Stone
 from mcpython.world.util import sectorize, normalize
@@ -493,10 +498,22 @@ class Window(pyglet.window.Window):
 
     def set_preview_3d(self, offset: Vec3, box_size: Vec3):
         width, height = self.get_size()
-        # self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
-        self.projection = Mat4.perspective_projection(
-            self.aspect_ratio, z_near=0.1, z_far=100, fov=45
+        # self.projection = Mat4.orthogonal_projection(
+        #     -width / 2, width / 2, -height / 2, height / 2, 0.1, 255
+        # )
+        self.projection = off_axis_projection_matrix(
+            z_near=0.1,
+            z_far=100,
+            aspect=self.aspect_ratio,
+            fov=45,
+            off_center_x=offset[0],
+            off_center_y=offset[1],
+            size=self.get_size(),
         )
+        # self.projection = off_axis_projection_matrix(0, width, height, 0, 0.1, 100)
+        # self.projection = Mat4.perspective_projection(
+        #     self.aspect_ratio, z_near=0.1, z_far=100, fov=45
+        # )
 
         # don't know why this is needed, but we need it here...
         extra_scale = self.get_size()[1] / 600
@@ -506,7 +523,7 @@ class Window(pyglet.window.Window):
             Mat4()
             @ Mat4.look_at(Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0))
             @ Mat4.from_scale(Vec3(0.08, 0.08, 0.08) / extra_scale)
-            # @ Mat4.from_translation(new_offset)
+            # @ Mat4.from_translation(offset)
         )
 
         glEnable(GL_DEPTH_TEST)

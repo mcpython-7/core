@@ -65,10 +65,10 @@ class Slot:
         if self.slot_vertex_data:
             x = self.relative_position[0] - self.container.visual_size[0] / 2
             y = self.relative_position[1] - self.container.visual_size[1] / 2
-            for item in self.slot_vertex_data:
-                item.set_attribute_data(
-                    "render_offset", (x / width * 12.5, y / height * 12.5) * item.count
-                )
+            # for item in self.slot_vertex_data:
+            #     item.set_attribute_data(
+            #         "render_offset", (x / width * 12.5, y / height * 12.5) * item.count
+            #     )
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:
         from mcpython.rendering.Window import Window

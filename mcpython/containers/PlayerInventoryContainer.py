@@ -16,6 +16,7 @@ class PlayerInventoryContainer(Container):
             .get_region((0, 0), (175, 165))
             .to_pyglet(),
         )
+        i = 0
         self.slots = (
             [
                 Slot(
@@ -28,21 +29,21 @@ class PlayerInventoryContainer(Container):
                 Slot(
                     self,
                     (8 + 20 * i, 32),
-                ).set_stack(ItemStack(Stone))
+                )
                 for i in range(9)
             ]
             + [
                 Slot(
                     self,
                     (8 + 20 * i, 52),
-                ).set_stack(ItemStack(Stone))
+                )
                 for i in range(9)
             ]
             + [
                 Slot(
                     self,
                     (8 + 20 * i, 72),
-                ).set_stack(ItemStack(Stone))
+                )
                 for i in range(9)
             ]
         )

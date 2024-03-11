@@ -206,7 +206,7 @@ class Model:
             DEFAULT_BLOCK_GROUP,
             position=("f", vertex_data),
             tex_coords=("f", texture_data),
-            render_offset=("f", tuple(offset) * count),
+            # render_offset=("f", tuple(offset) * count),
         )
 
 
