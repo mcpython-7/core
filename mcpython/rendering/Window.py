@@ -496,11 +496,7 @@ class Window(pyglet.window.Window):
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
         glEnable(GL_DEPTH_TEST)
 
-    def set_preview_3d(self, offset: Vec3, box_size: Vec3):
-        width, height = self.get_size()
-        # self.projection = Mat4.orthogonal_projection(
-        #     -width / 2, width / 2, -height / 2, height / 2, 0.1, 255
-        # )
+    def set_preview_3d(self, offset: Vec3):
         self.projection = off_axis_projection_matrix(
             z_near=0.1,
             z_far=100,
@@ -510,20 +506,12 @@ class Window(pyglet.window.Window):
             off_center_y=offset[1],
             size=self.get_size(),
         )
-        # self.projection = off_axis_projection_matrix(0, width, height, 0, 0.1, 100)
-        # self.projection = Mat4.perspective_projection(
-        #     self.aspect_ratio, z_near=0.1, z_far=100, fov=45
-        # )
-
-        # don't know why this is needed, but we need it here...
-        extra_scale = self.get_size()[1] / 600
 
         glClear(GL_DEPTH_BUFFER_BIT)
         self.view = (
             Mat4()
             @ Mat4.look_at(Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0))
-            @ Mat4.from_scale(Vec3(0.08, 0.08, 0.08) / extra_scale)
-            # @ Mat4.from_translation(offset)
+            @ Mat4.from_scale(Vec3(0.08, 0.08, 0.08))
         )
 
         glEnable(GL_DEPTH_TEST)

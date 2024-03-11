@@ -147,16 +147,6 @@ def off_axis_projection_matrix(
     off_center_y: float = 0,
     size=(0, 0),
 ) -> Mat4:
-    # tan_half_fov = math.tan(fov * math.pi / 360)
-    # top = z_near * tan_half_fov
-    # bottom = -top
-    # right = top * aspect
-    # left = -right
-
-    # left += off_center_x
-    # right += off_center_x
-    # top += off_center_y
-    # bottom += off_center_y
 
     xy_max = z_near * math.tan(fov * math.pi / 360)
     y_min = -xy_max
@@ -177,11 +167,4 @@ def off_axis_projection_matrix(
                  0, h, 0, 0,
                  -3.6*off_center_x/size[0], -3.6*off_center_y/size[1], q, -1,
                  0, 0, qn, 0))
-    # fmt: on
-
-    # fmt: off
-    # return Mat4((2 * z_near / (right - left), 0, 0, 0,
-    #              0, 2 * z_near / (top - bottom), 0, 0,
-    #              0, 2 * 1 / (top - bottom), -(z_far + z_near) / (z_far - z_near), -1,
-    #              0, 0, -2*z_far*z_near/(z_far - z_near), 0))
     # fmt: on

@@ -27,7 +27,7 @@ class Slot:
             self.relative_position[1] - self.container.visual_size[1] / 2,
             0,
         )
-        window.set_preview_3d(offset, Vec3(*self.container.visual_size))
+        window.set_preview_3d(offset)
         self.slot_batch.draw()
         window.set_2d_centered_for_inventory()
 
