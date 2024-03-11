@@ -109,6 +109,11 @@ class Stone(AbstractBlock):
     STATE_FILE = BlockStateFile.by_name(NAME)
 
 
+class OakPlanks(AbstractBlock):
+    NAME = "minecraft:oak_planks"
+    STATE_FILE = BlockStateFile.by_name(NAME)
+
+
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
     STATE_FILE = BlockStateFile.by_name(NAME)
