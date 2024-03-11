@@ -25,7 +25,7 @@ class Slot:
         self._itemstack: ItemStack = ItemStack.EMPTY
         self.slot_batch = pyglet.graphics.Batch()
         self.slot_vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
-        self.number_label = pyglet.text.Label(font_size=4)
+        self.number_label = pyglet.text.Label(font_size=4 * 4, bold=True)
         self.update_position(relative_position)
         self.enable_interaction = enable_interaction
 
@@ -38,10 +38,6 @@ class Slot:
         return self._relative_position
 
     def update_position(self, relative_position: tuple[float, float]):
-        from mcpython.rendering.Window import Window
-
-        window = Window.INSTANCE
-
         self._relative_position = relative_position
 
     def __repr__(self):
@@ -53,15 +49,17 @@ class Slot:
 
         window.set_preview_3d(offset + Vec3(8, 7, 0))
         self.slot_batch.draw()
-        window.set_2d_centered_for_inventory(self.container)
+        window.set_2d_centered_for_inventory(self.container, scale=0.25)
 
         if not self.itemstack.is_empty():
             self.number_label.position = (
-                offset[0] + 14 - self.number_label.content_width,
-                offset[1],
+                (offset[0] + 24 - self.number_label.content_width) * 4,
+                (offset[1]) * 4,
                 0,
             )
             self.number_label.draw()
+
+        window.set_2d_centered_for_inventory(self.container)
 
     def _calculate_offset(self, window: Window):
         return Vec3(

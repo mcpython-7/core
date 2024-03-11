@@ -484,7 +484,7 @@ class Window(pyglet.window.Window):
         self.view = Mat4()
         glDisable(GL_DEPTH_TEST)
 
-    def set_2d_centered_for_inventory(self, container: Container):
+    def set_2d_centered_for_inventory(self, container: Container, scale=1):
         width, height = self.get_size()
         self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
         self.view = Mat4.from_translation(
@@ -493,7 +493,9 @@ class Window(pyglet.window.Window):
                 height * container.render_anchor[1],
                 0,
             )
-        ) @ Mat4.from_scale(Vec3(self.inventory_scale, self.inventory_scale, 1))
+        ) @ Mat4.from_scale(
+            Vec3(self.inventory_scale * scale, self.inventory_scale * scale, 1)
+        )
         glDisable(GL_DEPTH_TEST)
 
     def set_3d(self):
