@@ -312,6 +312,8 @@ class Window(pyglet.window.Window):
 
         """
         if self.exclusive:
+            stack = self.player_inventory.get_selected_itemstack()
+
             vector = self.get_sight_vector()
             block, previous = self.world.hit_test(self.position, vector)
 
@@ -320,14 +322,11 @@ class Window(pyglet.window.Window):
             ):
                 if block in self.world.world and self.world.world[
                     block
-                ].on_block_interaction(button, modifiers):
+                ].on_block_interaction(stack, button, modifiers):
                     return
 
                 # ON OSX, control + left click = right click.
-                if previous:
-                    stack = self.player_inventory.get_selected_itemstack()
-
-                    if not stack.is_empty():
+                if previous and not stack.is_empty():
                         if block := stack.item.create_block_to_be_placed(stack):
                             self.world.add_block(previous, block)
 
@@ -336,7 +335,7 @@ class Window(pyglet.window.Window):
 
                 if block in self.world.world and self.world.world[
                     block
-                ].on_block_interaction(button, modifiers):
+                ].on_block_interaction(stack, button, modifiers):
                     return
 
                 if instance.BREAKABLE:

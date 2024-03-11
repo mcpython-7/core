@@ -4,17 +4,12 @@ import abc
 import typing
 
 import pyglet.graphics.vertexdomain
-from mcpython.rendering.TextureAtlas import TextureAtlas, AtlasReference
 
 from mcpython.rendering.Models import BlockStateFile
 
+if typing.TYPE_CHECKING:
+    from mcpython.containers.ItemStack import ItemStack
 
-# atlas = TextureAtlas()
-# dirt = atlas.add_image_from_path("minecraft:block/dirt")
-# stone = atlas.add_image_from_path("minecraft:block/stone")
-# sand = atlas.add_image_from_path("minecraft:block/sand")
-# bricks = atlas.add_image_from_path("minecraft:block/bricks")
-# bedrock = atlas.add_image_from_path("minecraft:block/bedrock")
 
 _EMPTY_STATE = {}
 
@@ -44,7 +39,7 @@ class AbstractBlock(abc.ABC):
     def on_block_updated(self):
         pass
 
-    def on_block_interaction(self, button: int, modifiers: int) -> bool:
+    def on_block_interaction(self, itemstack: ItemStack, button: int, modifiers: int) -> bool:
         """
         Called when the block is interacted with.
         'button' and 'modifiers' are the mouse buttons pressed.
