@@ -21,28 +21,28 @@ class PlayerInventoryContainer(Container):
             [
                 Slot(
                     self,
-                    (8 + 20 * i, 8),
+                    (8 + 18 * i, 8),
                 ).set_stack(ItemStack(Dirt))
                 for i in range(9)
             ]
             + [
                 Slot(
                     self,
-                    (8 + 20 * i, 32),
+                    (8 + 20 * i, 30),
                 )
                 for i in range(9)
             ]
             + [
                 Slot(
                     self,
-                    (8 + 20 * i, 52),
+                    (8 + 20 * i, 48),
                 )
                 for i in range(9)
             ]
             + [
                 Slot(
                     self,
-                    (8 + 20 * i, 72),
+                    (8 + 20 * i, 66),
                 )
                 for i in range(9)
             ]

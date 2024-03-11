@@ -16,39 +16,46 @@ if typing.TYPE_CHECKING:
 class Slot:
     def __init__(self, container: Container, relative_position: tuple[int, int]):
         self.container = container
-        self.relative_position = relative_position
-        self.itemstack: ItemStack = ItemStack.EMPTY
+        self._relative_position = relative_position
+        self._itemstack: ItemStack = ItemStack.EMPTY
         self.slot_batch = pyglet.graphics.Batch()
         self.slot_vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
         self.number_label = pyglet.text.Label(font_size=4)
-        self.number_label.position = (
-            relative_position[0] + 18 - container.visual_size[0] / 2,
-            relative_position[1] - container.visual_size[1] / 2,
-            0,
-        )
+        self.update_position(relative_position)
+
+    @property
+    def itemstack(self):
+        return self._itemstack
+
+    @property
+    def relative_position(self):
+        return self._relative_position
 
     def update_position(self, relative_position: tuple[float, float]):
-        self.relative_position = relative_position
+        self._relative_position = relative_position
         self.number_label.position = (
-            relative_position[0] + 18 - self.container.visual_size[0] / 2,
-            relative_position[1] - self.container.visual_size[1] / 2,
+            relative_position[0]
+            + 14
+            - self.container.visual_size[0] / 2
+            - self.number_label.content_width,
+            relative_position[1] + 1 - self.container.visual_size[1] / 2,
             0,
         )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}@{self.relative_position}({self.itemstack})"
+        return f"{self.__class__.__name__}@{self._relative_position}({self._itemstack})"
 
     def draw(self, window: Window):
         offset = Vec3(
-            self.relative_position[0] - self.container.visual_size[0] / 2,
-            self.relative_position[1] - self.container.visual_size[1] / 2,
+            self._relative_position[0] - self.container.visual_size[0] / 2,
+            self._relative_position[1] - self.container.visual_size[1] / 2,
             0,
         )
-        window.set_preview_3d(offset)
+        window.set_preview_3d(offset + Vec3(8, 7, 0))
         self.slot_batch.draw()
         window.set_2d_centered_for_inventory()
 
-        if not self.itemstack.is_empty():
+        if not self._itemstack.is_empty():
             self.number_label.draw()
 
     def set_stack(self, stack: ItemStack | None) -> typing.Self:
@@ -58,19 +65,19 @@ class Slot:
 
         self.slot_vertex_data.clear()
 
-        self.itemstack = stack or ItemStack.EMPTY
+        self._itemstack = stack or ItemStack.EMPTY
 
-        if self.itemstack.item is not None:
+        if self._itemstack.item is not None:
             from mcpython.rendering.Window import Window
 
             width, height = Window.INSTANCE.get_size()
 
-            x = self.relative_position[0] - self.container.visual_size[0] / 2
-            y = self.relative_position[1] - self.container.visual_size[1] / 2
+            x = self._relative_position[0] - self.container.visual_size[0] / 2
+            y = self._relative_position[1] - self.container.visual_size[1] / 2
             # print(x, y, width, height)
 
             self.slot_vertex_data.append(
-                self.itemstack.item.MODEL.create_vertex_list(
+                self._itemstack.item.MODEL.create_vertex_list(
                     self.slot_batch,
                     (0, 0, 0),
                     offset=Vec2(
@@ -79,9 +86,15 @@ class Slot:
                     ),
                 ),
             )
-            self.number_label.text = str(self.itemstack.count)
+            self.number_label.text = str(self._itemstack.count)
+            self.number_label.x = (
+                self._relative_position[0]
+                + 14
+                - self.container.visual_size[0] / 2
+                - self.number_label.content_width
+            )
 
-            self.itemstack.item.on_slot_insert(self)
+            self._itemstack.item.on_slot_insert(self)
 
         return self
 
@@ -90,7 +103,7 @@ class Slot:
 
         moving_slot = Window.INSTANCE.moving_player_slot
 
-        if self.itemstack.is_empty():
+        if self._itemstack.is_empty():
             if moving_slot.itemstack.is_empty():
                 return False
 
@@ -106,38 +119,38 @@ class Slot:
             return True
 
         if moving_slot.itemstack.is_empty():
-            if self.itemstack.is_empty():
+            if self._itemstack.is_empty():
                 return False
 
             if button == mouse.LEFT:
-                moving_slot.set_stack(self.itemstack)
+                moving_slot.set_stack(self._itemstack)
                 self.set_stack(ItemStack.EMPTY)
                 return True
 
             if button == mouse.RIGHT:
-                transfer_amount = math.floor(self.itemstack.count / 2)
-                self.set_stack(self.itemstack.add_amount(-transfer_amount))
-                moving_slot.set_stack(self.itemstack.set_amount(transfer_amount))
+                transfer_amount = math.floor(self._itemstack.count / 2)
+                self.set_stack(self._itemstack.add_amount(-transfer_amount))
+                moving_slot.set_stack(self._itemstack.set_amount(transfer_amount))
                 return True
 
-        if moving_slot.itemstack.is_compatible(self.itemstack):
+        if moving_slot.itemstack.is_compatible(self._itemstack):
             if button == mouse.LEFT:
                 transfer_amount = min(
-                    self.itemstack.item.MAX_STACK_SIZE - self.itemstack.count,
+                    self._itemstack.item.MAX_STACK_SIZE - self._itemstack.count,
                     moving_slot.itemstack.count,
                 )
                 if transfer_amount == 0:
                     return True
 
-                self.set_stack(self.itemstack.add_amount(transfer_amount))
+                self.set_stack(self._itemstack.add_amount(transfer_amount))
                 moving_slot.set_stack(
                     moving_slot.itemstack.add_amount(-transfer_amount)
                 )
                 return True
 
             if button == mouse.RIGHT:
-                if self.itemstack.count < self.itemstack.item.MAX_STACK_SIZE:
-                    self.set_stack(self.itemstack.add_amount(1))
+                if self._itemstack.count < self._itemstack.item.MAX_STACK_SIZE:
+                    self.set_stack(self._itemstack.add_amount(1))
                     moving_slot.set_stack(moving_slot.itemstack.add_amount(-1))
 
                 return True

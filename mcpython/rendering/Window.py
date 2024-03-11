@@ -539,16 +539,17 @@ class Window(pyglet.window.Window):
         for container in CONTAINER_STACK:
             container.draw(self)
 
-        x, y = self.mouse_position
-        rx = (x - self.get_size()[0] / 2) / self.inventory_scale
-        ry = (y - self.get_size()[1] / 2) / self.inventory_scale
-        self.moving_player_slot.update_position(
-            (
-                rx + self.player_inventory.visual_size[0] / 2,
-                ry + self.player_inventory.visual_size[1] / 2,
+        if self.player_inventory.open:
+            x, y = self.mouse_position
+            rx = (x - self.get_size()[0] / 2) / self.inventory_scale
+            ry = (y - self.get_size()[1] / 2) / self.inventory_scale
+            self.moving_player_slot.update_position(
+                (
+                    rx + self.player_inventory.visual_size[0] / 2 - 8,
+                    ry + self.player_inventory.visual_size[1] / 2 - 7,
+                )
             )
-        )
-        self.moving_player_slot.draw(self)
+            self.moving_player_slot.draw(self)
 
     def draw_focused_block(self):
         """Draw black edges around the block that is currently under the
