@@ -138,6 +138,7 @@ class Window(pyglet.window.Window):
         """
         super(Window, self).set_exclusive_mouse(exclusive)
         self.exclusive = exclusive
+        self.strafe = [0, 0]
 
     def get_sight_vector(self) -> Vec3:
         """Returns the current line of sight vector indicating the direction
@@ -406,23 +407,25 @@ class Window(pyglet.window.Window):
             Number representing any modifying keys that were pressed.
 
         """
-        if symbol == key.W:
-            self.strafe[0] -= 1
 
-        elif symbol == key.S:
-            self.strafe[0] += 1
+        if self.exclusive:
+            if symbol == key.W:
+                self.strafe[0] -= 1
 
-        elif symbol == key.A:
-            self.strafe[1] -= 1
+            elif symbol == key.S:
+                self.strafe[0] += 1
 
-        elif symbol == key.D:
-            self.strafe[1] += 1
+            elif symbol == key.A:
+                self.strafe[1] -= 1
 
-        elif symbol == key.SPACE:
-            if self.dy == 0:
-                self.dy = JUMP_SPEED
+            elif symbol == key.D:
+                self.strafe[1] += 1
 
-        elif symbol == key.ESCAPE:
+            elif symbol == key.SPACE:
+                if self.dy == 0:
+                    self.dy = JUMP_SPEED
+
+        if symbol == key.ESCAPE:
             if self.player_inventory.open:
                 self.player_inventory.hide_container()
 
@@ -461,14 +464,15 @@ class Window(pyglet.window.Window):
             Number representing any modifying keys that were pressed.
 
         """
-        if symbol == key.W:
-            self.strafe[0] += 1
-        elif symbol == key.S:
-            self.strafe[0] -= 1
-        elif symbol == key.A:
-            self.strafe[1] += 1
-        elif symbol == key.D:
-            self.strafe[1] -= 1
+        if self.exclusive:
+            if symbol == key.W:
+                self.strafe[0] += 1
+            elif symbol == key.S:
+                self.strafe[0] -= 1
+            elif symbol == key.A:
+                self.strafe[1] += 1
+            elif symbol == key.D:
+                self.strafe[1] -= 1
 
     def on_resize(self, width: int, height: int):
         """Called when the window is resized to a new `width` and `height`."""
