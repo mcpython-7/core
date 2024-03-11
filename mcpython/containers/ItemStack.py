@@ -3,13 +3,25 @@ from mcpython.world.items.AbstractItem import AbstractItem
 
 
 class ItemStack:
+    __slots__ = ("_item", "_count")
+
+    EMPTY: ItemStack = None
+
     @classmethod
     def empty(cls):
-        return ItemStack(None)
+        return cls.EMPTY
 
-    def __init__(self, item: AbstractItem | None, count=1):
-        self.item = item
-        self.count = count if item is not None else 0
+    def __init__(self, item: type[AbstractItem] | None, count=1):
+        self._item = item if count != 0 else None
+        self._count = count if item is not None else 0
+
+    @property
+    def item(self) -> type[AbstractItem] | None:
+        return self._item
+
+    @property
+    def count(self) -> int:
+        return self._count if self._item else 0
 
     def __repr__(self):
         return f"ItemStack(item={self.item.NAME},count={self.count})"
@@ -21,16 +33,13 @@ class ItemStack:
         return ItemStack(self.item, self.count)
 
     def set_amount(self, amount: int) -> ItemStack:
-        self.count = amount
-        if amount == 0:
-            self.item = None
-        return self
+        return ItemStack(self.item, amount)
 
     def add_amount(self, amount: int) -> ItemStack:
-        self.count += amount
-        if amount == 0:
-            self.item = None
-        return self
+        return ItemStack(self.item, self.count + amount)
 
     def is_compatible(self, other: ItemStack) -> bool:
         return self.item == other.item
+
+
+ItemStack.EMPTY = ItemStack(None)

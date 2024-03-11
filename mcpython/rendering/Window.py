@@ -345,6 +345,7 @@ class Window(pyglet.window.Window):
         ry = (y - self.get_size()[1] / 2) / self.inventory_scale
 
         for container in CONTAINER_STACK:
+            print(rx, ry, container.visual_size)
             if container.on_mouse_press(
                 rx + container.visual_size[0] / 2,
                 ry + container.visual_size[1] / 2,
@@ -507,11 +508,14 @@ class Window(pyglet.window.Window):
             size=self.get_size(),
         )
 
+        # don't know why this is needed, but we need it here...
+        extra_scale = self.get_size()[1] / 600
+
         glClear(GL_DEPTH_BUFFER_BIT)
         self.view = (
             Mat4()
             @ Mat4.look_at(Vec3(2, 2, 2), Vec3(0, 0, 0), Vec3(0, 1, 0))
-            @ Mat4.from_scale(Vec3(0.08, 0.08, 0.08))
+            @ Mat4.from_scale(Vec3(0.08, 0.08, 0.08) / extra_scale)
         )
 
         glEnable(GL_DEPTH_TEST)
@@ -538,11 +542,12 @@ class Window(pyglet.window.Window):
         x, y = self.mouse_position
         rx = (x - self.get_size()[0] / 2) / self.inventory_scale
         ry = (y - self.get_size()[1] / 2) / self.inventory_scale
-        self.moving_player_slot.relative_position = (
-            rx + self.player_inventory.visual_size[0] / 2,
-            ry + self.player_inventory.visual_size[1] / 2,
+        self.moving_player_slot.update_position(
+            (
+                rx + self.player_inventory.visual_size[0] / 2,
+                ry + self.player_inventory.visual_size[1] / 2,
+            )
         )
-        self.moving_player_slot.on_resize(*self.get_size())
         self.moving_player_slot.draw(self)
 
     def draw_focused_block(self):
@@ -551,8 +556,8 @@ class Window(pyglet.window.Window):
 
         """
         vector = self.get_sight_vector()
-        block = self.world.hit_test(self.position, vector)[0]
-        if block:
+
+        if block := self.world.hit_test(self.position, vector)[0]:
             x, y, z = block
             vertex_data = cube_line_vertices(x, y, z, 0.51)
             self.focused_block.set_attribute_data("position", vertex_data)
