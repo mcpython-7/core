@@ -28,21 +28,21 @@ class PlayerInventoryContainer(Container):
             + [
                 Slot(
                     self,
-                    (8 + 20 * i, 30),
+                    (8 + 18 * i, 30),
                 )
                 for i in range(9)
             ]
             + [
                 Slot(
                     self,
-                    (8 + 20 * i, 48),
+                    (8 + 18 * i, 48),
                 )
                 for i in range(9)
             ]
             + [
                 Slot(
                     self,
-                    (8 + 20 * i, 66),
+                    (8 + 18 * i, 66),
                 )
                 for i in range(9)
             ]
