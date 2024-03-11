@@ -327,7 +327,7 @@ class Window(pyglet.window.Window):
                     return
 
                 if not stack.is_empty() and stack.item.on_block_interaction(
-                    self.world.world.get(block, None), button, modifiers
+                    stack, self.world.world.get(block, None), button, modifiers
                 ):
                     return
 
@@ -345,7 +345,7 @@ class Window(pyglet.window.Window):
                     return
 
                 if not stack.is_empty() and stack.item.on_block_interaction(
-                    self.world.world.get(block, None), button, modifiers
+                    stack, self.world.world.get(block, None), button, modifiers
                 ):
                     return
 
