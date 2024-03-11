@@ -38,7 +38,11 @@ class AbstractItem:
 
     @classmethod
     def on_block_interaction(
-        cls, itemstack: ItemStack, block: AbstractBlock.AbstractBlock | None, button: int, modifiers: int
+        cls,
+        itemstack: ItemStack,
+        block: AbstractBlock.AbstractBlock | None,
+        button: int,
+        modifiers: int,
     ) -> bool:
         """
         Called when the item is used to interact with a block (None if no block is targeted).
