@@ -75,7 +75,6 @@ class Chat(Container):
 
         return False
 
-    # TODO Rename this here and in `on_key_press`
     def on_enter_pressed(self):
         if self.text.startswith("/"):
             if command := COMMAND_REGISTRY.get(

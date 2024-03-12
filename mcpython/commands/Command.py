@@ -93,7 +93,7 @@ class FixedString(CommandElement):
         if remaining_text.startswith(f"{self.text} "):
             return remaining_text.removeprefix(f"{self.text} "), self.text
 
-        return INVALID
+        return ("", self.text) if remaining_text == self.text else INVALID
 
 
 class AnyString(CommandElement):
@@ -103,7 +103,7 @@ class AnyString(CommandElement):
         parsed_elements: list[tuple[CommandElement, typing.Any]],
     ) -> tuple[str, typing.Any] | object:
         element = remaining_text.split(" ")[0]
-        return remaining_text.removeprefix(f"{element} "), element
+        return remaining_text.removeprefix(f"{element}").lstrip(), element
 
 
 class ItemName(CommandElement):
