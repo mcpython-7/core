@@ -14,6 +14,7 @@ from pyglet.gl import (
 from pyglet.math import Vec3, Mat4
 from pyglet.window import key, mouse
 
+from mcpython.commands.Chat import Chat
 from mcpython.config import (
     TICKS_PER_SEC,
     FLYING_SPEED,
@@ -129,6 +130,7 @@ class Window(pyglet.window.Window):
         self.player_inventory = PlayerInventoryContainer()
         self.hotbar = HotbarContainer(self.player_inventory)
         self.hotbar.show_container()
+        self.player_chat = Chat()
 
         self.moving_player_slot = Slot(self.player_inventory, (0, 0))
 
@@ -379,9 +381,6 @@ class Window(pyglet.window.Window):
             ):
                 return
 
-        if not self.player_inventory.open:
-            self.set_exclusive_mouse(True)
-
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
         """Called when the player moves the mouse.
 
@@ -423,6 +422,10 @@ class Window(pyglet.window.Window):
 
         """
 
+        for container in CONTAINER_STACK:
+            if container.on_key_press(symbol, modifiers):
+                return
+
         if self.exclusive:
             if symbol == key.W:
                 self.strafe[0] -= 1
@@ -440,14 +443,25 @@ class Window(pyglet.window.Window):
                 if self.dy == 0:
                     self.dy = JUMP_SPEED
 
+            elif symbol == key.T:
+                self.player_chat.show_container()
+                self.player_chat.ignore_next_t = True
+                self.set_exclusive_mouse(False)
+                return pyglet.event.EVENT_HANDLED
+
         if symbol == key.ESCAPE:
             if self.player_inventory.open:
                 self.player_inventory.hide_container()
 
+            if self.player_chat.open:
+                self.player_chat.hide_container()
+
             self.set_exclusive_mouse(not self.exclusive)
 
         elif symbol == key.E:
-            if self.player_inventory.open:
+            if self.player_chat.open:
+                pass
+            elif self.player_inventory.open:
                 self.set_exclusive_mouse(True)
                 self.player_inventory.hide_container()
             else:
@@ -460,6 +474,11 @@ class Window(pyglet.window.Window):
         elif symbol in self.num_keys and self.exclusive:
             index = symbol - self.num_keys[0]
             self.player_inventory.selected_slot = index
+
+    def on_text(self, text):
+        for container in CONTAINER_STACK:
+            if container.on_text(text):
+                return pyglet.event.EVENT_HANDLED
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         if self.exclusive:
@@ -513,17 +532,23 @@ class Window(pyglet.window.Window):
         self.view = Mat4()
         glDisable(GL_DEPTH_TEST)
 
-    def set_2d_centered_for_inventory(self, container: Container, scale=1):
+    def set_2d_centered_for_inventory(
+        self, container: Container, scale=1, offset=(0, 0)
+    ):
         width, height = self.get_size()
         self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
-        self.view = Mat4.from_translation(
-            Vec3(
-                width * container.render_anchor[0],
-                height * container.render_anchor[1],
-                0,
+        self.view = (
+            Mat4.from_translation(
+                Vec3(
+                    width * container.render_anchor[0],
+                    height * container.render_anchor[1],
+                    0,
+                )
             )
-        ) @ Mat4.from_scale(
-            Vec3(self.inventory_scale * scale, self.inventory_scale * scale, 1)
+            @ Mat4.from_scale(
+                Vec3(self.inventory_scale * scale, self.inventory_scale * scale, 1)
+            )
+            @ Mat4.from_translation(Vec3(*offset))
         )
         glDisable(GL_DEPTH_TEST)
 
@@ -571,6 +596,7 @@ class Window(pyglet.window.Window):
         self.draw_reticle()
 
         self.draw_inventory()
+        self.player_chat.draw_chat_output(self)
 
     def draw_inventory(self):
         glClear(GL_DEPTH_BUFFER_BIT)

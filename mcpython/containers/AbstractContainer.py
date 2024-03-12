@@ -334,6 +334,12 @@ class Container:
 
         return True
 
+    def on_key_press(self, symbol: int, modifiers: int) -> bool:
+        return False
+
+    def on_text(self, text: str) -> bool:
+        return False
+
     def on_resize(self, width: int, height: int):
         # for slot in self.slots:
         #     slot.on_resize(width, height)
