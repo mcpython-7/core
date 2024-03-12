@@ -23,6 +23,7 @@ class Slot:
         allow_player_insertion=True,
         is_picked_up_into=True,
         discoverable=True,
+        on_update: typing.Callable[[Slot, ItemStack], None] = None,
     ):
         self.container = container
         self._relative_position = relative_position
@@ -36,6 +37,7 @@ class Slot:
         self.allow_player_insertion = allow_player_insertion
         self.is_picked_up_into = is_picked_up_into
         self.discoverable = discoverable
+        self.on_update = on_update
 
     @property
     def itemstack(self):
@@ -86,13 +88,14 @@ class Slot:
             0,
         )
 
-    def set_stack(self, stack: ItemStack | None) -> typing.Self:
+    def set_stack(self, stack: ItemStack | None, update=True) -> typing.Self:
         if self.slot_vertex_data:
             for entry in self.slot_vertex_data:
                 entry.delete()
 
         self.slot_vertex_data.clear()
 
+        old_stack = self._itemstack
         self._itemstack = stack or ItemStack.EMPTY
 
         if self._itemstack.item is not None:
@@ -112,6 +115,9 @@ class Slot:
             )
 
             self._itemstack.item.on_slot_insert(self)
+
+        if self.on_update:
+            self.on_update(self, old_stack)
 
         return self
 
@@ -212,6 +218,7 @@ class SlotRenderCopy(Slot):
         allow_player_insertion=True,
         is_picked_up_into=True,
         discoverable=True,
+        on_update: typing.Callable[[Slot, ItemStack], None] = None,
     ):
         super().__init__(
             container,
@@ -220,6 +227,7 @@ class SlotRenderCopy(Slot):
             allow_player_insertion=allow_player_insertion,
             is_picked_up_into=is_picked_up_into,
             discoverable=discoverable,
+            on_update=on_update,
         )
         self._mirror = mirror
 
@@ -227,8 +235,11 @@ class SlotRenderCopy(Slot):
     def itemstack(self):
         return self._mirror.itemstack
 
-    def set_stack(self, stack: ItemStack | None) -> typing.Self:
-        self._mirror.set_stack(stack)
+    def set_stack(self, stack: ItemStack | None, update=True) -> typing.Self:
+        old_stack = self._mirror.itemstack
+        self._mirror.set_stack(stack, update=update)
+        if self.on_update:
+            self.on_update(self, old_stack)
         return self
 
     def draw(self, window: Window, offset: Vec3 = None):
