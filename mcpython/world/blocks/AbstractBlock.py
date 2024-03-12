@@ -114,6 +114,14 @@ class OakPlanks(AbstractBlock):
     STATE_FILE = BlockStateFile.by_name(NAME)
 
 
+class OakLog(AbstractBlock):
+    NAME = "minecraft:oak_log"
+    STATE_FILE = BlockStateFile.by_name(NAME)
+
+    def get_block_state(self) -> dict[str, str]:
+        return {"axis": "x"}
+
+
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
     STATE_FILE = BlockStateFile.by_name(NAME)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import abc
 import copy
 import functools
+import math
 import random
 import typing
 
@@ -135,7 +136,7 @@ class Model:
         self.name = name
         self.texture_coordinates = None
         self.was_baked = False
-        self.vertex_data_cache: list[dict[Mat4, list[Vec3]]] = []
+        self.vertex_data_cache: list[dict[tuple[float, float, float], list[Vec3]]] = []
 
     def resolve_texture_name(self, name: str | None) -> str | None:
         if not name:
@@ -174,34 +175,33 @@ class Model:
             textures.extend(sum(tex, ()))
 
     def get_rendering_data(
-        self, position: tuple[int, int, int], rotation: Vec3 = Vec3(0, 0, 0)
+        self,
+        position: tuple[int, int, int],
+        rotation: tuple[float, float, float] = (0, 0, 0),
     ) -> tuple[int, list[float], list[float]]:
         v = Vec3(*position)
         count = 0
         vertex = []
         texture = []
 
-        if rotation != Vec3(0, 0, 0):
-            rotation_matrix = Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
-            rotation_matrix @= Mat4.from_rotation(rotation[1], Vec3(0, 1, 0))
-            rotation_matrix @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
-        else:
-            rotation_matrix = Mat4()
-
         from mcpython.rendering.util import cube_vertices
 
         for i, (center, size, textures) in enumerate(self.elements):
             vertex_cache = self.vertex_data_cache[i]
 
-            if rotation_matrix not in vertex_cache:
+            if rotation not in vertex_cache:
+                rotation_matrix = Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
+                rotation_matrix @= Mat4.from_rotation(rotation[1], Vec3(0, 1, 0))
+                rotation_matrix @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
+
                 vertex_data = cube_vertices(center, size / 2)
                 vertex_data = [
                     Vec3((e := rotation_matrix @ Vec4(*element))[0], e[1], e[2])
                     for element in vertex_data
                 ]
-                vertex_cache[rotation_matrix] = vertex_data
+                vertex_cache[rotation] = vertex_data
             else:
-                vertex_data = vertex_cache[rotation_matrix]
+                vertex_data = vertex_cache[rotation]
 
             count += 36
             vertex_data = [vertex + v for vertex in vertex_data]
@@ -222,6 +222,20 @@ class Model:
 
         count, vertex_data, texture_data = self.get_rendering_data(position)
 
+        try:
+            return DEFAULT_BLOCK_SHADER.vertex_list(
+                count,
+                GL_TRIANGLES,
+                batch,
+                DEFAULT_BLOCK_GROUP,
+                position=("f", vertex_data),
+                tex_coords=("f", texture_data),
+            )
+        except ValueError:
+            pass
+        self.was_baked = False
+        self.bake()
+        count, vertex_data, texture_data = self.get_rendering_data(position)
         return DEFAULT_BLOCK_SHADER.vertex_list(
             count,
             GL_TRIANGLES,
@@ -240,8 +254,8 @@ class BlockState:
             (
                 typing.cast(str, entry["model"]),
                 None,
-                entry.get("x", 0),
-                entry.get("y", 0),
+                entry.get("x", 0) / 180 * math.pi,
+                entry.get("y", 0) / 180 * math.pi,
                 0,
                 entry.get("uvlock", False),
                 entry.get("weight", 1),
@@ -281,7 +295,7 @@ class BlockState:
         self, position: tuple[int, int, int]
     ) -> tuple[int, list[float], list[float]]:
         name, model, x, y, z, uvlock, _ = self.get_model(position)
-        return model.get_rendering_data(position)
+        return model.get_rendering_data(position, (x, y, z))
 
 
 class AbstractBlockStateCondition(abc.ABC):
