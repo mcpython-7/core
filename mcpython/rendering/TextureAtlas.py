@@ -30,6 +30,13 @@ class AtlasReference:
         )
         # fmt: on
 
+    def get_texture(self) -> pyglet.image.AbstractImage:
+        texture = self.atlas.get_texture()
+        x, y = self.position
+        dx, dy = self.size
+        sx, sy = self.atlas.block_size
+        return texture.get_region(x * sx, y * sy, x * sx + dx, y * sy + dy)
+
 
 class TextureAtlas:
     def __init__(
@@ -108,7 +115,7 @@ class TextureAtlas:
 
         raise RuntimeError("no more space!")
 
-    def get_texture(self):
+    def get_texture(self) -> pyglet.image.AbstractImage:
         if self._texture_cache:
             return self._texture_cache
 

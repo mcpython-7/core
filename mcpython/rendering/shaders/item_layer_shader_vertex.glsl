@@ -1,10 +1,8 @@
 #version 330 core
-in vec3 position;
+in vec2 position;
 in vec2 tex_coords;
-in vec4 colors;
 
 out vec2 texture_coords;
-out vec4 coloring;
 
 uniform WindowBlock
 {
@@ -16,8 +14,7 @@ uniform mat4 model;
 
 void main()
 {
-    vec4 pos = window.view * model * vec4(position, 1.0);
-    gl_Position = window.projection * pos;
+    gl_Position = window.projection * model * window.view * vec4(position, 0.0, 1.0);
 
     texture_coords = tex_coords;
 }

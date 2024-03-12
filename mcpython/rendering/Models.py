@@ -79,6 +79,9 @@ class Model:
             model.texture_table.update(data["textures"])
 
         while f"layer{model.item_layer_count}" in model.texture_table:
+            tex = model.resolve_texture_name(f"layer{model.item_layer_count}")
+            if tex and ":" in tex:
+                _TEXTURE_ATLAS.add_image_from_path(tex)
             model.item_layer_count += 1
 
         for _, __, faces in model.elements:
@@ -145,7 +148,7 @@ class Model:
         self.was_baked = False
         self.vertex_data_cache: list[dict[tuple[float, float, float], list[Vec3]]] = []
         self.item_layer_count = 0
-        self.item_layer_coordinates = []
+        self.item_layers: list[pyglet.image.AbstractImage] = []
 
     def __repr__(self):
         return f"Model({self.name})"
@@ -186,8 +189,11 @@ class Model:
             textures.clear()
             textures.extend(sum(tex, ()))
 
-        for i in range(len(self.item_layer_coordinates)):
-            pass
+        for i in range(self.item_layer_count):
+            texture = _TEXTURE_ATLAS.add_image_from_path(
+                self.resolve_texture_name(f"layer{i}")
+            )
+            self.item_layers.append(texture.get_texture())
 
     def get_rendering_data(
         self,
@@ -226,7 +232,10 @@ class Model:
             texture.extend(textures)
 
         if flat_batch and self.item_layer_count:
-            pass
+            for i in range(self.item_layer_count):
+                # todo: creating sprites each time here seems a bit overkill, can we do better?
+                sprite = pyglet.sprite.Sprite(self.item_layers[i], batch=flat_batch)
+                extra.append(sprite)
 
         return count, vertex, texture
 
