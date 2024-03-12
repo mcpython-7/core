@@ -60,6 +60,9 @@ class PlayerInventoryContainer(Container):
 
         self.selected_slot = 0
 
+    def get_selected_slot(self) -> Slot:
+        return self.slots[self.selected_slot]
+
     def get_selected_itemstack(self) -> ItemStack:
         return self.slots[self.selected_slot].itemstack
 

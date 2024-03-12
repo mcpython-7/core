@@ -9,6 +9,7 @@ import pyglet.graphics.vertexdomain
 from mcpython.rendering.Models import BlockStateFile
 
 if typing.TYPE_CHECKING:
+    from mcpython.world.items.AbstractItem import AbstractItem
     from mcpython.containers.ItemStack import ItemStack
 
 
@@ -19,6 +20,7 @@ class AbstractBlock(abc.ABC):
     NAME: str | None = None
     STATE_FILE: BlockStateFile | None = None
     BREAKABLE = True
+    BLOCK_ITEM: type[AbstractItem] | None = None
 
     def __init__(self, position: tuple[int, int, int]):
         self.position = position

@@ -65,6 +65,7 @@ def create_item_for_block(
         ) -> AbstractBlock.AbstractBlock | None:
             return block((0, 0, 0))
 
+    block.BLOCK_ITEM = BlockItem
     return BlockItem
 
 

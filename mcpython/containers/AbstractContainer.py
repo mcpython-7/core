@@ -8,6 +8,7 @@ from pyglet.math import Mat4, Vec3, Vec4, Vec2
 from pyglet.window import mouse
 
 from mcpython.containers.ItemStack import ItemStack
+from mcpython.world.items.AbstractItem import AbstractItem
 
 if typing.TYPE_CHECKING:
     from mcpython.rendering.Window import Window
@@ -233,6 +234,50 @@ class Container:
             self.sprite = None
 
         self.open = False
+
+    def find_item(self, item: type[AbstractItem]) -> Slot | None:
+        for slot in self.slots:
+            if slot.itemstack.item == item:
+                return slot
+
+    def insert(self, itemstack: ItemStack, merge=True, span=True) -> bool:
+        if itemstack.is_empty():
+            return True
+
+        added_slots: list[tuple[Slot, int]] = []
+
+        for slot in self.slots:
+            if itemstack.is_empty():
+                return True
+
+            if slot.itemstack.is_empty():
+                slot.set_stack(itemstack)
+                return True
+
+            if (
+                merge
+                and slot.itemstack.is_compatible(itemstack)
+                and (
+                    span
+                    or slot.itemstack.count + itemstack.count
+                    < slot.itemstack.item.MAX_STACK_SIZE
+                )
+            ):
+                added = min(
+                    itemstack.count,
+                    slot.itemstack.item.MAX_STACK_SIZE - slot.itemstack.count,
+                )
+                slot.set_stack(slot.itemstack.add_amount(added))
+                added_slots.append((slot, added))
+                itemstack = itemstack.add_amount(-added)
+
+        if itemstack.count == 0:
+            return True
+
+        for slot, count in added_slots:
+            slot.set_stack(slot.itemstack.add_amount(-count))
+
+        return False
 
     def window_to_relative_world(
         self, coord: tuple[float, float], win_size: tuple[int, int], scale: float

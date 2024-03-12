@@ -24,6 +24,7 @@ from mcpython.config import (
     JUMP_SPEED,
 )
 from mcpython.containers.AbstractContainer import CONTAINER_STACK, Slot, Container
+from mcpython.containers.ItemStack import ItemStack
 from mcpython.containers.PlayerInventoryContainer import (
     PlayerInventoryContainer,
     HotbarContainer,
@@ -318,19 +319,19 @@ class Window(pyglet.window.Window):
             vector = self.get_sight_vector()
             block, previous = self.world.hit_test(self.position, vector)
 
+            if block in self.world.world and self.world.world[
+                block
+            ].on_block_interaction(stack, button, modifiers):
+                return
+
+            if not stack.is_empty() and stack.item.on_block_interaction(
+                stack, self.world.world.get(block, None), button, modifiers
+            ):
+                return
+
             if (button == mouse.RIGHT) or (
                 (button == mouse.LEFT) and (modifiers & key.MOD_CTRL)
             ):
-                if block in self.world.world and self.world.world[
-                    block
-                ].on_block_interaction(stack, button, modifiers):
-                    return
-
-                if not stack.is_empty() and stack.item.on_block_interaction(
-                    stack, self.world.world.get(block, None), button, modifiers
-                ):
-                    return
-
                 # ON OSX, control + left click = right click.
                 if previous and not stack.is_empty():
                     if b := stack.item.create_block_to_be_placed(stack):
@@ -340,18 +341,31 @@ class Window(pyglet.window.Window):
             elif button == pyglet.window.mouse.LEFT and block:
                 instance = self.world.world[block]
 
-                if block in self.world.world and self.world.world[
-                    block
-                ].on_block_interaction(stack, button, modifiers):
-                    return
-
-                if not stack.is_empty() and stack.item.on_block_interaction(
-                    stack, self.world.world.get(block, None), button, modifiers
-                ):
-                    return
-
                 if instance.BREAKABLE:
                     self.world.remove_block(block)
+
+            elif button == pyglet.window.mouse.MIDDLE and block:
+                instance = self.world.world[block]
+                block_item = instance.BLOCK_ITEM
+
+                if block_item is not None:
+                    slot = self.player_inventory.find_item(block_item)
+                    if slot is None:
+                        itemstack = self.player_inventory.get_selected_itemstack()
+                        self.player_inventory.get_selected_slot().set_stack(
+                            ItemStack(block_item)
+                        )
+                        self.player_inventory.insert(itemstack)
+                    elif slot not in self.player_inventory.slots[:9]:
+                        itemstack = self.player_inventory.get_selected_itemstack()
+                        self.player_inventory.get_selected_slot().set_stack(
+                            slot.itemstack
+                        )
+                        slot.set_stack(itemstack)
+                    else:
+                        self.player_inventory.selected_slot = (
+                            self.player_inventory.slots.index(slot)
+                        )
 
             return
 
