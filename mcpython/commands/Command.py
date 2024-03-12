@@ -122,6 +122,22 @@ class ItemName(CommandElement):
         return remaining_text.removeprefix(f"{element}").lstrip(), item
 
 
+class BlockName(CommandElement):
+    def parse_partial(
+        self,
+        remaining_text: str,
+        parsed_elements: list[tuple[CommandElement, typing.Any]],
+    ) -> tuple[str, typing.Any] | object:
+        from mcpython.world.blocks.AbstractBlock import BLOCK_REGISTRY
+
+        element = remaining_text.split(" ")[0]
+        item = BLOCK_REGISTRY.lookup(element)
+        if item is None:
+            return INVALID
+
+        return remaining_text.removeprefix(f"{element}").lstrip(), item
+
+
 COMMAND_REGISTRY: dict[str, Command] = {}
 
 
