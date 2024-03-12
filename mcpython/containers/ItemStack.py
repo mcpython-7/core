@@ -3,13 +3,14 @@ from mcpython.world.items.AbstractItem import AbstractItem
 
 
 class ItemStack:
-    __slots__ = ("_item", "_count")
+    __slots__ = ("_item", "_count", "data")
 
     EMPTY: ItemStack = None
 
     def __init__(self, item: type[AbstractItem] | None, count=1):
         self._item = item if count != 0 else None
         self._count = count if item is not None else 0
+        self.data = None
 
     @property
     def item(self) -> type[AbstractItem] | None:
