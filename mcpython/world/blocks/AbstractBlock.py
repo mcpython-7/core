@@ -25,7 +25,7 @@ class AbstractBlock(IRegisterAble, abc.ABC):
     def __init__(self, position: tuple[int, int, int]):
         self.position = position
         self.shown = False
-        self.vertex_data: pyglet.graphics.vertexdomain.VertexList | None = None
+        self.vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
 
     def set_block_state(self, state: dict[str, str]):
         pass

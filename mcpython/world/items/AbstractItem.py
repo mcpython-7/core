@@ -74,6 +74,15 @@ def create_item_for_block(
     return typing.cast(type[AbstractItem], BlockItem)
 
 
+def create_basic_item(name: str) -> type[AbstractItem]:
+    @ITEM_REGISTRY.register
+    class BasicItem(AbstractItem):
+        NAME = name
+        MODEL = Model.by_name("{}:item/{}".format(*NAME.split(":")))
+
+    return typing.cast(type[AbstractItem], BasicItem)
+
+
 Dirt = create_item_for_block(AbstractBlock.Dirt)
 Sand = create_item_for_block(AbstractBlock.Sand)
 Bricks = create_item_for_block(AbstractBlock.Bricks)
@@ -81,3 +90,4 @@ Stone = create_item_for_block(AbstractBlock.Stone)
 OakPlanks = create_item_for_block(AbstractBlock.OakPlanks)
 OakLog = create_item_for_block(AbstractBlock.OakLog)
 Bedrock = create_item_for_block(AbstractBlock.Bedrock)
+Stick = create_basic_item("minecraft:stick")

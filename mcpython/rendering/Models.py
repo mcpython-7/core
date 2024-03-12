@@ -44,7 +44,7 @@ def _textured_cube(
 
 
 class Model:
-    _MODEL_CACHE: dict[str, Model] = {}
+    _MODEL_CACHE: dict[str, Model] = {"minecraft:builtin/generated": None}
 
     @classmethod
     def by_name(cls, name: str) -> Model:
@@ -53,6 +53,9 @@ class Model:
 
         if ":" not in name:
             name = f"minecraft:{name}"
+
+        if name in cls._MODEL_CACHE:
+            return cls._MODEL_CACHE[name]
 
         file = "assets/{}/models/{}.json".format(*name.split(":"))
         data = ResourceManager.load_json(file)
@@ -66,13 +69,17 @@ class Model:
 
         if "parent" in data:
             model.parent = cls.by_name(data["parent"])
-            model.elements = copy.deepcopy(model.parent.elements.copy())
-            # this is a 'basic' copy to share the cache entries
-            model.vertex_data_cache = model.parent.vertex_data_cache.copy()
-            model.texture_table.update(model.parent.texture_table)
+            if model.parent is not None:
+                model.elements = copy.deepcopy(model.parent.elements.copy())
+                # this is a 'basic' copy to share the cache entries
+                model.vertex_data_cache = model.parent.vertex_data_cache.copy()
+                model.texture_table.update(model.parent.texture_table)
 
         if "textures" in data:
             model.texture_table.update(data["textures"])
+
+        while f"layer{model.item_layer_count}" in model.texture_table:
+            model.item_layer_count += 1
 
         for _, __, faces in model.elements:
             faces[:] = [
@@ -137,6 +144,11 @@ class Model:
         self.texture_coordinates = None
         self.was_baked = False
         self.vertex_data_cache: list[dict[tuple[float, float, float], list[Vec3]]] = []
+        self.item_layer_count = 0
+        self.item_layer_coordinates = []
+
+    def __repr__(self):
+        return f"Model({self.name})"
 
     def resolve_texture_name(self, name: str | None) -> str | None:
         if not name:
@@ -174,10 +186,15 @@ class Model:
             textures.clear()
             textures.extend(sum(tex, ()))
 
+        for i in range(len(self.item_layer_coordinates)):
+            pass
+
     def get_rendering_data(
         self,
+        extra: list[pyglet.graphics.vertexdomain.VertexList],
         position: tuple[int, int, int],
         rotation: tuple[float, float, float] = (0, 0, 0),
+        flat_batch=None,
     ) -> tuple[int, list[float], list[float]]:
         v = Vec3(*position)
         count = 0
@@ -208,12 +225,16 @@ class Model:
             vertex += sum(map(tuple, vertex_data), ())
             texture.extend(textures)
 
+        if flat_batch and self.item_layer_count:
+            pass
+
         return count, vertex, texture
 
     def create_vertex_list(
         self,
         batch: pyglet.graphics.Batch,
         position: tuple[int, int, int],
+        flat_batch=None,
     ):
         from mcpython.rendering.util import (
             DEFAULT_BLOCK_SHADER,
@@ -223,16 +244,21 @@ class Model:
         if not self.was_baked:
             self.bake()
 
-        count, vertex_data, texture_data = self.get_rendering_data(position)
-
-        return DEFAULT_BLOCK_SHADER.vertex_list(
-            count,
-            GL_TRIANGLES,
-            batch,
-            DEFAULT_BLOCK_GROUP,
-            position=("f", vertex_data),
-            tex_coords=("f", texture_data),
+        extra = []
+        count, vertex_data, texture_data = self.get_rendering_data(
+            extra, position, flat_batch=flat_batch
         )
+
+        return [
+            DEFAULT_BLOCK_SHADER.vertex_list(
+                count,
+                GL_TRIANGLES,
+                batch,
+                DEFAULT_BLOCK_GROUP,
+                position=("f", vertex_data),
+                tex_coords=("f", texture_data),
+            )
+        ] + extra
 
 
 class BlockState:
@@ -281,10 +307,12 @@ class BlockState:
             model.bake()
 
     def get_rendering_data(
-        self, position: tuple[int, int, int]
+        self,
+        extra: list[pyglet.graphics.vertexdomain.VertexList],
+        position: tuple[int, int, int],
     ) -> tuple[int, list[float], list[float]]:
         name, model, x, y, z, uvlock, _ = self.get_model(position)
-        return model.get_rendering_data(position, (x, y, z))
+        return model.get_rendering_data(extra, position, (x, y, z))
 
 
 class AbstractBlockStateCondition(abc.ABC):
@@ -391,18 +419,21 @@ class BlockStateFile:
         count = 0
         vertex_data = []
         texture_data = []
+        extra = []
 
         for blockstate in self.get_blockstates(state):
-            c, v, t = blockstate.get_rendering_data(position)
+            c, v, t = blockstate.get_rendering_data(extra, position)
             count += c
             vertex_data += v
             texture_data += t
 
-        return DEFAULT_BLOCK_SHADER.vertex_list(
-            count,
-            GL_TRIANGLES,
-            batch,
-            DEFAULT_BLOCK_GROUP,
-            position=("f", vertex_data),
-            tex_coords=("f", texture_data),
-        )
+        return [
+            DEFAULT_BLOCK_SHADER.vertex_list(
+                count,
+                GL_TRIANGLES,
+                batch,
+                DEFAULT_BLOCK_GROUP,
+                position=("f", vertex_data),
+                tex_coords=("f", texture_data),
+            )
+        ] + extra

@@ -25,6 +25,7 @@ class Slot:
         self._relative_position = relative_position
         self._itemstack: ItemStack = ItemStack.EMPTY
         self.slot_batch = pyglet.graphics.Batch()
+        self.flat_batch = pyglet.graphics.Batch()
         self.slot_vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
         self.number_label = pyglet.text.Label(font_size=4 * 4, bold=True)
         self.update_position(relative_position)
@@ -50,6 +51,8 @@ class Slot:
 
         window.set_preview_3d(offset + Vec3(8, 7, 0))
         self.slot_batch.draw()
+        window.set_2d_centered_for_inventory(self.container)
+        self.flat_batch.draw()
         window.set_2d_centered_for_inventory(self.container, scale=0.25)
 
         if not self.itemstack.is_empty():
@@ -87,10 +90,11 @@ class Slot:
         self._itemstack = stack or ItemStack.EMPTY
 
         if self._itemstack.item is not None:
-            self.slot_vertex_data.append(
+            self.slot_vertex_data.extend(
                 self._itemstack.item.MODEL.create_vertex_list(
                     self.slot_batch,
                     (0, 0, 0),
+                    flat_batch=self.flat_batch,
                 ),
             )
             self.number_label.text = str(self._itemstack.count)

@@ -278,7 +278,8 @@ class World:
 
     def _hide_block(self, instance: AbstractBlock):
         """Private implementation of the 'hide_block()` method."""
-        instance.vertex_data.delete()
+        for element in instance.vertex_data:
+            element.delete()
         instance.vertex_data = None
 
     def show_sector(self, sector: tuple[int, int]):

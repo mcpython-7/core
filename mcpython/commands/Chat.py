@@ -50,6 +50,7 @@ class Chat(Container):
         self.chat_output_batch.draw()
 
     def submit_text(self, text: str):
+        # todo: clear parts of the chat history
         label = pyglet.text.Label(text, font_size=20, batch=self.chat_output_batch)
         label.position = 2, 2 - len(self.chat_output) * 30, 0
         self.chat_output.append(label)
