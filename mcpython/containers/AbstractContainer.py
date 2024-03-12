@@ -86,21 +86,10 @@ class Slot:
         self._itemstack = stack or ItemStack.EMPTY
 
         if self._itemstack.item is not None:
-            from mcpython.rendering.Window import Window
-
-            width, height = Window.INSTANCE.get_size()
-
-            x = self._relative_position[0] - self.container.visual_size[0] / 2
-            y = self._relative_position[1] - self.container.visual_size[1] / 2
-
             self.slot_vertex_data.append(
                 self._itemstack.item.MODEL.create_vertex_list(
                     self.slot_batch,
                     (0, 0, 0),
-                    offset=Vec2(
-                        x / width * 12.5,
-                        y / height * 12.5,
-                    ),
                 ),
             )
             self.number_label.text = str(self._itemstack.count)

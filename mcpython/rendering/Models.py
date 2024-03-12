@@ -190,7 +190,6 @@ class Model:
         self,
         batch: pyglet.graphics.Batch,
         position: tuple[int, int, int],
-        offset: Vec2 = Vec2(0, 0),
     ):
         from mcpython.rendering.util import (
             DEFAULT_BLOCK_SHADER,
@@ -206,7 +205,6 @@ class Model:
             DEFAULT_BLOCK_GROUP,
             position=("f", vertex_data),
             tex_coords=("f", texture_data),
-            # render_offset=("f", tuple(offset) * count),
         )
 
 
@@ -254,6 +252,12 @@ class BlockState:
         ]
         for _, model, *__ in self.models:
             model.bake()
+
+    def get_rendering_data(
+        self, position: tuple[int, int, int]
+    ) -> tuple[int, list[float], list[float]]:
+        name, model, x, y, z, uvlock, _ = self.get_model(position)
+        return model.get_rendering_data(position)
 
 
 class AbstractBlockStateCondition(abc.ABC):
@@ -331,19 +335,20 @@ class BlockStateFile:
         for _, state in self.multipart:
             state.bake()
 
-    def get_models(
-        self, position: tuple[int, int, int], state: dict[str, str]
-    ) -> typing.Iterator[tuple[str, Model | None, int, int, int, bool, int]]:
+    def get_blockstates(self, state: dict[str, str]) -> typing.Iterator[BlockState]:
         if self.variants:
             for case, variant in self.variants:
                 if all(state.get(key) == value for key, value in case.items()):
-                    yield variant.get_model(position)
+                    yield variant
                     return
-            raise KeyError(f"block state: {self.name}, state: {state}")
+
+            raise KeyError(
+                f"block state: {self.name}, state: {state} (possible: {', '.join(map(lambda e: str(e[0]), self.variants))})"
+            )
 
         for case, variant in self.multipart:
             if case.applies(state):
-                yield variant.get_model(position)
+                yield variant
 
     def create_vertex_list(
         self,
@@ -359,8 +364,9 @@ class BlockStateFile:
         count = 0
         vertex_data = []
         texture_data = []
-        for _, model, x, y, z, uvlock, __ in self.get_models(position, state):
-            c, v, t = model.get_rendering_data(position)
+
+        for blockstate in self.get_blockstates(state):
+            c, v, t = blockstate.get_rendering_data(position)
             count += c
             vertex_data += v
             texture_data += t
