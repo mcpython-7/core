@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+import enum
 import typing
 
 import pyglet.graphics.vertexdomain
@@ -30,7 +31,20 @@ class AbstractBlock(abc.ABC):
     def get_block_state(self) -> dict[str, str]:
         return _EMPTY_STATE
 
+    def update_render_state(self):
+        if not self.shown:
+            return
+
+        from mcpython.rendering.Window import Window
+
+        world = Window.INSTANCE.world
+        world.hide_block(self)
+        world.show_block(self)
+
     def on_block_added(self):
+        pass
+
+    def on_block_placed(self, itemstack: ItemStack, onto: tuple[int, int, int]):
         pass
 
     def on_block_removed(self):
@@ -114,12 +128,44 @@ class OakPlanks(AbstractBlock):
     STATE_FILE = BlockStateFile.by_name(NAME)
 
 
+class LogAxis(enum.Enum):
+    X = 0
+    Y = 1
+    Z = 2
+
+
 class OakLog(AbstractBlock):
     NAME = "minecraft:oak_log"
     STATE_FILE = BlockStateFile.by_name(NAME)
 
+    def __init__(self, position: tuple[int, int, int]):
+        super().__init__(position)
+        self.axis = LogAxis.Y
+
+    def on_block_placed(self, itemstack: ItemStack, onto: tuple[int, int, int]):
+        dx, dy, dz = (
+            self.position[0] - onto[0],
+            self.position[1] - onto[1],
+            self.position[2] - onto[2],
+        )
+        print(dx, dy, dz)
+
+        if dy != 0:
+            self.axis = LogAxis.Y
+        elif dx != 0:
+            self.axis = LogAxis.X
+        elif dz != 0:
+            self.axis = LogAxis.Z
+        else:
+            self.axis = LogAxis.Y
+
+        self.update_render_state()
+
     def get_block_state(self) -> dict[str, str]:
-        return {"axis": "x"}
+        return {"axis": self.axis.name.lower()}
+
+    def set_block_state(self, block_state: dict[str]):
+        self.axis = LogAxis[block_state.get("axis", "y").upper()]
 
 
 class Bedrock(AbstractBlock):
