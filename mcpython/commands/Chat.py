@@ -5,6 +5,7 @@ import typing
 
 import pyglet.text
 
+from mcpython.commands.Command import COMMAND_REGISTRY
 from mcpython.containers.AbstractContainer import Container
 from pyglet.window import key
 import clipboard
@@ -65,16 +66,33 @@ class Chat(Container):
             return True
 
         if symbol == key.ENTER:
-            # todo: handle command
-            self.submit_text(self.text)
-            self.history.append(self.text)
-            self.text = ""
-            self.hide_container()
-            from mcpython.rendering.Window import Window
+            self.on_enter_pressed()
+            return True
 
-            Window.INSTANCE.set_exclusive_mouse(True)
+        if symbol == key.BACKSPACE and self.text:
+            self.text = self.text[:-1]
+            return True
 
         return False
+
+    # TODO Rename this here and in `on_key_press`
+    def on_enter_pressed(self):
+        if self.text.startswith("/"):
+            if command := COMMAND_REGISTRY.get(
+                self.text.split(" ")[0].removeprefix("/")
+            ):
+                command.run_command(self, self.text.removeprefix("/"))
+            else:
+                self.submit_text("ERROR: Command not found!")
+        else:
+            self.submit_text(self.text)
+
+        self.history.append(self.text)
+        self.text = ""
+        self.hide_container()
+        from mcpython.rendering.Window import Window
+
+        Window.INSTANCE.set_exclusive_mouse(True)
 
     def on_text(self, text: str) -> bool:
         if self.ignore_next_t:
@@ -99,3 +117,7 @@ class Chat(Container):
             self, offset=(10, 40 + len(self.chat_output) * 30), scale=0.25
         )
         self.chat_output_batch.draw()
+
+    def hide_container(self):
+        super().hide_container()
+        self.text = ""
