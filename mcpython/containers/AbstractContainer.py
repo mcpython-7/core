@@ -23,6 +23,7 @@ class Slot:
         allow_player_insertion=True,
         is_picked_up_into=True,
         discoverable=True,
+        allow_right_click=True,
         on_update: typing.Callable[[Slot, ItemStack], None] = None,
     ):
         self.container = container
@@ -37,6 +38,7 @@ class Slot:
         self.allow_player_insertion = allow_player_insertion
         self.is_picked_up_into = is_picked_up_into
         self.discoverable = discoverable
+        self.allow_right_click = allow_right_click
         self.on_update = on_update
 
     @property
@@ -137,7 +139,7 @@ class Slot:
                 self.set_stack(moving_slot.itemstack)
                 moving_slot.set_stack(ItemStack.EMPTY)
 
-            elif button == mouse.RIGHT:
+            elif button == mouse.RIGHT and self.allow_right_click:
                 self.set_stack(moving_slot.itemstack.set_amount(1))
                 moving_slot.set_stack(moving_slot.itemstack.add_amount(-1))
                 return True
@@ -162,7 +164,7 @@ class Slot:
                 self.set_stack(ItemStack.EMPTY)
                 return True
 
-            if button == mouse.RIGHT:
+            if button == mouse.RIGHT and self.allow_right_click:
                 transfer_amount = math.floor(self.itemstack.count / 2)
                 self.set_stack(self.itemstack.add_amount(-transfer_amount))
                 moving_slot.set_stack(self.itemstack.set_amount(transfer_amount))
@@ -193,7 +195,7 @@ class Slot:
                 )
                 return True
 
-            if button == mouse.RIGHT:
+            if button == mouse.RIGHT and self.allow_right_click:
                 if self.itemstack.count < self.itemstack.item.MAX_STACK_SIZE:
                     self.set_stack(self.itemstack.add_amount(1))
                     moving_slot.set_stack(moving_slot.itemstack.add_amount(-1))
@@ -218,6 +220,7 @@ class SlotRenderCopy(Slot):
         allow_player_insertion=True,
         is_picked_up_into=True,
         discoverable=True,
+        allow_right_click=True,
         on_update: typing.Callable[[Slot, ItemStack], None] = None,
     ):
         super().__init__(
@@ -227,6 +230,7 @@ class SlotRenderCopy(Slot):
             allow_player_insertion=allow_player_insertion,
             is_picked_up_into=is_picked_up_into,
             discoverable=discoverable,
+            allow_right_click=allow_right_click,
             on_update=on_update,
         )
         self._mirror = mirror

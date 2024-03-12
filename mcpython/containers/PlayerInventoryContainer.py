@@ -6,6 +6,7 @@ import pyglet.sprite
 
 from mcpython.containers.AbstractContainer import Container, Slot, SlotRenderCopy
 from mcpython.containers.ItemStack import ItemStack
+from mcpython.crafting.GridRecipes import GridRecipeManager
 from mcpython.resources.ResourceManager import ResourceManager
 from mcpython.world.items.AbstractItem import ITEMS
 
@@ -39,8 +40,19 @@ class PlayerInventoryContainer(Container):
                 discoverable=False,
                 is_picked_up_into=False,
                 allow_player_insertion=False,
+                allow_right_click=False,
             ),
         ]
+        self.player_crafting_provider = GridRecipeManager(
+            self,
+            (2, 2),
+            (
+                (self.player_crafting_slots[0], self.player_crafting_slots[2]),
+                (self.player_crafting_slots[1], self.player_crafting_slots[3]),
+            ),
+            self.player_crafting_slots[4],
+        )
+
         self.slots = (
             [
                 Slot(
@@ -81,8 +93,9 @@ class PlayerInventoryContainer(Container):
 
         for slot in self.player_crafting_slots[:4]:
             self.insert(slot.itemstack)
-            slot.set_stack(ItemStack.EMPTY)
-        self.player_crafting_slots[-1].set_stack(ItemStack.EMPTY)
+            slot.set_stack(ItemStack.EMPTY, update=False)
+        self.player_crafting_slots[-1].set_stack(ItemStack.EMPTY, update=False)
+        self.player_crafting_provider.current_recipe = None
 
     def get_selected_slot(self) -> Slot:
         return self.slots[self.selected_slot]
