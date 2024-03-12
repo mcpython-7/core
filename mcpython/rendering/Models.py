@@ -8,7 +8,7 @@ import typing
 
 import pyglet.graphics
 from pyglet.gl import GL_TRIANGLES
-from pyglet.math import Vec3, Vec2
+from pyglet.math import Vec3, Vec2, Mat4, Vec4
 
 from mcpython.resources.ResourceManager import ResourceManager
 from mcpython.rendering.TextureAtlas import TextureAtlas, AtlasReference
@@ -66,6 +66,8 @@ class Model:
         if "parent" in data:
             model.parent = cls.by_name(data["parent"])
             model.elements = copy.deepcopy(model.parent.elements.copy())
+            # this is a 'basic' copy to share the cache entries
+            model.vertex_data_cache = model.parent.vertex_data_cache.copy()
             model.texture_table.update(model.parent.texture_table)
 
         if "textures" in data:
@@ -116,6 +118,7 @@ class Model:
                         faces,
                     )
                 )
+                model.vertex_data_cache.append({})
 
         return model
 
@@ -132,6 +135,7 @@ class Model:
         self.name = name
         self.texture_coordinates = None
         self.was_baked = False
+        self.vertex_data_cache: list[dict[Mat4, list[Vec3]]] = []
 
     def resolve_texture_name(self, name: str | None) -> str | None:
         if not name:
@@ -170,18 +174,35 @@ class Model:
             textures.extend(sum(tex, ()))
 
     def get_rendering_data(
-        self, position: tuple[int, int, int]
+        self, position: tuple[int, int, int], rotation: Vec3 = Vec3(0, 0, 0)
     ) -> tuple[int, list[float], list[float]]:
         v = Vec3(*position)
         count = 0
         vertex = []
         texture = []
 
+        rotation_matrix = Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
+        rotation_matrix @= Mat4.from_rotation(rotation[1], Vec3(0, 1, 0))
+        rotation_matrix @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
+
         from mcpython.rendering.util import cube_vertices
 
-        for center, size, textures in self.elements:
+        for i, (center, size, textures) in enumerate(self.elements):
+            vertex_cache = self.vertex_data_cache[i]
+
+            if rotation_matrix not in vertex_cache:
+                vertex_data = cube_vertices(center, size / 2)
+                vertex_data = [
+                    Vec3((e := rotation_matrix @ Vec4(*element))[0], e[1], e[2])
+                    for element in vertex_data
+                ]
+                vertex_cache[rotation_matrix] = vertex_data
+            else:
+                vertex_data = vertex_cache[rotation_matrix]
+
             count += 36
-            vertex += cube_vertices(v + center, size / 2)
+            vertex_data = [vertex + v for vertex in vertex_data]
+            vertex += sum(map(tuple, vertex_data), ())
             texture.extend(textures)
 
         return count, vertex, texture
