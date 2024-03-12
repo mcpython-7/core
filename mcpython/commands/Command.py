@@ -30,7 +30,7 @@ class CommandElement(ABC):
             | None
         ) = None
 
-    def then(self, element: CommandElement):
+    def then(self, element: CommandElement) -> typing.Self:
         self.possible_continue.append(element)
         return self
 
@@ -104,6 +104,27 @@ class AnyString(CommandElement):
     ) -> tuple[str, typing.Any] | object:
         element = remaining_text.split(" ")[0]
         return remaining_text.removeprefix(f"{element}").lstrip(), element
+
+
+class IntegerLiteral(CommandElement):
+    def __init__(self, min: int = None, max: int = None):
+        super().__init__()
+        self.min = min
+        self.max = max
+
+    def parse_partial(
+        self,
+        remaining_text: str,
+        parsed_elements: list[tuple[CommandElement, typing.Any]],
+    ) -> tuple[str, typing.Any] | object:
+        element = remaining_text.split(" ")[0]
+        if element.removeprefix("-").isnumeric():
+            v = int(element)
+            if (self.min is None or self.min <= v) and (
+                self.max is None or v <= self.max
+            ):
+                return remaining_text.removeprefix(f"{element}").lstrip(), v
+        return INVALID
 
 
 class ItemName(CommandElement):
