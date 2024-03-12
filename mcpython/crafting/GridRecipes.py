@@ -3,7 +3,8 @@ from __future__ import annotations
 import typing
 
 from mcpython.containers.AbstractContainer import Slot, Container
-from mcpython.containers.ItemStack import ItemStack
+from mcpython.containers.ItemStack import ItemStack, TagStack
+from mcpython.resources.ResourceManager import ResourceManager
 
 
 def _normalize(
@@ -42,6 +43,19 @@ def _normalize_slots(
     return tuple(col[frn : lrn + 1] for col in items[fcn : lcn + 1])
 
 
+def _decode_ingredient(entry: dict | list) -> ItemStack:
+    if isinstance(entry, list):
+        return TagStack(None, [_decode_ingredient(entry) for entry in entry])
+
+    if "tag" in entry:
+        return TagStack(entry["tag"])
+
+    return ItemStack(
+        entry["item"],
+        entry.get("count", 1),
+    )
+
+
 class AbstractGridRecipe:
     PROVIDER_NAME: str = None
 
@@ -67,11 +81,25 @@ class AbstractGridRecipe:
 class GridShapedRecipe(AbstractGridRecipe):
     PROVIDER_NAME = "minecraft:crafting_shaped"
 
+    @classmethod
+    def decode(cls, data: dict) -> AbstractGridRecipe:
+        table = {" ": ItemStack.EMPTY} | {
+            key: _decode_ingredient(value) for key, value in data["key"]
+        }
+        pattern = data["pattern"]
+        size = len(pattern[0]), len(pattern)
+        table = tuple(
+            tuple(table[pattern[y][x]] for y in range(size[1])) for x in range(size[0])
+        )
+        output = _decode_ingredient(data["result"])
+        return cls(table, output)
+
     def __init__(
         self, itemlist: tuple[tuple[ItemStack | None, ...], ...], output: ItemStack
     ):
         self.itemlist = itemlist
         self.output = output
+        self.size = len(itemlist), len(itemlist[0])
 
     def matches(
         self, item_grid: tuple[tuple[ItemStack | None, ...], ...]
@@ -91,6 +119,12 @@ class GridShapedRecipe(AbstractGridRecipe):
 
 class GridShapelessRecipe(AbstractGridRecipe):
     PROVIDER_NAME = "minecraft:crafting_shapeless"
+
+    @classmethod
+    def decode(cls, data: dict) -> AbstractGridRecipe:
+        items = [_decode_ingredient(entry) for entry in data["ingredients"]]
+        output = _decode_ingredient(data["result"])
+        return cls(items, output)
 
     def __init__(self, itemlist: list[ItemStack], output: ItemStack):
         self.itemlist = itemlist
@@ -120,9 +154,44 @@ class GridShapelessRecipe(AbstractGridRecipe):
 
 
 class RecipeManager:
+    DECODERS = [
+        GridShapedRecipe,
+        GridShapelessRecipe,
+    ]
+
     def __init__(self):
         self.shapeless_recipes: dict[int, list[GridShapelessRecipe]] = {}
         self.shaped_recipes: dict[tuple[int, int], list[GridShapedRecipe]] = {}
+
+    def decode_recipe_file(self, file: str) -> AbstractGridRecipe:
+        data = ResourceManager.load_json(file)
+
+        for decoder in self.DECODERS:
+            if data["type"] == decoder.PROVIDER_NAME:
+                return decoder.decode(data)
+
+        raise ValueError(f"unsupported recipe type: {data['type']}")
+
+    def register_recipe_from_file(self, file: str):
+        try:
+            recipe = self.decode_recipe_file(file)
+        except ValueError:
+            return
+
+        if isinstance(recipe, GridShapedRecipe):
+            self.shaped_recipes.get(recipe.size, []).append(recipe)
+        elif isinstance(recipe, GridShapelessRecipe):
+            self.shapeless_recipes.get(len(recipe.itemlist), []).append(recipe)
+        else:
+            raise ValueError(f"unsupported recipe: {recipe}")
+
+    def discover_recipes(self):
+        from mcpython.rendering.Window import Window
+
+        for file in ResourceManager.list_directory(
+            "data/minecraft/recipes", no_duplicates=False
+        ):
+            Window.INSTANCE.world._enqueue(self.register_recipe_from_file, file)
 
 
 RECIPE_MANAGER = RecipeManager()

@@ -43,4 +43,24 @@ class ItemStack:
         return self.item == other.item
 
 
+class TagStack(ItemStack):
+    def __init__(self, tag_name: str | None, entries: list[ItemStack] = None):
+        super().__init__(None)
+        self.tag_name = tag_name
+        self.entries = entries or []
+
+    def is_compatible(self, other: ItemStack) -> bool:
+        if isinstance(other, TagStack):
+            for a in self.entries:
+                for b in other.entries:
+                    if a.matches(b):
+                        return True
+        else:
+            for entry in self.entries:
+                if entry.matches(other):
+                    return True
+
+        return False
+
+
 ItemStack.EMPTY = ItemStack(None)

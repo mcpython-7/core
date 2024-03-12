@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import io
+import os
+import typing
 import zipfile
 import pathlib
 import json
@@ -17,6 +19,9 @@ class AbstractResourceSource:
     def load_raw(self, file: str) -> bytes:
         raise NotImplementedError()
 
+    def list_directory(self, directory: str) -> typing.Iterator[str]:
+        raise NotImplementedError
+
 
 class DirectoryResourceSource(AbstractResourceSource):
     def __init__(self, directory: str | pathlib.Path):
@@ -31,6 +36,17 @@ class DirectoryResourceSource(AbstractResourceSource):
     def load_raw(self, file: str) -> bytes:
         return self.directory.joinpath(file).read_bytes()
 
+    def list_directory(
+        self, directory: str, no_duplicates=True
+    ) -> typing.Iterator[str]:
+        if not self.directory.joinpath(directory).exists():
+            return
+
+        yield from (
+            f"{directory}/{file}"
+            for file in os.listdir(self.directory.joinpath(directory))
+        )
+
 
 class ArchiveResourceSource(AbstractResourceSource):
     def __init__(self, path: str | pathlib.Path):
@@ -43,6 +59,13 @@ class ArchiveResourceSource(AbstractResourceSource):
 
     def load_raw(self, file: str) -> bytes:
         return self.file.read(file)
+
+    def list_directory(
+        self, directory: str, no_duplicates=True
+    ) -> typing.Iterator[str]:
+        for file in self.file.namelist():
+            if file.startswith(f"{directory}/"):
+                yield file
 
 
 class _ResourceManager:
@@ -89,6 +112,27 @@ class _ResourceManager:
     def load_image(self, file: str) -> ImageWrapper:
         data = self.load_raw(file)
         return ImageWrapper(file, data)
+
+    def list_directory(
+        self, directory: str, no_duplicates=True
+    ) -> typing.Iterator[str]:
+        if ".." in directory:
+            raise IOError
+
+        if no_duplicates:
+            yielded = set()
+
+            for source in self.dynamic_source_list + self.static_source_list:
+                generator = source.list_directory(directory)
+
+                for entry in generator:
+                    if entry in yielded:
+                        continue
+                    yielded.add(entry)
+                    yield entry
+        else:
+            for source in self.dynamic_source_list + self.static_source_list:
+                yield from source.list_directory(directory)
 
 
 class ImageWrapper:
