@@ -235,7 +235,14 @@ class Container:
 
         self.open = False
 
-    def find_item(self, item: type[AbstractItem]) -> Slot | None:
+    def find_item(self, item: type[AbstractItem] | str) -> Slot | None:
+        if isinstance(item, str):
+            for slot in self.slots:
+                if not slot.itemstack.is_empty() and slot.itemstack.item.NAME == item:
+                    return slot
+
+            return
+
         for slot in self.slots:
             if slot.itemstack.item == item:
                 return slot

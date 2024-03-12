@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import typing
+from abc import ABC
 
 from mcpython.rendering.Models import Model
+from mcpython.resources.Registry import IRegisterAble, Registry
 from mcpython.world.blocks import AbstractBlock
 
 if typing.TYPE_CHECKING:
@@ -13,7 +15,7 @@ if typing.TYPE_CHECKING:
 ITEMS: list[type[AbstractItem]] = []
 
 
-class AbstractItem:
+class AbstractItem(IRegisterAble, ABC):
     NAME: str | None = None
     MODEL: Model | None = None
     MAX_STACK_SIZE = 64
@@ -52,9 +54,13 @@ class AbstractItem:
         return False
 
 
+ITEM_REGISTRY = Registry("minecraft:item", AbstractItem)
+
+
 def create_item_for_block(
     block: type[AbstractBlock.AbstractBlock],
 ) -> type[AbstractItem]:
+    @ITEM_REGISTRY.register
     class BlockItem(AbstractItem):
         NAME = block.NAME
         MODEL = Model.by_name("{}:item/{}".format(*NAME.split(":")))
@@ -65,8 +71,7 @@ def create_item_for_block(
         ) -> AbstractBlock.AbstractBlock | None:
             return block((0, 0, 0))
 
-    block.BLOCK_ITEM = BlockItem
-    return BlockItem
+    return typing.cast(type[AbstractItem], BlockItem)
 
 
 Dirt = create_item_for_block(AbstractBlock.Dirt)

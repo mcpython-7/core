@@ -55,9 +55,6 @@ class PlayerInventoryContainer(Container):
             ]
         )
 
-        for slot, item in zip(self.slots, ITEMS):
-            slot.set_stack(ItemStack(item))
-
         self.selected_slot = 0
 
     def get_selected_slot(self) -> Slot:
@@ -101,7 +98,7 @@ class HotbarContainer(Container):
     def draw(self, window: Window):
         super().draw(window)
         pos = self.slots[self.player_inventory.selected_slot]._calculate_offset(window)
-        self.hotbar_selection_sprite.position = (pos.x - 5, pos.y - 5, 0)
+        self.hotbar_selection_sprite.position = (pos.x - 4, pos.y - 5, 0)
         self.hotbar_selection_sprite.draw()
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:

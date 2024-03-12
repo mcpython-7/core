@@ -7,6 +7,7 @@ import typing
 import pyglet.graphics.vertexdomain
 
 from mcpython.rendering.Models import BlockStateFile
+from mcpython.resources.Registry import IRegisterAble, Registry
 
 if typing.TYPE_CHECKING:
     from mcpython.world.items.AbstractItem import AbstractItem
@@ -16,11 +17,10 @@ if typing.TYPE_CHECKING:
 _EMPTY_STATE = {}
 
 
-class AbstractBlock(abc.ABC):
+class AbstractBlock(IRegisterAble, abc.ABC):
     NAME: str | None = None
     STATE_FILE: BlockStateFile | None = None
     BREAKABLE = True
-    BLOCK_ITEM: type[AbstractItem] | None = None
 
     def __init__(self, position: tuple[int, int, int]):
         self.position = position
@@ -69,11 +69,16 @@ class AbstractBlock(abc.ABC):
         return f"{self.__class__.__name__}{self.position}"
 
 
+BLOCK_REGISTRY = Registry("minecraft:block", AbstractBlock)
+
+
+@BLOCK_REGISTRY.register
 class Dirt(AbstractBlock):
     NAME = "minecraft:dirt"
     STATE_FILE = BlockStateFile.by_name(NAME)
 
 
+@BLOCK_REGISTRY.register
 class Sand(AbstractBlock):
     NAME = "minecraft:sand"
     STATE_FILE = BlockStateFile.by_name(NAME)
@@ -115,16 +120,19 @@ class Sand(AbstractBlock):
             World.INSTANCE.send_block_update(old_pos)
 
 
+@BLOCK_REGISTRY.register
 class Bricks(AbstractBlock):
     NAME = "minecraft:bricks"
     STATE_FILE = BlockStateFile.by_name(NAME)
 
 
+@BLOCK_REGISTRY.register
 class Stone(AbstractBlock):
     NAME = "minecraft:stone"
     STATE_FILE = BlockStateFile.by_name(NAME)
 
 
+@BLOCK_REGISTRY.register
 class OakPlanks(AbstractBlock):
     NAME = "minecraft:oak_planks"
     STATE_FILE = BlockStateFile.by_name(NAME)
@@ -136,6 +144,7 @@ class LogAxis(enum.Enum):
     Z = 2
 
 
+@BLOCK_REGISTRY.register
 class OakLog(AbstractBlock):
     NAME = "minecraft:oak_log"
     STATE_FILE = BlockStateFile.by_name(NAME)
@@ -170,10 +179,8 @@ class OakLog(AbstractBlock):
         self.axis = LogAxis[block_state.get("axis", "y").upper()]
 
 
+@BLOCK_REGISTRY.register
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
     STATE_FILE = BlockStateFile.by_name(NAME)
     BREAKABLE = False
-
-
-BlockStateFile.bake_all()

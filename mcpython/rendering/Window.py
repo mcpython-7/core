@@ -346,26 +346,26 @@ class Window(pyglet.window.Window):
 
             elif button == pyglet.window.mouse.MIDDLE and block:
                 instance = self.world.world[block]
-                block_item = instance.BLOCK_ITEM
 
-                if block_item is not None:
-                    slot = self.player_inventory.find_item(block_item)
-                    if slot is None:
-                        itemstack = self.player_inventory.get_selected_itemstack()
-                        self.player_inventory.get_selected_slot().set_stack(
-                            ItemStack(block_item)
-                        )
+                slot = self.player_inventory.find_item(instance.NAME)
+
+                if slot is None:
+                    itemstack = self.player_inventory.get_selected_itemstack()
+                    self.player_inventory.get_selected_slot().set_stack(
+                        ItemStack(instance.NAME)
+                    )
+                    if not itemstack.is_empty():
                         self.player_inventory.insert(itemstack)
-                    elif slot not in self.player_inventory.slots[:9]:
-                        itemstack = self.player_inventory.get_selected_itemstack()
-                        self.player_inventory.get_selected_slot().set_stack(
-                            slot.itemstack
-                        )
-                        slot.set_stack(itemstack)
-                    else:
-                        self.player_inventory.selected_slot = (
-                            self.player_inventory.slots.index(slot)
-                        )
+
+                elif slot not in self.player_inventory.slots[:9]:
+                    itemstack = self.player_inventory.get_selected_itemstack()
+                    self.player_inventory.get_selected_slot().set_stack(slot.itemstack)
+                    slot.set_stack(itemstack)
+
+                else:
+                    self.player_inventory.selected_slot = (
+                        self.player_inventory.slots.index(slot)
+                    )
 
             return
 

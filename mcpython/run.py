@@ -4,6 +4,10 @@ import pyglet.graphics.shader
 from pyglet.gl import *
 import pyglet.model.codecs.obj
 
+from mcpython.containers.ItemStack import ItemStack
+from mcpython.rendering.Models import BlockStateFile
+from mcpython.world.World import World
+
 pyglet.image.Texture.default_min_filter = GL_NEAREST
 pyglet.image.Texture.default_mag_filter = GL_NEAREST
 
@@ -11,6 +15,9 @@ from mcpython.rendering.Window import Window
 from mcpython.rendering.util import (
     setup_fog,
 )
+
+from mcpython.world.blocks.AbstractBlock import BLOCK_REGISTRY
+from mcpython.world.items.AbstractItem import ITEM_REGISTRY
 
 pyglet.resource.path.append("../cache/assets.zip")
 
@@ -33,10 +40,16 @@ def setup():
 
 
 def main():
-    window = Window(width=800, height=600, caption="Pyglet", resizable=True)
+    ITEM_REGISTRY.run_registrations()
+    BLOCK_REGISTRY.run_registrations()
+
+    BlockStateFile.bake_all()
+
+    window = Window(width=800, height=600, caption="mcpython 7", resizable=True)
     # Hide the mouse cursor and prevent the mouse from leaving the window.
     window.set_exclusive_mouse(True)
     setup()
+
     pyglet.app.run()
 
 

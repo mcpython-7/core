@@ -1,5 +1,5 @@
 from __future__ import annotations
-from mcpython.world.items.AbstractItem import AbstractItem
+from mcpython.world.items.AbstractItem import AbstractItem, ITEM_REGISTRY
 
 
 class ItemStack:
@@ -7,8 +7,12 @@ class ItemStack:
 
     EMPTY: ItemStack = None
 
-    def __init__(self, item: type[AbstractItem] | None, count=1):
-        self._item = item if count != 0 else None
+    def __init__(self, item: type[AbstractItem] | str | None, count=1):
+        self._item = (
+            (item if not isinstance(item, str) else ITEM_REGISTRY.lookup(item))
+            if count != 0
+            else None
+        )
         self._count = count if item is not None else 0
         self.data = None
 

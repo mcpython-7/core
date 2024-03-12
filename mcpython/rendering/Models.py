@@ -220,22 +220,11 @@ class Model:
             DEFAULT_BLOCK_GROUP,
         )
 
+        if not self.was_baked:
+            self.bake()
+
         count, vertex_data, texture_data = self.get_rendering_data(position)
 
-        try:
-            return DEFAULT_BLOCK_SHADER.vertex_list(
-                count,
-                GL_TRIANGLES,
-                batch,
-                DEFAULT_BLOCK_GROUP,
-                position=("f", vertex_data),
-                tex_coords=("f", texture_data),
-            )
-        except ValueError:
-            pass
-        self.was_baked = False
-        self.bake()
-        count, vertex_data, texture_data = self.get_rendering_data(position)
         return DEFAULT_BLOCK_SHADER.vertex_list(
             count,
             GL_TRIANGLES,
