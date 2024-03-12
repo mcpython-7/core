@@ -185,6 +185,11 @@ class Slot:
 
                 return True
 
+        elif button == mouse.LEFT:
+            itemstack = moving_slot.itemstack
+            moving_slot.set_stack(self.itemstack)
+            self.set_stack(itemstack)
+
         return False
 
 
