@@ -20,6 +20,9 @@ class Slot:
         container: Container,
         relative_position: tuple[int, int],
         enable_interaction=True,
+        allow_player_insertion=True,
+        is_picked_up_into=True,
+        discoverable=True,
     ):
         self.container = container
         self._relative_position = relative_position
@@ -30,6 +33,9 @@ class Slot:
         self.number_label = pyglet.text.Label(font_size=4 * 4, bold=True)
         self.update_position(relative_position)
         self.enable_interaction = enable_interaction
+        self.allow_player_insertion = allow_player_insertion
+        self.is_picked_up_into = is_picked_up_into
+        self.discoverable = discoverable
 
     @property
     def itemstack(self):
@@ -117,7 +123,7 @@ class Slot:
 
         moving_slot = Window.INSTANCE.moving_player_slot
 
-        if self.itemstack.is_empty():
+        if self.itemstack.is_empty() and self.allow_player_insertion:
             if moving_slot.itemstack.is_empty():
                 return False
 
@@ -163,7 +169,10 @@ class Slot:
                     )
                 return True
 
-        if moving_slot.itemstack.is_compatible(self.itemstack):
+        if (
+            moving_slot.itemstack.is_compatible(self.itemstack)
+            and self.allow_player_insertion
+        ):
             if button == mouse.LEFT:
                 transfer_amount = min(
                     self.itemstack.item.MAX_STACK_SIZE - self.itemstack.count,
@@ -185,7 +194,7 @@ class Slot:
 
                 return True
 
-        elif button == mouse.LEFT:
+        elif button == mouse.LEFT and self.allow_player_insertion:
             itemstack = moving_slot.itemstack
             moving_slot.set_stack(self.itemstack)
             self.set_stack(itemstack)
@@ -200,9 +209,17 @@ class SlotRenderCopy(Slot):
         relative_position: tuple[int, int],
         mirror: Slot,
         enable_interaction=True,
+        allow_player_insertion=True,
+        is_picked_up_into=True,
+        discoverable=True,
     ):
         super().__init__(
-            container, relative_position, enable_interaction=enable_interaction
+            container,
+            relative_position,
+            enable_interaction=enable_interaction,
+            allow_player_insertion=allow_player_insertion,
+            is_picked_up_into=is_picked_up_into,
+            discoverable=discoverable,
         )
         self._mirror = mirror
 
@@ -247,13 +264,17 @@ class Container:
     def find_item(self, item: type[AbstractItem] | str) -> Slot | None:
         if isinstance(item, str):
             for slot in self.slots:
-                if not slot.itemstack.is_empty() and slot.itemstack.item.NAME == item:
+                if (
+                    not slot.itemstack.is_empty()
+                    and slot.itemstack.item.NAME == item
+                    and slot.discoverable
+                ):
                     return slot
 
             return
 
         for slot in self.slots:
-            if slot.itemstack.item == item:
+            if slot.itemstack.item == item and slot.discoverable:
                 return slot
 
     def insert(self, itemstack: ItemStack, merge=True, span=True) -> bool:
@@ -263,6 +284,9 @@ class Container:
         added_slots: list[tuple[Slot, int]] = []
 
         for slot in self.slots:
+            if not slot.is_picked_up_into:
+                continue
+
             if itemstack.is_empty():
                 return True
 

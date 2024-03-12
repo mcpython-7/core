@@ -23,7 +23,24 @@ class PlayerInventoryContainer(Container):
             .get_region((0, 0), (175, 165))
             .to_pyglet(),
         )
-        i = 0
+        self.player_crafting_slots = [
+            Slot(self, (98, 114), discoverable=False, is_picked_up_into=False),
+            Slot(self, (98 + 18, 114), discoverable=False, is_picked_up_into=False),
+            Slot(self, (98, 114 + 18), discoverable=False, is_picked_up_into=False),
+            Slot(
+                self,
+                (98 + 18, 114 + 18),
+                discoverable=False,
+                is_picked_up_into=False,
+            ),
+            Slot(
+                self,
+                (154, 122),
+                discoverable=False,
+                is_picked_up_into=False,
+                allow_player_insertion=False,
+            ),
+        ]
         self.slots = (
             [
                 Slot(
@@ -53,9 +70,19 @@ class PlayerInventoryContainer(Container):
                 )
                 for i in range(9)
             ]
+            # Crafting Slots
+            + self.player_crafting_slots
         )
 
         self.selected_slot = 0
+
+    def hide_container(self):
+        super().hide_container()
+
+        for slot in self.player_crafting_slots[:4]:
+            self.insert(slot.itemstack)
+            slot.set_stack(ItemStack.EMPTY)
+        self.player_crafting_slots[-1].set_stack(ItemStack.EMPTY)
 
     def get_selected_slot(self) -> Slot:
         return self.slots[self.selected_slot]
