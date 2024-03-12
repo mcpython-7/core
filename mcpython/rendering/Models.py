@@ -181,9 +181,12 @@ class Model:
         vertex = []
         texture = []
 
-        rotation_matrix = Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
-        rotation_matrix @= Mat4.from_rotation(rotation[1], Vec3(0, 1, 0))
-        rotation_matrix @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
+        if rotation != Vec3(0, 0, 0):
+            rotation_matrix = Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
+            rotation_matrix @= Mat4.from_rotation(rotation[1], Vec3(0, 1, 0))
+            rotation_matrix @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
+        else:
+            rotation_matrix = Mat4()
 
         from mcpython.rendering.util import cube_vertices
 
