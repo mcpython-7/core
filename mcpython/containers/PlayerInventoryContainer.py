@@ -103,3 +103,7 @@ class HotbarContainer(Container):
         pos = self.slots[self.player_inventory.selected_slot]._calculate_offset(window)
         self.hotbar_selection_sprite.position = (pos.x - 5, pos.y - 5, 0)
         self.hotbar_selection_sprite.draw()
+
+    def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:
+        # we don't allow interaction with these slots
+        return False
