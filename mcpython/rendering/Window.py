@@ -24,7 +24,12 @@ from mcpython.config import (
     PLAYER_HEIGHT,
     JUMP_SPEED,
 )
-from mcpython.containers.AbstractContainer import CONTAINER_STACK, Slot, Container
+from mcpython.containers.AbstractContainer import (
+    CONTAINER_STACK,
+    Slot,
+    Container,
+    ItemInformationScreen,
+)
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.containers.PlayerInventoryContainer import (
     PlayerInventoryContainer,
@@ -127,12 +132,22 @@ class Window(pyglet.window.Window):
 
         self.inventory_scale = 2
 
+        self.slot_hover_info = ItemInformationScreen()
+
         self.player_inventory = PlayerInventoryContainer()
         self.hotbar = HotbarContainer(self.player_inventory)
         self.hotbar.show_container()
         self.player_chat = Chat()
 
-        self.moving_player_slot = Slot(self.player_inventory, (0, 0))
+        self.moving_player_slot = Slot(
+            self.player_inventory, (0, 0), on_update=self._update_moving_slot
+        )
+
+    def _update_moving_slot(self, slot, old_stack):
+        if not slot.itemstack.is_empty():
+            self.slot_hover_info.bind_to_slot(slot)
+        else:
+            self.slot_hover_info.bind_to_slot(None)
 
     def set_exclusive_mouse(self, exclusive: bool):
         """If `exclusive` is True, the game will capture the mouse, if False
@@ -382,6 +397,12 @@ class Window(pyglet.window.Window):
                 return
 
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
+        self.on_any_mouse_motion(x, y, dx, dy, 0, 0)
+
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        self.on_any_mouse_motion(x, y, dx, dy, buttons, modifiers)
+
+    def on_any_mouse_motion(self, x, y, dx, dy, buttons, modifiers):
         """Called when the player moves the mouse.
 
         Parameters
@@ -406,8 +427,16 @@ class Window(pyglet.window.Window):
 
         self.mouse_position = x, y
 
-    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        self.mouse_position = x, y
+        for container in CONTAINER_STACK:
+            container.on_mouse_motion(
+                *container.window_to_relative_world(
+                    (x, y), self.get_size(), self.inventory_scale
+                ),
+                dx / self.inventory_scale,
+                dy / self.inventory_scale,
+                buttons,
+                modifiers,
+            )
 
     def on_key_press(self, symbol: int, modifiers: int):
         """Called when the player presses a key. See pyglet docs for key
@@ -595,10 +624,10 @@ class Window(pyglet.window.Window):
         self.draw_label()
         self.draw_reticle()
 
-        self.draw_inventory()
+        self.draw_inventories()
         self.player_chat.draw_chat_output(self)
 
-    def draw_inventory(self):
+    def draw_inventories(self):
         glClear(GL_DEPTH_BUFFER_BIT)
 
         for container in CONTAINER_STACK:
@@ -616,6 +645,8 @@ class Window(pyglet.window.Window):
                 )
             )
             self.moving_player_slot.draw(self)
+
+        self.slot_hover_info.draw(self)
 
     def draw_focused_block(self):
         """Draw black edges around the block that is currently under the

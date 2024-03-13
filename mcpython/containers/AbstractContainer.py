@@ -121,6 +121,9 @@ class Slot:
         if self.on_update:
             self.on_update(self, old_stack)
 
+        if self.container.item_info_screen.bound_slot is self:
+            self.container.item_info_screen.bind_to_slot(self)
+
         return self
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:
@@ -266,6 +269,7 @@ class Container:
         self.render_offset = (0, 0)
         self.render_anchor = (0.5, 0.5)
         self.image_anchor = (0.5, 0.5)
+        self.item_info_screen = ItemInformationScreen()
 
         if texture:
             self.sprite = pyglet.sprite.Sprite(self.texture)
@@ -358,6 +362,8 @@ class Container:
         for slot in self.slots:
             slot.draw(window)
 
+        self.item_info_screen.draw(window)
+
     def show_container(self):
         self.open = True
         CONTAINER_STACK.append(self)
@@ -365,6 +371,14 @@ class Container:
     def hide_container(self):
         self.open = False
         CONTAINER_STACK.remove(self)
+
+    def get_container_at(self, rel_x: float, rel_y: float) -> Slot | None:
+        for slot in self.slots:
+            if (
+                slot.relative_position[0] <= rel_x <= slot.relative_position[0] + 18
+                and slot.relative_position[1] <= rel_y <= slot.relative_position[1] + 18
+            ):
+                return slot
 
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:
         if not self.open:
@@ -382,6 +396,12 @@ class Container:
 
         return True
 
+    def on_mouse_motion(
+        self, x: float, y: float, dx: float, dy: float, buttons: int, modifiers: int
+    ):
+        slot = self.get_container_at(x, y)
+        self.item_info_screen.bind_to_slot(slot)
+
     def on_key_press(self, symbol: int, modifiers: int) -> bool:
         return False
 
@@ -395,3 +415,79 @@ class Container:
 
 
 CONTAINER_STACK: list[Container] = []
+
+
+class ItemInformationScreen:
+    def __init__(self):
+        self.labels_batch = pyglet.graphics.Batch()
+        self.labels: list[pyglet.text.Label] = []
+        self.background = pyglet.shapes.Rectangle(
+            0, 0, 10, 10, color=(0, 0, 0, 255), batch=self.labels_batch
+        )
+        self.bound_slot: Slot | None = None
+
+    def bind_to_slot(self, slot: Slot | None):
+        if slot == self.bound_slot:
+            return
+
+        if slot and slot.itemstack.is_empty():
+            slot = None
+
+        self.bound_slot = slot
+
+        for label in self.labels:
+            label.delete()
+        self.labels.clear()
+
+        if slot is None:
+            return
+
+        # top-down
+        self.labels.append(
+            pyglet.text.Label(
+                text=slot.itemstack.item.NAME,
+                batch=self.labels_batch,
+                color=(255, 255, 255, 255),
+                font_size=25,
+            )
+        )
+        self.labels.append(
+            pyglet.text.Label(
+                text=f"{len(slot.itemstack.item.TAGS)} tag(s)",
+                batch=self.labels_batch,
+                color=(200, 200, 200, 255),
+                font_size=22,
+            )
+        )
+        if len(slot.itemstack.item.TAGS) < 6:
+            self.labels.extend(
+                pyglet.text.Label(
+                    text=tag,
+                    batch=self.labels_batch,
+                    color=(200, 200, 200, 255),
+                    font_size=20,
+                )
+                for tag in slot.itemstack.item.TAGS
+            )
+
+        height = 0
+        width = 0
+        for label in reversed(self.labels):
+            label.x = 10
+            label.y = height + 10
+            height += label.content_height
+            width = max(width, label.content_width)
+
+        self.background.width = width + 20
+        self.background.height = height + 20
+
+    def draw(self, window: Window):
+        if self.bound_slot is None:
+            return
+
+        window.set_2d_centered_for_inventory(
+            self.bound_slot.container,
+            offset=(self.bound_slot._calculate_offset(window) + Vec3(0, 15, 0)) * 4,
+            scale=0.25,
+        )
+        self.labels_batch.draw()
