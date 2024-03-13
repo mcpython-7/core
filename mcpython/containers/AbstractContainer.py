@@ -470,6 +470,16 @@ class ItemInformationScreen:
                 for tag in slot.itemstack.item.TAGS
             )
 
+        for line in slot.itemstack.item.get_custom_hover_info(slot.itemstack):
+            self.labels.append(
+                pyglet.text.Label(
+                    text=line,
+                    batch=self.labels_batch,
+                    color=(210, 210, 210, 256),
+                    font_size=22,
+                )
+            )
+
         height = 0
         width = 0
         for label in reversed(self.labels):

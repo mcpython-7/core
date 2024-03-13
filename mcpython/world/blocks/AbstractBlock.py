@@ -22,6 +22,12 @@ class AbstractBlock(IRegisterAble, abc.ABC):
     STATE_FILE: BlockStateFile | None = None
     BREAKABLE = True
 
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if cls.NAME is not None and cls.STATE_FILE is None:
+            cls.STATE_FILE = BlockStateFile.by_name(cls.NAME)
+
     def __init__(self, position: tuple[int, int, int]):
         self.position = position
         self.shown = False
@@ -132,23 +138,13 @@ class Stone(AbstractBlock):
     STATE_FILE = BlockStateFile.by_name(NAME)
 
 
-@BLOCK_REGISTRY.register
-class OakPlanks(AbstractBlock):
-    NAME = "minecraft:oak_planks"
-    STATE_FILE = BlockStateFile.by_name(NAME)
-
-
 class LogAxis(enum.Enum):
     X = 0
     Y = 1
     Z = 2
 
 
-@BLOCK_REGISTRY.register
-class OakLog(AbstractBlock):
-    NAME = "minecraft:oak_log"
-    STATE_FILE = BlockStateFile.by_name(NAME)
-
+class LogLikeBlock(AbstractBlock):
     def __init__(self, position: tuple[int, int, int]):
         super().__init__(position)
         self.axis = LogAxis.Y
@@ -182,5 +178,4 @@ class OakLog(AbstractBlock):
 @BLOCK_REGISTRY.register
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
-    STATE_FILE = BlockStateFile.by_name(NAME)
     BREAKABLE = False

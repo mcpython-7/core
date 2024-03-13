@@ -19,6 +19,7 @@ from mcpython.rendering.util import (
 
 from mcpython.world.blocks.AbstractBlock import BLOCK_REGISTRY
 from mcpython.world.items.AbstractItem import ITEM_REGISTRY
+import mcpython.world.helpers
 
 pyglet.resource.path.append("../cache/assets.zip")
 

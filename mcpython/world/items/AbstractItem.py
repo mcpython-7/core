@@ -54,6 +54,15 @@ class AbstractItem(IRegisterAble, ABC):
         """
         return False
 
+    @classmethod
+    def get_custom_hover_info(cls, itemstack: ItemStack) -> list[str]:
+        """
+        Returns a list of strings to be added to the hover text
+        First Element is the topmost element.
+        Width is dynamic based on context size.
+        """
+        return []
+
 
 ITEM_REGISTRY = Registry("minecraft:item", AbstractItem)
 
@@ -88,7 +97,5 @@ Dirt = create_item_for_block(AbstractBlock.Dirt)
 Sand = create_item_for_block(AbstractBlock.Sand)
 Bricks = create_item_for_block(AbstractBlock.Bricks)
 Stone = create_item_for_block(AbstractBlock.Stone)
-OakPlanks = create_item_for_block(AbstractBlock.OakPlanks)
-OakLog = create_item_for_block(AbstractBlock.OakLog)
 Bedrock = create_item_for_block(AbstractBlock.Bedrock)
 Stick = create_basic_item("minecraft:stick")
