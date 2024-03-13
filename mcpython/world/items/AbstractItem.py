@@ -22,6 +22,7 @@ class AbstractItem(IRegisterAble, ABC):
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
         if cls.NAME is not None:
             ITEMS.append(cls)
 

@@ -60,7 +60,7 @@ class AbstractGridRecipe:
     PROVIDER_NAME: str = None
 
     @classmethod
-    def decode(cls, data: dict) -> AbstractGridRecipe:
+    def decode(cls, data: dict) -> AbstractGridRecipe | None:
         raise NotImplementedError
 
     def matches(self, itemlist) -> ItemStack | None:
@@ -82,16 +82,22 @@ class GridShapedRecipe(AbstractGridRecipe):
     PROVIDER_NAME = "minecraft:crafting_shaped"
 
     @classmethod
-    def decode(cls, data: dict) -> AbstractGridRecipe:
+    def decode(cls, data: dict) -> GridShapedRecipe | None:
         table = {" ": ItemStack.EMPTY} | {
             key: _decode_ingredient(value) for key, value in data["key"]
         }
+        if any(value.is_empty() for value in table.values()):
+            return
+
         pattern = data["pattern"]
         size = len(pattern[0]), len(pattern)
         table = tuple(
             tuple(table[pattern[y][x]] for y in range(size[1])) for x in range(size[0])
         )
         output = _decode_ingredient(data["result"])
+        if output.is_empty():
+            return
+
         return cls(table, output)
 
     def __init__(
@@ -121,9 +127,13 @@ class GridShapelessRecipe(AbstractGridRecipe):
     PROVIDER_NAME = "minecraft:crafting_shapeless"
 
     @classmethod
-    def decode(cls, data: dict) -> AbstractGridRecipe:
+    def decode(cls, data: dict) -> GridShapelessRecipe | None:
         items = [_decode_ingredient(entry) for entry in data["ingredients"]]
+        if any(entry.is_empty() for entry in items):
+            return
         output = _decode_ingredient(data["result"])
+        if output.is_empty():
+            return
         return cls(items, output)
 
     def __init__(self, itemlist: list[ItemStack], output: ItemStack):
@@ -148,7 +158,8 @@ class GridShapelessRecipe(AbstractGridRecipe):
                 if slot.itemstack.is_compatible(p) and p.count <= slot.itemstack.count:
                     break
             else:
-                return
+                raise RuntimeError()
+
             pending.remove(p)
             slot.set_stack(slot.itemstack.add_amount(-p.count), update=False)
 
@@ -172,18 +183,23 @@ class RecipeManager:
 
         raise ValueError(f"unsupported recipe type: {data['type']}")
 
-    def register_recipe_from_file(self, file: str):
+    def register_recipe_from_file(self, file: str) -> AbstractGridRecipe | None:
         try:
             recipe = self.decode_recipe_file(file)
         except ValueError:
             return
 
+        if recipe is None:
+            return
+
         if isinstance(recipe, GridShapedRecipe):
-            self.shaped_recipes.get(recipe.size, []).append(recipe)
+            self.shaped_recipes.setdefault(recipe.size, []).append(recipe)
         elif isinstance(recipe, GridShapelessRecipe):
-            self.shapeless_recipes.get(len(recipe.itemlist), []).append(recipe)
+            self.shapeless_recipes.setdefault(len(recipe.itemlist), []).append(recipe)
         else:
-            raise ValueError(f"unsupported recipe: {recipe}")
+            raise ValueError(f"unsupported recipe to register: {recipe}")
+
+        return recipe
 
     def discover_recipes(self):
         from mcpython.rendering.Window import Window
@@ -191,7 +207,9 @@ class RecipeManager:
         for file in ResourceManager.list_directory(
             "data/minecraft/recipes", no_duplicates=False
         ):
-            Window.INSTANCE.world._enqueue(self.register_recipe_from_file, file)
+            recipe = self.register_recipe_from_file(file)
+            if file == "data/minecraft/recipes/oak_planks.json":
+                recipe: GridShapelessRecipe
 
 
 RECIPE_MANAGER = RecipeManager()

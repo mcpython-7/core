@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from mcpython.resources.Tags import TAG_ITEMS
 from mcpython.world.items.AbstractItem import AbstractItem, ITEM_REGISTRY
 
 
@@ -25,7 +27,7 @@ class ItemStack:
         return self._count if self._item else 0
 
     def __repr__(self):
-        return f"ItemStack(item={self.item.NAME},count={self.count})"
+        return f"ItemStack(item={self.item.NAME if self.item else 'EMPTY'},count={self.count})"
 
     def is_empty(self) -> bool:
         return self.count == 0 or self.item is None
@@ -40,6 +42,8 @@ class ItemStack:
         return ItemStack(self.item, self.count + amount)
 
     def is_compatible(self, other: ItemStack) -> bool:
+        if isinstance(other, TagStack):
+            return other.is_compatible(self)
         return self.item == other.item
 
 
@@ -47,7 +51,19 @@ class TagStack(ItemStack):
     def __init__(self, tag_name: str | None, entries: list[ItemStack] = None):
         super().__init__(None)
         self.tag_name = tag_name
-        self.entries = entries or []
+        self.entries = entries or (
+            [ItemStack(e) for e in TAG_ITEMS.load_tag_by_name(tag_name)]
+            if tag_name
+            else []
+        )
+        self.entries = [entry for entry in self.entries if not entry.is_empty()]
+
+    @property
+    def count(self) -> int:
+        return max(entry.count for entry in self.entries)
+
+    def is_empty(self) -> bool:
+        return all(entry.is_empty() for entry in self.entries)
 
     def is_compatible(self, other: ItemStack) -> bool:
         if isinstance(other, TagStack):
@@ -57,10 +73,13 @@ class TagStack(ItemStack):
                         return True
         else:
             for entry in self.entries:
-                if entry.matches(other):
+                if entry.is_compatible(other):
                     return True
 
         return False
+
+    def __repr__(self):
+        return f"TagStack({self.tag_name},{self.entries})"
 
 
 ItemStack.EMPTY = ItemStack(None)

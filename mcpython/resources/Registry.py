@@ -6,6 +6,11 @@ from abc import ABC
 
 class IRegisterAble(ABC):
     NAME: str = None
+    TAGS: list[str] = []
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        cls.TAGS = []
 
 
 class Registry:
