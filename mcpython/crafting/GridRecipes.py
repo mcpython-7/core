@@ -84,9 +84,9 @@ class GridShapedRecipe(AbstractGridRecipe):
     @classmethod
     def decode(cls, data: dict) -> GridShapedRecipe | None:
         table = {" ": ItemStack.EMPTY} | {
-            key: _decode_ingredient(value) for key, value in data["key"]
+            key: _decode_ingredient(value) for key, value in data["key"].items()
         }
-        if any(value.is_empty() for value in table.values()):
+        if any(value.is_empty() for key, value in table.items() if key != " "):
             return
 
         pattern = data["pattern"]
@@ -112,7 +112,9 @@ class GridShapedRecipe(AbstractGridRecipe):
     ) -> ItemStack | None:
         for a, b in zip(item_grid, self.itemlist):
             for x, y in zip(a, b):
-                if not x.is_compatible(y) or x.count < y.count:
+                if x is None and not y.is_empty():
+                    return
+                elif not x.is_compatible(y) or x.count < y.count:
                     return
 
         return self.output
@@ -164,6 +166,10 @@ class GridShapelessRecipe(AbstractGridRecipe):
             slot.set_stack(slot.itemstack.add_amount(-p.count), update=False)
 
 
+class InvalidRecipeType(Exception):
+    pass
+
+
 class RecipeManager:
     DECODERS = [
         GridShapedRecipe,
@@ -181,12 +187,12 @@ class RecipeManager:
             if data["type"] == decoder.PROVIDER_NAME:
                 return decoder.decode(data)
 
-        raise ValueError(f"unsupported recipe type: {data['type']}")
+        raise InvalidRecipeType(f"unsupported recipe type: {data['type']}")
 
     def register_recipe_from_file(self, file: str) -> AbstractGridRecipe | None:
         try:
             recipe = self.decode_recipe_file(file)
-        except ValueError:
+        except InvalidRecipeType:
             return
 
         if recipe is None:
@@ -197,7 +203,7 @@ class RecipeManager:
         elif isinstance(recipe, GridShapelessRecipe):
             self.shapeless_recipes.setdefault(len(recipe.itemlist), []).append(recipe)
         else:
-            raise ValueError(f"unsupported recipe to register: {recipe}")
+            raise InvalidRecipeType(f"unsupported recipe to register: {recipe}")
 
         return recipe
 
@@ -208,7 +214,7 @@ class RecipeManager:
             "data/minecraft/recipes", no_duplicates=False
         ):
             recipe = self.register_recipe_from_file(file)
-            if file == "data/minecraft/recipes/oak_planks.json":
+            if file == "data/minecraft/recipes/oak_wood.json":
                 recipe: GridShapelessRecipe
 
 
