@@ -161,6 +161,14 @@ class LogLikeBlock(AbstractBlock):
 
 
 @BLOCK_REGISTRY.register
+class OakFence(AbstractBlock):
+    NAME = "minecraft:oak_fence"
+
+    def get_block_state(self) -> dict[str, str]:
+        return {"north": "true", "east": "true", "south": "true", "west": "true"}
+
+
+@BLOCK_REGISTRY.register
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
     BREAKABLE = False

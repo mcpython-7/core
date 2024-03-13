@@ -52,35 +52,37 @@ COLORED_LINE_SHADER, COLORED_LINE_GROUP = create_shader_group("colored_outline_s
 LAYERED_ITEM_SHADER, LAYERED_ITEM_GROUP = create_shader_group("item_layer_shader")
 
 
-def cube_vertices(center: Vec3, size: Vec3) -> list[Vec3]:
+def cube_vertices(
+    center: Vec3, size: Vec3
+) -> list[tuple[Vec3, Vec3, Vec3, Vec3, Vec3, Vec3]]:
     x, y, z = center
     nx, ny, nz = size
     """Return the vertices of the cube at position x, y, z with size 2*n."""
     # fmt: off
     return [
         # Top
-        Vec3(x-nx, y+ny, z-nz), Vec3(x-nx, y+ny, z+nz), Vec3(x+nx, y+ny, z+nz),  # Triangle 1
-        Vec3(x-nx, y+ny, z-nz), Vec3(x+nx, y+ny, z+nz), Vec3(x+nx, y+ny, z-nz),  # Triangle 2
+        (Vec3(x-nx, y+ny, z-nz), Vec3(x-nx, y+ny, z+nz), Vec3(x+nx, y+ny, z+nz),  # Triangle 1
+        Vec3(x-nx, y+ny, z-nz), Vec3(x+nx, y+ny, z+nz), Vec3(x+nx, y+ny, z-nz)),  # Triangle 2
 
         # Bottom
-        Vec3(x-nx, y-ny, z-nz), Vec3(x+nx, y-ny, z-nz), Vec3(x+nx, y-ny, z+nz),  # Triangle 1
-        Vec3(x-nx, y-ny, z-nz), Vec3(x+nx, y-ny, z+nz), Vec3(x-nx, y-ny, z+nz),  # Triangle 2
+        (Vec3(x-nx, y-ny, z-nz), Vec3(x+nx, y-ny, z-nz), Vec3(x+nx, y-ny, z+nz),  # Triangle 1
+        Vec3(x-nx, y-ny, z-nz), Vec3(x+nx, y-ny, z+nz), Vec3(x-nx, y-ny, z+nz)),  # Triangle 2
 
         # Left
-        Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y-ny, z+nz), Vec3(x-nx, y+ny, z+nz),  # Triangle 1
-        Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y+ny, z+nz), Vec3(x-nx, y+ny, z-nz),  # Triangle 2
+        (Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y-ny, z+nz), Vec3(x-nx, y+ny, z+nz),  # Triangle 1
+        Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y+ny, z+nz), Vec3(x-nx, y+ny, z-nz)),  # Triangle 2
 
         # Right
-        Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y-ny, z-nz), Vec3(x+nx, y+ny, z-nz),  # Triangle 1
-        Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y+ny, z-nz), Vec3(x+nx, y+ny, z+nz),  # Triangle 2
+        (Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y-ny, z-nz), Vec3(x+nx, y+ny, z-nz),  # Triangle 1
+        Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y+ny, z-nz), Vec3(x+nx, y+ny, z+nz)),  # Triangle 2
 
         # Front
-        Vec3(x-nx, y-ny, z+nz), Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y+ny, z+nz),  # Triangle 1
-        Vec3(x-nx, y-ny, z+nz), Vec3(x+nx, y+ny, z+nz), Vec3(x-nx, y+ny, z+nz),  # Triangle 2
+        (Vec3(x-nx, y-ny, z+nz), Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y+ny, z+nz),  # Triangle 1
+        Vec3(x-nx, y-ny, z+nz), Vec3(x+nx, y+ny, z+nz), Vec3(x-nx, y+ny, z+nz)),  # Triangle 2
 
         # Back
-        Vec3(x+nx, y-ny, z-nz), Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y+ny, z-nz),  # Triangle 1
-        Vec3(x+nx, y-ny, z-nz), Vec3(x-nx, y+ny, z-nz), Vec3(x+nx, y+ny, z-nz),  # Triangle 2
+        (Vec3(x+nx, y-ny, z-nz), Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y+ny, z-nz),  # Triangle 1
+        Vec3(x+nx, y-ny, z-nz), Vec3(x-nx, y+ny, z-nz), Vec3(x+nx, y+ny, z-nz)),  # Triangle 2
     ]
     # fmt: on
 

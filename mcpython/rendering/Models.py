@@ -84,7 +84,7 @@ class Model:
                 _TEXTURE_ATLAS.add_image_from_path(tex)
             model.item_layer_count += 1
 
-        for _, __, faces in model.elements:
+        for _, __, faces, ___ in model.elements:
             faces[:] = [
                 (
                     (
@@ -105,7 +105,7 @@ class Model:
                 from_coord = Vec3(*element["from"]) / 16
                 to_coord = Vec3(*element["to"]) / 16
 
-                faces = [
+                _faces = [
                     _try_resolve_texture(model, element, "up"),
                     _try_resolve_texture(model, element, "down"),
                     _try_resolve_texture(model, element, "north"),
@@ -119,7 +119,8 @@ class Model:
                         if face and ":" in face
                         else face
                     )
-                    for face in faces
+                    for face in _faces
+                    if face is not None
                 ]
 
                 model.elements.append(
@@ -127,6 +128,7 @@ class Model:
                         (from_coord + to_coord) / 2 - Vec3(0.5, 0.5, 0.5),
                         (to_coord - from_coord),
                         faces,
+                        tuple(face is not None for face in _faces),
                     )
                 )
                 model.vertex_data_cache.append({})
@@ -140,7 +142,10 @@ class Model:
 
         self.elements: list[
             tuple[
-                Vec3, Vec3, list[float | None] | tuple[AtlasReference | str | None, ...]
+                Vec3,
+                Vec3,
+                list[float | None] | list[AtlasReference | str | None],
+                tuple[bool, ...],
             ]
         ] = []
         self.name = name
@@ -174,7 +179,7 @@ class Model:
         if self.parent:
             self.parent.bake()
 
-        for _, __, textures in self.elements:
+        for _, __, textures, ___ in self.elements:
             if None in textures:
                 continue
 
@@ -209,7 +214,7 @@ class Model:
 
         from mcpython.rendering.util import cube_vertices
 
-        for i, (center, size, textures) in enumerate(self.elements):
+        for i, (center, size, textures, enabled) in enumerate(self.elements):
             vertex_cache = self.vertex_data_cache[i]
 
             if rotation not in vertex_cache:
@@ -218,15 +223,26 @@ class Model:
                 rotation_matrix @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
 
                 vertex_data = cube_vertices(center, size / 2)
-                vertex_data = [
-                    Vec3((e := rotation_matrix @ Vec4(*element))[0], e[1], e[2])
-                    for element in vertex_data
-                ]
+                vertex_data = sum(
+                    (
+                        [
+                            Vec3(
+                                (e := rotation_matrix @ Vec4(*element))[0],
+                                e[1],
+                                e[2],
+                            )
+                            for element in x
+                        ]
+                        for i, x in enumerate(vertex_data)
+                        if enabled[i]
+                    ),
+                    [],
+                )
                 vertex_cache[rotation] = vertex_data
             else:
                 vertex_data = vertex_cache[rotation]
 
-            count += 36
+            count += 6 * enabled.count(True)
             vertex_data = [vertex + v for vertex in vertex_data]
             vertex += sum(map(tuple, vertex_data), ())
             texture.extend(textures)
@@ -327,10 +343,18 @@ class BlockState:
 class AbstractBlockStateCondition(abc.ABC):
     @classmethod
     def by_data(cls, data: dict) -> AbstractBlockStateCondition:
-        raise NotImplementedError
+        return BlockStateConditionStateMatch(data)
 
     def applies(self, state: dict[str, str]) -> bool:
         raise NotImplementedError
+
+
+class BlockStateConditionStateMatch(AbstractBlockStateCondition):
+    def __init__(self, state: dict):
+        self.state = state
+
+    def applies(self, state: dict[str, str]) -> bool:
+        return all(state[key] == value for key, value in self.state.items())
 
 
 class BlockStateFile:
@@ -374,13 +398,15 @@ class BlockStateFile:
 
         elif "multipart" in data:
             for entry in data["multipart"]:
-                instance.multipart = (
+                instance.multipart.append(
                     (
-                        AbstractBlockStateCondition.by_data(entry["when"])
-                        if "when" in entry
-                        else None
-                    ),
-                    BlockState.by_data(entry["apply"]),
+                        (
+                            AbstractBlockStateCondition.by_data(entry["when"])
+                            if "when" in entry
+                            else None
+                        ),
+                        BlockState.by_data(entry["apply"]),
+                    )
                 )
 
         return instance
@@ -411,7 +437,7 @@ class BlockStateFile:
             )
 
         for case, variant in self.multipart:
-            if case.applies(state):
+            if case is None or case.applies(state):
                 yield variant
 
     def create_vertex_list(
