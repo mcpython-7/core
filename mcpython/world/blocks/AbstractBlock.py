@@ -156,6 +156,9 @@ class LogLikeBlock(AbstractBlock):
     def set_block_state(self, block_state: dict[str]):
         self.axis = LogAxis[block_state.get("axis", "y").upper()]
 
+    def list_all_block_states(self) -> typing.Iterable[dict[str, str]]:
+        yield _EMPTY_STATE
+
 
 @BLOCK_REGISTRY.register
 class Bedrock(AbstractBlock):
