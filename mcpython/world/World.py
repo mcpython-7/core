@@ -15,11 +15,7 @@ from mcpython.rendering.util import (
 from mcpython.world.util import normalize, sectorize
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
-    Dirt,
-    Stone,
-    Sand,
-    Bricks,
-    Bedrock,
+    BLOCK_REGISTRY,
 )
 
 
@@ -53,16 +49,28 @@ class World:
         for x in range(-n, n + 1, s):
             for z in range(-n, n + 1, s):
                 # create a layer stone a grass everywhere.
-                self.add_block((x, y - 2, z), Dirt, immediate=False, block_update=False)
                 self.add_block(
-                    (x, y - 3, z), Bedrock, immediate=False, block_update=False
+                    (x, y - 2, z), "minecraft:dirt", immediate=False, block_update=False
+                )
+                self.add_block(
+                    (x, y - 3, z),
+                    "minecraft:bedrock",
+                    immediate=False,
+                    block_update=False,
                 )
                 if x in (-n, n) or z in (-n, n):
                     # create outer walls.
                     for dy in range(-2, 3):
                         self.add_block(
-                            (x, y + dy, z), Bedrock, immediate=False, block_update=False
+                            (x, y + dy, z),
+                            "minecraft:bedrock",
+                            immediate=False,
+                            block_update=False,
                         )
+
+        blocks = list(
+            filter(lambda e: e.BREAKABLE, list(BLOCK_REGISTRY._registry.values()))
+        )
 
         # generate the hills randomly
         o = n - 10
@@ -73,7 +81,7 @@ class World:
             h = random.randint(1, 6)  # height of the hill
             s = random.randint(4, 8)  # 2 * s is the side length of the hill
             d = 1  # how quickly to taper off the hills
-            t = random.choice([Dirt, Sand, Bricks, Stone])
+            t = random.choice(blocks)
             for y in range(c, c + h):
                 for x in range(a - s, a + s + 1):
                     for z in range(b - s, b + s + 1):
@@ -132,7 +140,7 @@ class World:
     def add_block(
         self,
         position: tuple[int, int, int],
-        block_type: type[AbstractBlock] | AbstractBlock,
+        block_type: type[AbstractBlock] | AbstractBlock | str,
         immediate=True,
         block_update=True,
     ):
@@ -154,6 +162,9 @@ class World:
         if isinstance(block_type, AbstractBlock):
             instance = block_type
             instance.position = position
+        elif isinstance(block_type, str):
+            block_type = BLOCK_REGISTRY.lookup(block_type, raise_on_error=True)
+            instance = block_type(position)
         else:
             instance = block_type(position)
 

@@ -79,12 +79,6 @@ BLOCK_REGISTRY = Registry("minecraft:block", AbstractBlock)
 
 
 @BLOCK_REGISTRY.register
-class Dirt(AbstractBlock):
-    NAME = "minecraft:dirt"
-    STATE_FILE = BlockStateFile.by_name(NAME)
-
-
-@BLOCK_REGISTRY.register
 class Sand(AbstractBlock):
     NAME = "minecraft:sand"
     STATE_FILE = BlockStateFile.by_name(NAME)
@@ -124,18 +118,6 @@ class Sand(AbstractBlock):
                 (self.position[0], self.position[1] - 1, self.position[2]), self
             )
             World.INSTANCE.send_block_update(old_pos)
-
-
-@BLOCK_REGISTRY.register
-class Bricks(AbstractBlock):
-    NAME = "minecraft:bricks"
-    STATE_FILE = BlockStateFile.by_name(NAME)
-
-
-@BLOCK_REGISTRY.register
-class Stone(AbstractBlock):
-    NAME = "minecraft:stone"
-    STATE_FILE = BlockStateFile.by_name(NAME)
 
 
 class LogAxis(enum.Enum):

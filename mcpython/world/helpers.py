@@ -29,6 +29,14 @@ def add_wooden_set(wood_name: str, namespace="minecraft"):
     create_item_for_block(Wood)
 
 
+def add_simple_block(name: str):
+    @BLOCK_REGISTRY.register
+    class SimpleBlock(AbstractBlock):
+        NAME = name if ":" in name else f"minecraft:{name}"
+
+    create_item_for_block(SimpleBlock)
+
+
 add_wooden_set("acacia")
 add_wooden_set("birch")
 add_wooden_set("dark_oak")
@@ -37,3 +45,13 @@ add_wooden_set("oak")
 add_wooden_set("spruce")
 add_wooden_set("mangrove")
 add_wooden_set("cherry")
+
+add_simple_block("bricks")
+
+add_simple_block("dirt")
+add_simple_block("coarse_dirt")
+
+add_simple_block("stone")
+add_simple_block("diorite")
+add_simple_block("andesite")
+add_simple_block("granite")

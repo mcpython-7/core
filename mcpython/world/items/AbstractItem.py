@@ -93,9 +93,5 @@ def create_basic_item(name: str) -> type[AbstractItem]:
     return typing.cast(type[AbstractItem], BasicItem)
 
 
-Dirt = create_item_for_block(AbstractBlock.Dirt)
-Sand = create_item_for_block(AbstractBlock.Sand)
-Bricks = create_item_for_block(AbstractBlock.Bricks)
-Stone = create_item_for_block(AbstractBlock.Stone)
 Bedrock = create_item_for_block(AbstractBlock.Bedrock)
 Stick = create_basic_item("minecraft:stick")
