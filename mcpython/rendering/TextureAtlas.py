@@ -35,7 +35,7 @@ class AtlasReference:
         x, y = self.position
         dx, dy = self.size
         sx, sy = self.atlas.block_size
-        return texture.get_region(x * sx, y * sy, x * sx + dx, y * sy + dy)
+        return texture.get_region(x * sx, y * sy, sx, sy)
 
 
 class TextureAtlas:
