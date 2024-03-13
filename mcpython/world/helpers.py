@@ -1,6 +1,7 @@
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
     LogLikeBlock,
+    FenceLikeBlock,
     BLOCK_REGISTRY,
 )
 from mcpython.world.items.AbstractItem import (
@@ -24,9 +25,14 @@ def add_wooden_set(wood_name: str, namespace="minecraft"):
     class Wood(LogLikeBlock):
         NAME = f"{namespace}:{wood_name}_wood"
 
+    @BLOCK_REGISTRY.register
+    class Fence(FenceLikeBlock):
+        NAME = f"{namespace}:{wood_name}_fence"
+
     create_item_for_block(Planks)
     create_item_for_block(Log)
     create_item_for_block(Wood)
+    create_item_for_block(Fence)
 
 
 def add_simple_block(name: str):

@@ -177,7 +177,7 @@ class World:
         instance.on_block_added()
 
         if block_update:
-            instance.on_block_updated()
+            instance.on_block_updated(self)
             self.send_block_update(position)
 
     def remove_block(
@@ -234,7 +234,7 @@ class World:
             if key not in self.world:
                 continue
             instance = self.world[key]
-            instance.on_block_updated()
+            instance.on_block_updated(self)
 
     def show_block(self, instance: AbstractBlock, immediate=True):
         """Show the block at the given `position`. This method assumes the

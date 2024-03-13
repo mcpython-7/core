@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import enum
+import random
 import typing
 
 import pyglet.graphics.vertexdomain
@@ -58,7 +59,7 @@ class AbstractBlock(IRegisterAble, abc.ABC):
     def on_block_removed(self):
         pass
 
-    def on_block_updated(self):
+    def on_block_updated(self, world):
         pass
 
     def on_block_interaction(
@@ -87,7 +88,7 @@ class Sand(AbstractBlock):
         super().__init__(position)
         self.falling = False
 
-    def on_block_updated(self):
+    def on_block_updated(self, world):
         from mcpython.world.World import World
 
         if (
@@ -160,12 +161,26 @@ class LogLikeBlock(AbstractBlock):
         yield _EMPTY_STATE
 
 
-@BLOCK_REGISTRY.register
-class OakFence(AbstractBlock):
-    NAME = "minecraft:oak_fence"
+class FenceLikeBlock(AbstractBlock):
+    FACE_ORDER = ["north", "east", "south", "west"]
+
+    def __init__(self, position: tuple[int, int, int]):
+        super().__init__(position)
+        self.connected = [False, False, False, False]
 
     def get_block_state(self) -> dict[str, str]:
-        return {"north": "true", "east": "true", "south": "true", "west": "true"}
+        return {
+            face: str(state).lower()
+            for face, state in zip(self.FACE_ORDER, self.connected)
+        }
+
+    def set_block_state(self, state: dict[str, str]):
+        for face, state in state.items():
+            self.connected[self.FACE_ORDER.index(face)] = state == "true"
+
+    def on_block_updated(self, world):
+        self.connected = random.choices([False, True], k=6)
+        self.update_render_state()
 
 
 @BLOCK_REGISTRY.register
