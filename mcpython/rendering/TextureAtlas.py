@@ -12,11 +12,25 @@ from mcpython import config
 
 class AtlasReference:
     def __init__(
-        self, atlas: TextureAtlas, position: tuple[int, int], size: tuple[int, int]
+        self,
+        atlas: TextureAtlas,
+        position: tuple[float, float],
+        size: tuple[float, float],
     ):
         self.atlas = atlas
         self.position = position
         self.size = size
+
+    def uv_section(self, uv: tuple[float, ...]) -> AtlasReference:
+        if uv == (0, 0, 1, 1):
+            return self
+        a, b, c, d = uv
+        x, y = self.position
+        dx, dy = self.size
+        sx, sy = self.atlas.size
+        return AtlasReference(
+            self.atlas, (x + a / sx, y + b / sy), ((c - a) * dx, (d - b) * dy)
+        )
 
     def tex_coord(self) -> tuple[float, ...]:
         """Return the bounding vertices of the texture square."""

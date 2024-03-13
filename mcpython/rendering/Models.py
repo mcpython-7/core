@@ -43,6 +43,10 @@ def _textured_cube(
     return result
 
 
+FACE_ORDER = ["up", "down", "north", "east", "south", "west"]
+FACE_ORDER_UV = ["up", "down", "east", "west", "north", "south"]
+
+
 class Model:
     _MODEL_CACHE: dict[str, Model] = {"minecraft:builtin/generated": None}
 
@@ -88,13 +92,23 @@ class Model:
             faces[:] = [
                 (
                     (
-                        _TEXTURE_ATLAS.add_image_from_path(
-                            model.resolve_texture_name(face)
+                        (
+                            _TEXTURE_ATLAS.add_image_from_path(
+                                model.resolve_texture_name(face[0])
+                            )
+                            if not face[1]
+                            else (
+                                _TEXTURE_ATLAS.add_image_from_path(
+                                    model.resolve_texture_name(face[0])
+                                ).uv_section(face[1])
+                                if ":" in model.resolve_texture_name(face[0])
+                                else model.resolve_texture_name(face[0])
+                            )
                         )
-                        if ":" in model.resolve_texture_name(face)
-                        else model.resolve_texture_name(face)
+                        if ":" in model.resolve_texture_name(face[0])
+                        else (model.resolve_texture_name(face[0]), face[1])
                     )
-                    if isinstance(face, str)
+                    if isinstance(face, tuple)
                     else face
                 )
                 for face in faces
@@ -106,20 +120,29 @@ class Model:
                 to_coord = Vec3(*element["to"]) / 16
 
                 _faces = [
-                    _try_resolve_texture(model, element, "up"),
-                    _try_resolve_texture(model, element, "down"),
-                    _try_resolve_texture(model, element, "north"),
-                    _try_resolve_texture(model, element, "east"),
-                    _try_resolve_texture(model, element, "south"),
-                    _try_resolve_texture(model, element, "west"),
+                    _try_resolve_texture(model, element, face) for face in FACE_ORDER
                 ]
+                uvs = [
+                    tuple(
+                        e / 16
+                        for e in element["faces"]
+                        .get(FACE_ORDER_UV[i], {})
+                        .get("uv", [])
+                    )
+                    for i in range(6)
+                ]
+
                 faces = [
                     (
-                        _TEXTURE_ATLAS.add_image_from_path(face)
+                        (
+                            _TEXTURE_ATLAS.add_image_from_path(face)
+                            if not uv
+                            else _TEXTURE_ATLAS.add_image_from_path(face).uv_section(uv)
+                        )
                         if face and ":" in face
-                        else face
+                        else (face, uv)
                     )
-                    for face in _faces
+                    for face, uv in zip(_faces, uvs)
                     if face is not None
                 ]
 
