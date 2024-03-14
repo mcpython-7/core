@@ -90,6 +90,9 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     def on_block_added(self):
         pass
 
+    def on_block_loaded(self):
+        self.on_block_added()
+
     def on_block_placed(self, itemstack: ItemStack, onto: tuple[int, int, int]):
         pass
 

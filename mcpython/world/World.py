@@ -13,6 +13,11 @@ from mcpython.config import TICKS_PER_SEC
 from mcpython.rendering.util import (
     FACES,
 )
+from mcpython.world.serialization.DataBuffer import (
+    IBufferSerializableWithVersion,
+    ReadBuffer,
+    WriteBuffer,
+)
 from mcpython.world.util import normalize, sectorize
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
@@ -20,15 +25,71 @@ from mcpython.world.blocks.AbstractBlock import (
 )
 
 
-class Chunk:
+class Chunk(IBufferSerializableWithVersion):
+    @classmethod
+    def decode(cls, buffer: ReadBuffer):
+        raise RuntimeError("use decode_instance() instead")
+
     def __init__(self, world: World, position: tuple[int, int]):
         self.world = world
         self.position = position
         self.blocks: dict[tuple[int, int, int], AbstractBlock] = {}
         self.shown = False
 
+    def decode_instance(self, buffer: ReadBuffer):
+        sector = buffer.read_int32(), buffer.read_int32()
+        if sector != self.position:
+            raise RuntimeError("wrong chunk")
+
+        buffer = self.decode_datafixable(buffer, self)
+        count = buffer.read_uint32()
+        dx, dz = sector[0] * 16, sector[1] * 16
+        for _ in range(count):
+            px = buffer.read_uint8()
+            py = buffer.read_uint16()
+            pz = buffer.read_uint8()
+            pos = px + dx, py, pz + dz
+            block = AbstractBlock.decode(buffer)
+            block.position = pos
+            self.blocks[pos] = block
+
+        for block in self.blocks.values():
+            block.on_block_loaded()
+
+    def encode(self, buffer: WriteBuffer):
+        buffer.write_int32(self.position[0])
+        buffer.write_int32(self.position[1])
+        self.encode_datafixable(buffer)
+        buffer.write_uint32(len(self.blocks))
+        dx, dz = self.position[0] * 16, self.position[1] * 16
+        for pos, instance in self.blocks.items():
+            buffer.write_uint8(pos[0] - dx)
+            buffer.write_int16(pos[1])
+            buffer.write_uint8(pos[2] - dz)
+            instance.encode(buffer)
+
     def __repr__(self):
         return f"Chunk({self.position[0]}, {self.position[1]}, {len(self.blocks)} blocks, visible={self.shown})"
+
+    def show(self, immediate=True, force=False):
+        if self.shown and not force:
+            return
+
+        self.shown = True
+
+        for position, instance in self.blocks.items():
+            if not instance.shown and self.world.exposed(position):
+                self.world.show_block(instance, immediate)
+
+    def hide(self, immediate=True, force=False):
+        if not self.shown and not force:
+            return
+
+        self.shown = False
+
+        for position, instance in self.blocks.items():
+            if instance.shown:
+                self.world.hide_block(instance, immediate)
 
 
 class World:
@@ -330,14 +391,7 @@ class World:
         if chunk is None and isinstance(sector, tuple):
             chunk = self.chunks[sector] = Chunk(self, sector)
 
-        if chunk.shown:
-            return
-
-        chunk.shown = True
-
-        for position, instance in chunk.blocks.items():
-            if not instance.shown and self.exposed(position):
-                self.show_block(instance, False)
+        chunk.show(immediate=False)
 
     def hide_chunk(self, sector: tuple[int, int] | Chunk):
         """Ensure all blocks in the given sector that should be hidden are
@@ -349,14 +403,7 @@ class World:
         if chunk is None and isinstance(sector, tuple):
             chunk = self.chunks[sector] = Chunk(self, sector)
 
-        if not chunk.shown:
-            return
-
-        chunk.shown = False
-
-        for position, instance in chunk.blocks.items():
-            if instance.shown:
-                self.hide_block(instance, False)
+        chunk.hide(immediate=False)
 
     def ensure_chunks_shown(self):
         pad = 4  # chunk range
