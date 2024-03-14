@@ -128,11 +128,13 @@ class Sand(AbstractBlock):
     def on_block_updated(self, world):
         from mcpython.world.World import World
 
+        chunk = World.INSTANCE.get_or_create_chunk(self.position)
+
         if (
             self.position[0],
             self.position[1] - 1,
             self.position[2],
-        ) not in World.INSTANCE.world:
+        ) not in chunk.blocks:
             pyglet.clock.schedule_once(self.fall, 0.5)
             self.falling = True
 
@@ -141,14 +143,16 @@ class Sand(AbstractBlock):
 
         self.falling = False
 
+        chunk = World.INSTANCE.get_or_create_chunk(self.position)
+
         if (
-            World.INSTANCE.world.get(self.position, None) is self
+            chunk.blocks.get(self.position, None) is self
             and (
                 self.position[0],
                 self.position[1] - 1,
                 self.position[2],
             )
-            not in World.INSTANCE.world
+            not in chunk.blocks
         ):
             World.INSTANCE.remove_block(self.position, block_update=False)
             old_pos = self.position

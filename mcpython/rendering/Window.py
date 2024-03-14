@@ -227,9 +227,11 @@ class Window(pyglet.window.Window):
         self.world.process_queue()
         sector = sectorize(self.position)
         if sector != self.sector:
-            self.world.change_sectors(self.sector, sector)
+            self.world.change_chunks(self.sector, sector)
+
             if self.sector is None:
                 self.world.process_entire_queue()
+
             self.sector = sector
         m = 8
         dt = min(dt, 0.2)
@@ -302,7 +304,7 @@ class Window(pyglet.window.Window):
                     op = list(np)
                     op[1] -= dy
                     op[i] += face[i]
-                    if tuple(op) not in self.world.world:
+                    if tuple(op) not in self.world.get_or_create_chunk(op).blocks:
                         continue
                     p[i] -= (d - pad) * face[i]
                     if face == (0, -1, 0) or face == (0, 1, 0):
@@ -335,14 +337,16 @@ class Window(pyglet.window.Window):
 
             vector = self.get_sight_vector()
             block, previous = self.world.hit_test(self.position, vector)
+            block_chunk = self.world.get_or_create_chunk(block)
+            previous_chunk = self.world.get_or_create_chunk(previous)
 
-            if block in self.world.world and self.world.world[
+            if block in block_chunk.blocks and block_chunk.blocks[
                 block
             ].on_block_interaction(stack, button, modifiers):
                 return
 
             if not stack.is_empty() and stack.item.on_block_interaction(
-                stack, self.world.world.get(block, None), button, modifiers
+                stack, block_chunk.blocks.get(block, None), button, modifiers
             ):
                 return
 
@@ -356,13 +360,13 @@ class Window(pyglet.window.Window):
                         b.on_block_placed(stack, block)
 
             elif button == pyglet.window.mouse.LEFT and block:
-                instance = self.world.world[block]
+                instance = block_chunk.blocks[block]
 
                 if instance.BREAKABLE:
                     self.world.remove_block(block)
 
             elif button == pyglet.window.mouse.MIDDLE and block:
-                instance = self.world.world[block]
+                instance = block_chunk.blocks[block]
 
                 slot = self.player_inventory.find_item(instance.NAME)
 
@@ -664,12 +668,13 @@ class Window(pyglet.window.Window):
     def draw_label(self):
         """Draw the label in the top left of the screen."""
         x, y, z = self.position
-        self.label.text = "%02d (%.2f, %.2f, %.2f) %d" % (
+        self.label.text = "%02d (%.2f, %.2f, %.2f) %d (%d)" % (
             pyglet.clock.get_frequency(),
             x,
             y,
             z,
-            len(self.world.world),
+            len(self.world.chunks),
+            len(self.world.get_or_create_chunk(self.position).blocks),
         )
         self.label.draw()
 

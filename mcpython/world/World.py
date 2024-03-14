@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import random
 import time
 import typing
@@ -19,6 +20,17 @@ from mcpython.world.blocks.AbstractBlock import (
 )
 
 
+class Chunk:
+    def __init__(self, world: World, position: tuple[int, int]):
+        self.world = world
+        self.position = position
+        self.blocks: dict[tuple[int, int, int], AbstractBlock] = {}
+        self.shown = False
+
+    def __repr__(self):
+        return f"Chunk({self.position[0]}, {self.position[1]}, {len(self.blocks)} blocks, visible={self.shown})"
+
+
 class World:
     INSTANCE: World = None
 
@@ -28,12 +40,7 @@ class World:
         # A Batch is a collection of vertex lists for batched rendering.
         self.batch = pyglet.graphics.Batch()
 
-        # A mapping from position to the texture of the block at that position.
-        # This defines all the blocks that are currently in the world.
-        self.world: dict[tuple[int, int, int], AbstractBlock] = {}
-
-        # Mapping from sector to a list of positions inside that sector.
-        self.sectors: dict[tuple[int, int], list[tuple[int, int, int]]] = {}
+        self.chunks: dict[tuple[int, int], Chunk] = {}
 
         # Simple function queue implementation. The queue is populated with
         # _show_block() and _hide_block() calls
@@ -41,32 +48,40 @@ class World:
 
         self._initialize()
 
+    def get_or_create_chunk(
+        self, position: tuple[int, int, int] | tuple[int, int]
+    ) -> Chunk:
+        c = position[0] // 16, position[-1] // 16
+        chunk = self.chunks.get(c)
+        if chunk is None:
+            chunk = self.chunks[c] = Chunk(self, c)
+        return chunk
+
     def _initialize(self):
         """Initialize the world by placing all the blocks."""
         n = 100  # 1/2 width and height of world
         s = 1  # step size
         y = 0  # initial y height
-        for x in range(-n, n + 1, s):
-            for z in range(-n, n + 1, s):
-                # create a layer stone a grass everywhere.
-                self.add_block(
-                    (x, y - 2, z), "minecraft:dirt", immediate=False, block_update=False
-                )
-                self.add_block(
-                    (x, y - 3, z),
-                    "minecraft:bedrock",
-                    immediate=False,
-                    block_update=False,
-                )
-                if x in (-n, n) or z in (-n, n):
-                    # create outer walls.
-                    for dy in range(-2, 3):
-                        self.add_block(
-                            (x, y + dy, z),
-                            "minecraft:bedrock",
-                            immediate=False,
-                            block_update=False,
-                        )
+        for x, z in itertools.product(range(-n, n + 1, s), range(-n, n + 1, s)):
+            # create a layer stone a grass everywhere.
+            self.add_block(
+                (x, y - 2, z), "minecraft:dirt", immediate=False, block_update=False
+            )
+            self.add_block(
+                (x, y - 3, z),
+                "minecraft:bedrock",
+                immediate=False,
+                block_update=False,
+            )
+            if x in (-n, n) or z in (-n, n):
+                # create outer walls.
+                for dy in range(-2, 3):
+                    self.add_block(
+                        (x, y + dy, z),
+                        "minecraft:bedrock",
+                        immediate=False,
+                        block_update=False,
+                    )
 
         blocks = list(
             filter(lambda e: e.BREAKABLE, list(BLOCK_REGISTRY._registry.values()))
@@ -74,25 +89,26 @@ class World:
 
         # generate the hills randomly
         o = n - 10
+        c = -1  # base of the hill
+        d = 1  # how quickly to taper off the hills
         for _ in range(120):
             a = random.randint(-o, o)  # x position of the hill
             b = random.randint(-o, o)  # z position of the hill
-            c = -1  # base of the hill
             h = random.randint(1, 6)  # height of the hill
             s = random.randint(4, 8)  # 2 * s is the side length of the hill
-            d = 1  # how quickly to taper off the hills
             t = random.choice(blocks)
             for y in range(c, c + h):
-                for x in range(a - s, a + s + 1):
-                    for z in range(b - s, b + s + 1):
-                        if (x - a) ** 2 + (z - b) ** 2 > (s + 1) ** 2:
-                            continue
-                        if (x - 0) ** 2 + (z - 0) ** 2 < 5**2:
-                            continue
-                        self.add_block(
-                            (x, y, z), t, immediate=False, block_update=False
-                        )
+                for x, z in itertools.product(
+                    range(a - s, a + s + 1), range(b - s, b + s + 1)
+                ):
+                    if (x - a) ** 2 + (z - b) ** 2 > (s + 1) ** 2:
+                        continue
+                    if (x - 0) ** 2 + (z - 0) ** 2 < 5**2:
+                        continue
+                    self.add_block((x, y, z), t, immediate=False, block_update=False)
                 s -= d  # decrement side length so hills taper off
+
+        self.ensure_chunks_shown()
 
     def hit_test(
         self,
@@ -120,8 +136,10 @@ class World:
         previous = None
         for _ in range(max_distance * m):
             key = normalize((x, y, z))
-            if key != previous and key in self.world:
+
+            if key != previous and key in self.get_or_create_chunk(key).blocks:
                 return key, previous
+
             previous = key
             x, y, z = x + dx / m, y + dy / m, z + dz / m
         return None, None
@@ -133,8 +151,11 @@ class World:
         """
         x, y, z = position
         for dx, dy, dz in FACES:
-            if (x + dx, y + dy, z + dz) not in self.world:
+            if (x + dx, y + dy, z + dz) not in self.get_or_create_chunk(
+                (x + dx, y + dy, z + dz)
+            ).blocks:
                 return True
+
         return False
 
     def add_block(
@@ -156,7 +177,8 @@ class World:
             Whether or not to draw the block immediately.
 
         """
-        if position in self.world:
+        chunk = self.get_or_create_chunk(position)
+        if position in chunk.blocks:
             self.remove_block(position, immediate)
 
         if isinstance(block_type, AbstractBlock):
@@ -168,12 +190,13 @@ class World:
         else:
             instance = block_type(position)
 
-        self.world[position] = instance
-        self.sectors.setdefault(sectorize(position), []).append(position)
+        chunk.blocks[position] = instance
+
         if immediate:
-            if self.exposed(position):
+            if chunk.shown and self.exposed(position):
                 self.show_block(instance)
             self.check_neighbors(position)
+
         instance.on_block_added()
 
         if block_update:
@@ -196,13 +219,15 @@ class World:
             Whether or not to immediately remove block from canvas.
 
         """
-        instance = self.world[position]
-        del self.world[position]
-        self.sectors[sectorize(position)].remove(position)
+        chunk = self.get_or_create_chunk(position)
+        instance = chunk.blocks[position]
+        del chunk.blocks[position]
+
         if immediate:
             if instance.shown:
                 self.hide_block(instance)
             self.check_neighbors(position)
+
         instance.on_block_removed()
         if block_update:
             self.send_block_update(position)
@@ -217,9 +242,10 @@ class World:
         x, y, z = position
         for dx, dy, dz in FACES:
             key = (x + dx, y + dy, z + dz)
-            if key not in self.world:
+            chunk = self.get_or_create_chunk(key)
+            if key not in chunk.blocks:
                 continue
-            instance = self.world[key]
+            instance = chunk.blocks[key]
             if self.exposed(key):
                 if not instance.shown:
                     self.show_block(instance)
@@ -231,9 +257,10 @@ class World:
         x, y, z = position
         for dx, dy, dz in FACES:
             key = (x + dx, y + dy, z + dz)
-            if key not in self.world:
+            chunk = self.get_or_create_chunk(key)
+            if key not in chunk.blocks:
                 continue
-            instance = self.world[key]
+            instance = chunk.blocks[key]
             instance.on_block_updated(self)
 
     def show_block(self, instance: AbstractBlock, immediate=True):
@@ -293,27 +320,54 @@ class World:
             element.delete()
         instance.vertex_data = None
 
-    def show_sector(self, sector: tuple[int, int]):
+    def show_chunk(self, sector: tuple[int, int] | Chunk):
         """Ensure all blocks in the given sector that should be shown are
         drawn to the canvas.
 
         """
-        for position in self.sectors.get(sector, []):
-            instance = self.world[position]
+        chunk = self.chunks.get(sector) if isinstance(sector, tuple) else sector
+
+        if chunk is None and isinstance(sector, tuple):
+            chunk = self.chunks[sector] = Chunk(self, sector)
+
+        if chunk.shown:
+            return
+
+        chunk.shown = True
+
+        for position, instance in chunk.blocks.items():
             if not instance.shown and self.exposed(position):
                 self.show_block(instance, False)
 
-    def hide_sector(self, sector: tuple[int, int]):
+    def hide_chunk(self, sector: tuple[int, int] | Chunk):
         """Ensure all blocks in the given sector that should be hidden are
         removed from the canvas.
 
         """
-        for position in self.sectors.get(sector, []):
-            instance = self.world[position]
+        chunk = self.chunks.get(sector) if isinstance(sector, tuple) else sector
+
+        if chunk is None and isinstance(sector, tuple):
+            chunk = self.chunks[sector] = Chunk(self, sector)
+
+        if not chunk.shown:
+            return
+
+        chunk.shown = False
+
+        for position, instance in chunk.blocks.items():
             if instance.shown:
                 self.hide_block(instance, False)
 
-    def change_sectors(self, before: tuple[int, int], after: tuple[int, int]):
+    def ensure_chunks_shown(self):
+        pad = 4  # chunk range
+
+        for dx, dz in itertools.product(range(-pad, pad + 1), range(-pad, pad + 1)):
+            if dx**2 + dz**2 > (pad + 1) ** 2:
+                continue
+
+            self.show_chunk((dx, dz))
+
+    def change_chunks(self, before: tuple[int, int], after: tuple[int, int]):
         """Move from sector `before` to sector `after`. A sector is a
         contiguous x, y sub-region of world. Sectors are used to speed up
         world rendering.
@@ -321,25 +375,27 @@ class World:
         """
         before_set: set[tuple[int, int]] = set()
         after_set: set[tuple[int, int]] = set()
-        pad = 4
-        for dx in range(-pad, pad + 1):
-            for dy in [0]:  # range(-pad, pad + 1):
-                for dz in range(-pad, pad + 1):
-                    if dx**2 + dy**2 + dz**2 > (pad + 1) ** 2:
-                        continue
-                    if before:
-                        x, z = before
-                        before_set.add((x + dx, z + dz))
-                    if after:
-                        x, z = after
-                        after_set.add((x + dx, z + dz))
+        pad = 4  # chunk range
+
+        for dx, dz in itertools.product(range(-pad, pad + 1), range(-pad, pad + 1)):
+            if dx**2 + dz**2 > (pad + 1) ** 2:
+                continue
+
+            if before:
+                x, z = before
+                before_set.add((x + dx, z + dz))
+
+            if after:
+                x, z = after
+                after_set.add((x + dx, z + dz))
 
         show = after_set - before_set
         hide = before_set - after_set
         for sector in show:
-            self.show_sector(sector)
+            self.show_chunk(sector)
+
         for sector in hide:
-            self.hide_sector(sector)
+            self.hide_chunk(sector)
 
     def _enqueue(self, func: typing.Callable, *args):
         """Add `func` to the internal queue."""
