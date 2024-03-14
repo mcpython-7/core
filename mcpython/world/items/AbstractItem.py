@@ -6,6 +6,7 @@ from abc import ABC
 from mcpython.rendering.Models import Model
 from mcpython.resources.Registry import IRegisterAble, Registry
 from mcpython.world.blocks import AbstractBlock
+from mcpython.world.serialization.DataBuffer import AbstractDataFixer, ReadBuffer, WriteBuffer
 
 if typing.TYPE_CHECKING:
     from mcpython.containers.AbstractContainer import Slot
@@ -19,6 +20,17 @@ class AbstractItem(IRegisterAble, ABC):
     NAME: str | None = None
     MODEL: Model | None = None
     MAX_STACK_SIZE = 64
+
+    VERSION = 0
+    DATA_FIXERS: dict[int, AbstractDataFixer] = {}
+
+    @classmethod
+    def decode_metadata(cls, stack: ItemStack, buffer: ReadBuffer):
+        pass
+
+    @classmethod
+    def encode_metadata(cls, stack: ItemStack, buffer: WriteBuffer):
+        pass
 
     @classmethod
     def __init_subclass__(cls, **kwargs):

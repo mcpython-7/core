@@ -9,6 +9,11 @@ import pyglet.graphics.vertexdomain
 
 from mcpython.rendering.Models import BlockStateFile
 from mcpython.resources.Registry import IRegisterAble, Registry
+from mcpython.world.serialization.DataBuffer import (
+    IBufferSerializableWithVersion,
+    ReadBuffer,
+    WriteBuffer,
+)
 
 if typing.TYPE_CHECKING:
     from mcpython.world.items.AbstractItem import AbstractItem
@@ -18,7 +23,7 @@ if typing.TYPE_CHECKING:
 _EMPTY_STATE = {}
 
 
-class AbstractBlock(IRegisterAble, abc.ABC):
+class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     NAME: str | None = None
     STATE_FILE: BlockStateFile | None = None
     BREAKABLE = True
@@ -29,10 +34,42 @@ class AbstractBlock(IRegisterAble, abc.ABC):
         if cls.NAME is not None and cls.STATE_FILE is None:
             cls.STATE_FILE = BlockStateFile.by_name(cls.NAME)
 
+    @classmethod
+    def decode(cls, buffer: ReadBuffer):
+        name = buffer.read_string()
+
+        block_type = typing.cast(
+            AbstractBlock, BLOCK_REGISTRY.lookup(name, raise_on_error=True)
+        )
+        obj = cls((0, 0, 0))
+        buffer = block_type.decode_datafixable(buffer, obj)
+        block_type.inner_decode(obj, buffer)
+        return obj
+
+    @classmethod
+    def inner_decode(cls, obj: AbstractBlock, buffer: ReadBuffer):
+        state = {
+            buffer.read_string(): buffer.read_string()
+            for _ in range(buffer.read_uint16())
+        }
+        obj.set_block_state(state)
+
     def __init__(self, position: tuple[int, int, int]):
         self.position = position
         self.shown = False
         self.vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
+
+    def encode(self, buffer: WriteBuffer):
+        buffer.write_string(self.NAME)
+        self.encode_datafixable(buffer)
+        self.inner_encode(buffer)
+
+    def inner_encode(self, buffer: WriteBuffer):
+        state = self.get_block_state()
+        buffer.write_uint32(len(state))
+        for key, value in state.items():
+            buffer.write_string(key)
+            buffer.write_string(value)
 
     def set_block_state(self, state: dict[str, str]):
         pass
