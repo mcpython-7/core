@@ -6,7 +6,11 @@ from abc import ABC
 from mcpython.rendering.Models import Model
 from mcpython.resources.Registry import IRegisterAble, Registry
 from mcpython.world.blocks import AbstractBlock
-from mcpython.world.serialization.DataBuffer import AbstractDataFixer, ReadBuffer, WriteBuffer
+from mcpython.world.serialization.DataBuffer import (
+    AbstractDataFixer,
+    ReadBuffer,
+    WriteBuffer,
+)
 
 if typing.TYPE_CHECKING:
     from mcpython.containers.AbstractContainer import Slot

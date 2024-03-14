@@ -211,8 +211,8 @@ class IBufferSerializableWithVersion(IBufferSerializable, ABC):
             target = WriteReadBuffer()
             version = fixer.apply(read_buffer, target, context=context)
             read_buffer = target
-        
+
         return read_buffer
-    
+
     def encode_datafixable(self, write_buffer: WriteBuffer):
         write_buffer.write_singleton_struct(self._VERSION_SIZE, self.VERSION)

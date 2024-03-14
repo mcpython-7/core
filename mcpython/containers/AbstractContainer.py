@@ -9,12 +9,18 @@ from pyglet.window import mouse
 
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.world.items.AbstractItem import AbstractItem
+from mcpython.world.serialization.DataBuffer import (
+    IBufferSerializable,
+    IBufferSerializableWithVersion,
+    ReadBuffer,
+    WriteBuffer,
+)
 
 if typing.TYPE_CHECKING:
     from mcpython.rendering.Window import Window
 
 
-class Slot:
+class Slot(IBufferSerializable):
     def __init__(
         self,
         container: Container,
@@ -40,6 +46,12 @@ class Slot:
         self.discoverable = discoverable
         self.allow_right_click = allow_right_click
         self.on_update = on_update
+
+    def encode(self, buffer: WriteBuffer):
+        self.itemstack.encode(buffer)
+
+    def decode(self, buffer: ReadBuffer):
+        self.set_stack(ItemStack.decode(buffer))
 
     @property
     def itemstack(self):
@@ -238,6 +250,12 @@ class SlotRenderCopy(Slot):
         )
         self._mirror = mirror
 
+    def encode(self, buffer: WriteBuffer):
+        pass
+
+    def decode(self, buffer: ReadBuffer):
+        pass
+
     @property
     def itemstack(self):
         return self._mirror.itemstack
@@ -259,7 +277,7 @@ class SlotRenderCopy(Slot):
         self._mirror.update_position(pos)
 
 
-class Container:
+class Container(IBufferSerializableWithVersion):
     def __init__(
         self, visual_size: tuple[int, int], texture: pyglet.image.AbstractImage | None
     ):
@@ -279,6 +297,22 @@ class Container:
             self.sprite = None
 
         self.open = False
+
+    def encode(self, buffer: WriteBuffer):
+        self.encode_datafixable(buffer)
+        buffer.write_uint32(len(self.slots))
+        for slot in self.slots:
+            slot.encode(buffer)
+
+    def decode(self, buffer: ReadBuffer):
+        buffer = self.decode_datafixable(buffer, self)
+        count = buffer.read_uint32()
+
+        if count != len(self.slots):
+            raise ValueError("Slot count changed!")
+
+        for slot in self.slots:
+            slot.decode(buffer)
 
     def find_item(self, item: type[AbstractItem] | str) -> Slot | None:
         if isinstance(item, str):

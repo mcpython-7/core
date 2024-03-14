@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from mcpython.resources.Tags import TAG_ITEMS
 from mcpython.world.items.AbstractItem import AbstractItem, ITEM_REGISTRY
-from mcpython.world.serialization.DataBuffer import IBufferSerializableWithVersion, ReadBuffer, WriteBuffer
+from mcpython.world.serialization.DataBuffer import (
+    IBufferSerializableWithVersion,
+    ReadBuffer,
+    WriteBuffer,
+)
 
 
 class ItemStack(IBufferSerializableWithVersion):
@@ -13,14 +17,15 @@ class ItemStack(IBufferSerializableWithVersion):
     @classmethod
     def decode(cls, buffer: ReadBuffer) -> ItemStack:
         name = buffer.read_string()
-        if name == 0: return cls.EMPTY
+        if name == 0:
+            return cls.EMPTY
 
         size = buffer.read_uint16()
         itemstack = ItemStack(name, size)
         buffer = cls.decode_datafixable(buffer)
         itemstack.item.decode_metadata(itemstack, buffer)
         return itemstack
-    
+
     @property
     def VERSION(self):
         return 0 if self.is_empty() else self.item.VERSION + 1

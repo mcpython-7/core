@@ -3,6 +3,13 @@ from __future__ import annotations
 import typing
 from abc import ABC
 
+from mcpython.world.serialization.DataBuffer import (
+    IBufferSerializable,
+    IBufferSerializableWithVersion,
+    WriteBuffer,
+    ReadBuffer,
+)
+
 
 class IRegisterAble(ABC):
     NAME: str = None
@@ -13,13 +20,71 @@ class IRegisterAble(ABC):
         cls.TAGS = []
 
 
-class Registry:
+class Registry(IBufferSerializable):
+    @classmethod
+    def decode(cls, buffer: ReadBuffer):
+        raise RuntimeError("unsupported")
+
     def __init__(self, name: str, data_type: type[IRegisterAble]):
         self.name = name
         self.data_type = data_type
         self._registry: dict[str, type[IRegisterAble]] = {}
         self._namespace_free_registry: dict[str, tuple[type[IRegisterAble], ...]] = {}
         self._on_registration_period: list[typing.Callable] = []
+
+    def encode(self, buffer: WriteBuffer):
+        encode_version = issubclass(self.data_type, IBufferSerializableWithVersion)
+
+        buffer.write_string(self.name)
+        buffer.write_uint32(len(self._registry))
+
+        for key, entry in self._registry.items():
+            buffer.write_string(key)
+
+            if encode_version:
+                entry: IBufferSerializableWithVersion
+                buffer.write_singleton_struct(entry._VERSION_SIZE, entry.VERSION)
+
+    def check_content(
+        self, buffer: ReadBuffer
+    ) -> tuple[list[type[IRegisterAble]], list[str]]:
+        """
+        Checks the content of a saved registry state against the runtime data
+
+        Returns a list of extra data in the runtime registry, and one for the extra in the saved data
+
+        Also includes an entry in both lists if it is versioned and no datafixer path was found
+        """
+        if buffer.read_string() != self.name:
+            raise ValueError("Registry name mismatch")
+
+        encode_version = issubclass(self.data_type, IBufferSerializableWithVersion)
+        runtime_only: list[type[IRegisterAble]] = []
+        saved_only: list[str] = []
+
+        found_keys = set()
+
+        count = buffer.read_uint32()
+        for _ in range(count):
+            key = buffer.read_string()
+            found_keys.add(key)
+
+            if key not in self._registry:
+                saved_only.append(key)
+                continue
+
+            if encode_version:
+                entry = self._registry[key]
+                version = buffer.read_singleton_struct(entry._VERSION_SIZE)
+
+                if version != entry.VERSION and version not in entry.DATA_FIXERS:
+                    runtime_only.append(entry)
+                    saved_only.append(key)
+
+        saved_only.extend(
+            key for key, entry in self._registry.items() if key not in found_keys
+        )
+        return runtime_only, saved_only
 
     def on_registration_period(
         self, target: typing.Callable[[Registry], None]
