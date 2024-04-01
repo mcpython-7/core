@@ -243,7 +243,7 @@ class World:
         """
         chunk = self.get_or_create_chunk(position)
         if position in chunk.blocks:
-            self.remove_block(position, immediate)
+            self.remove_block(position, immediate, block_update=block_update)
 
         if isinstance(block_type, AbstractBlock):
             instance = block_type

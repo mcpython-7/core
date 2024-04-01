@@ -211,24 +211,45 @@ class LogLikeBlock(AbstractBlock):
 
 
 class FenceLikeBlock(AbstractBlock):
-    FACE_ORDER = ["north", "east", "south", "west"]
+    FACE_ORDER: list[Facing] = list(Facing)[2:]
 
     def __init__(self, position: tuple[int, int, int]):
         super().__init__(position)
-        self.connected = [False, False, False, False]
+        self.connected = [False] * 4
+
+    def may_connect_to(self, fence: FenceLikeBlock) -> bool:
+        return True
 
     def get_block_state(self) -> dict[str, str]:
         return {
-            face: str(state).lower()
+            face.name.lower(): str(state).lower()
             for face, state in zip(self.FACE_ORDER, self.connected)
         }
 
     def set_block_state(self, state: dict[str, str]):
         for face, state in state.items():
-            self.connected[self.FACE_ORDER.index(face)] = state == "true"
+            self.connected[self.FACE_ORDER.index(Facing[face.upper()])] = (
+                state == "true"
+            )
 
     def on_block_updated(self, world):
-        self.connected = random.choices([False, True], k=6)
+        from mcpython.rendering.Window import Window
+
+        pos = self.position
+        world = Window.INSTANCE.world
+
+        for i, face in enumerate(self.FACE_ORDER):
+            p = face.position_offset(pos)
+            block = world.get_or_create_chunk(p).blocks.get(p)
+
+            if block and (
+                block.is_solid(face.opposite)
+                or (isinstance(block, FenceLikeBlock) and block.may_connect_to(self))
+            ):
+                self.connected[i] = True
+            else:
+                self.connected[i] = False
+
         self.update_render_state()
 
     def is_solid(self, face: Facing) -> bool:
