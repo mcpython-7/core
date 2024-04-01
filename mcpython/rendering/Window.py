@@ -336,7 +336,7 @@ class Window(pyglet.window.Window):
             stack = self.player_inventory.get_selected_itemstack()
 
             vector = self.get_sight_vector()
-            block, previous = self.world.hit_test(self.position, vector)
+            block, previous, block_raw = self.world.hit_test(self.position, vector)
             block_chunk = self.world.get_or_create_chunk(block) if block else None
             previous_chunk = (
                 self.world.get_or_create_chunk(previous) if previous else None
@@ -362,7 +362,9 @@ class Window(pyglet.window.Window):
                 # ON OSX, control + left click = right click.
                 if previous and not stack.is_empty():
                     if b := stack.item.create_block_to_be_placed(stack):
-                        self.world.add_block(previous, b)
+                        self.world.add_block(
+                            previous, b, block_added_parms=(block_raw,)
+                        )
                         b.on_block_placed(stack, block)
 
             elif button == pyglet.window.mouse.LEFT and block:

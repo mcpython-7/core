@@ -176,7 +176,10 @@ class World:
         position: Vec3,
         vector: Vec3,
         max_distance=8,
-    ) -> tuple[tuple[int, int, int], tuple[int, int, int]] | tuple[None, None]:
+    ) -> (
+        tuple[tuple[int, int, int], tuple[int, int, int], tuple[float, float, float]]
+        | tuple[None, None, None]
+    ):
         """Line of sight search from current position. If a block is
         intersected it is returned, along with the block previously in the line
         of sight. If no block is found, return None, None.
@@ -199,11 +202,11 @@ class World:
             key = normalize((x, y, z))
 
             if key != previous and key in self.get_or_create_chunk(key).blocks:
-                return key, previous
+                return key, previous, (x, y, z)
 
             previous = key
             x, y, z = x + dx / m, y + dy / m, z + dz / m
-        return None, None
+        return None, None, None
 
     def exposed(self, position: tuple[int, int, int]) -> bool:
         """Returns False is given `position` is surrounded on all 6 sides by
@@ -225,6 +228,7 @@ class World:
         block_type: type[AbstractBlock] | AbstractBlock | str,
         immediate=True,
         block_update=True,
+        block_added_parms=(),
     ):
         """Add a block with the given `texture` and `position` to the world.
 
@@ -253,12 +257,12 @@ class World:
 
         chunk.blocks[position] = instance
 
+        instance.on_block_added(*block_added_parms)
+
         if immediate:
             if chunk.shown and self.exposed(position):
                 self.show_block(instance)
             self.check_neighbors(position)
-
-        instance.on_block_added()
 
         if block_update:
             instance.on_block_updated(self)

@@ -88,7 +88,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         world.hide_block(self)
         world.show_block(self)
 
-    def on_block_added(self):
+    def on_block_added(self, hit_position: tuple[float, float, float] = None):
         pass
 
     def on_block_loaded(self):
@@ -228,6 +228,32 @@ class FenceLikeBlock(AbstractBlock):
         self.update_render_state()
 
 
+class SlabLikeBlock(AbstractBlock):
+    class SlabHalf(enum.Enum):
+        TOP = 0
+        BOTTOM = 1
+        DOUBLE = 2
+
+    def __init__(self, position: tuple[int, int, int]):
+        super().__init__(position)
+        self.half: SlabLikeBlock.SlabHalf = self.SlabHalf.TOP
+
+    def on_block_added(self, hit_position: tuple[float, float, float] = None):
+        if hit_position:
+            print(hit_position, self.position, hit_position[1] < self.position[1])
+
+            if hit_position[1] < self.position[1]:
+                self.half = SlabLikeBlock.SlabHalf.BOTTOM
+            else:
+                self.half = SlabLikeBlock.SlabHalf.TOP
+
+    def get_block_state(self) -> dict[str, str]:
+        return {"type": self.half.name.lower()}
+
+    def set_block_state(self, state: dict[str, str]):
+        self.half = SlabLikeBlock.SlabHalf[state.get("half", "top").upper()]
+
+
 @BLOCK_REGISTRY.register
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
@@ -246,6 +272,7 @@ class CraftingTable(AbstractBlock):
             from mcpython.rendering.Window import Window
 
             if self.CONTAINER is None:
+                # todo: create it earlier, requires worldgen to happen later
                 from mcpython.containers.CraftingTableInventory import (
                     CraftingTableContainer,
                 )
