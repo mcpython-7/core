@@ -278,6 +278,8 @@ class SlotRenderCopy(Slot):
 
 
 class Container(IBufferSerializableWithVersion):
+    SHOULD_DRAW_MOVING_SLOT = True
+
     def __init__(
         self, visual_size: tuple[int, int], texture: pyglet.image.AbstractImage | None
     ):
@@ -446,6 +448,9 @@ class Container(IBufferSerializableWithVersion):
         # for slot in self.slots:
         #     slot.on_resize(width, height)
         pass
+
+    def on_close_with_escape(self):
+        self.hide_container()
 
 
 CONTAINER_STACK: list[Container] = []

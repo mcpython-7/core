@@ -94,6 +94,7 @@ class PlayerInventoryContainer(Container):
         for slot in self.player_crafting_slots[:4]:
             self.insert(slot.itemstack)
             slot.set_stack(ItemStack.EMPTY, update=False)
+
         self.player_crafting_slots[-1].set_stack(ItemStack.EMPTY, update=False)
         self.player_crafting_provider.current_recipe = None
 
@@ -113,6 +114,8 @@ class PlayerInventoryContainer(Container):
 
 
 class HotbarContainer(Container):
+    SHOULD_DRAW_MOVING_SLOT = False
+
     def __init__(self, player_inventory: PlayerInventoryContainer):
         super().__init__(
             (182, 22),
@@ -144,3 +147,6 @@ class HotbarContainer(Container):
     def on_mouse_press(self, x: float, y: float, button: int, modifiers: int) -> bool:
         # we don't allow interaction with these slots
         return False
+
+    def on_close_with_escape(self):
+        pass

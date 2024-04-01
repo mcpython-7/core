@@ -20,6 +20,8 @@ NUMBER_MAPPING: dict[int, str] = {getattr(key, f"_{c}"): c for c in "0123456789"
 
 
 class Chat(Container):
+    SHOULD_DRAW_MOVING_SLOT = False
+
     def __init__(self):
         super().__init__((0, 0), None)
         self.render_anchor = (0, 0)

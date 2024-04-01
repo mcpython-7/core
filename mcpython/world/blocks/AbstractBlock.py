@@ -6,6 +6,7 @@ import random
 import typing
 
 import pyglet.graphics.vertexdomain
+from pyglet.window import mouse, key
 
 from mcpython.rendering.Models import BlockStateFile
 from mcpython.resources.Registry import IRegisterAble, Registry
@@ -231,3 +232,27 @@ class FenceLikeBlock(AbstractBlock):
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
     BREAKABLE = False
+
+
+@BLOCK_REGISTRY.register
+class CraftingTable(AbstractBlock):
+    NAME = "minecraft:crafting_table"
+    CONTAINER = None
+
+    def on_block_interaction(
+        self, itemstack: ItemStack, button: int, modifiers: int
+    ) -> bool:
+        if button == mouse.RIGHT and not modifiers & key.MOD_SHIFT:
+            from mcpython.rendering.Window import Window
+
+            if self.CONTAINER is None:
+                from mcpython.containers.CraftingTableInventory import (
+                    CraftingTableContainer,
+                )
+
+                CraftingTable.CONTAINER = CraftingTableContainer()
+
+            Window.INSTANCE.set_exclusive_mouse(False)
+            self.CONTAINER.show_container()
+            return True
+        return False

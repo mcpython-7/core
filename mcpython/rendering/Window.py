@@ -342,9 +342,13 @@ class Window(pyglet.window.Window):
                 self.world.get_or_create_chunk(previous) if previous else None
             )
 
-            if block in block_chunk.blocks and block_chunk.blocks[
-                block
-            ].on_block_interaction(stack, button, modifiers):
+            if (
+                block_chunk
+                and block in block_chunk.blocks
+                and block_chunk.blocks[block].on_block_interaction(
+                    stack, button, modifiers
+                )
+            ):
                 return
 
             if not stack.is_empty() and stack.item.on_block_interaction(
@@ -485,11 +489,8 @@ class Window(pyglet.window.Window):
                 return pyglet.event.EVENT_HANDLED
 
         if symbol == key.ESCAPE:
-            if self.player_inventory.open:
-                self.player_inventory.hide_container()
-
-            if self.player_chat.open:
-                self.player_chat.hide_container()
+            for container in CONTAINER_STACK:
+                container.on_close_with_escape()
 
             self.set_exclusive_mouse(not self.exclusive)
 
@@ -640,7 +641,7 @@ class Window(pyglet.window.Window):
             self.set_2d_centered_for_inventory(container)
             container.draw(self)
 
-        if self.player_inventory.open:
+        if any(container.SHOULD_DRAW_MOVING_SLOT for container in CONTAINER_STACK):
             self.set_2d_centered_for_inventory(self.player_inventory)
 
             self.moving_player_slot.update_position(
@@ -650,6 +651,7 @@ class Window(pyglet.window.Window):
                     self.inventory_scale,
                 )
             )
+
             self.moving_player_slot.draw(self)
 
         self.slot_hover_info.draw(self)
