@@ -98,7 +98,7 @@ class Registry(IBufferSerializable):
 
         self._on_registration_period.clear()
 
-    def register(self, obj: type[IRegisterAble]) -> type[IRegisterAble]:
+    def register(self, obj: T) -> T:
         if not isinstance(obj, type):
             raise ValueError(
                 f"{self.name}: Registered objects should be classes, not instances, got {obj}"

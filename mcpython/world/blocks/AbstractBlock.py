@@ -110,7 +110,20 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         Called every tick when loaded and SHOULD_TICK is True
 
         WARNING: modifying SHOULD_TICK at in-game time is fatal!
+
+        You may call set_ticking(bool) at runtime (ensure that you remove the block when on_block_removed!)
         """
+
+    def set_ticking(self, ticking: bool):
+        from mcpython.rendering.Window import Window
+
+        chunk = Window.INSTANCE.world.get_or_create_chunk(self.position)
+
+        if ticking:
+            if self not in chunk.tick_list:
+                chunk.tick_list.append(self)
+        elif self in chunk.tick_list:
+            chunk.tick_list.remove(self)
 
     def on_block_interaction(
         self, itemstack: ItemStack, button: int, modifiers: int
@@ -140,21 +153,41 @@ class Sand(AbstractBlock):
     def __init__(self, position):
         super().__init__(position)
         self.falling = False
+        self.ticks_to_fall = 3
 
     def on_block_updated(self, world):
+        if self.falling:
+            return
+
         from mcpython.world.World import World
 
         chunk = World.INSTANCE.get_or_create_chunk(self.position)
 
-        if (
-            self.position[0],
-            self.position[1] - 1,
-            self.position[2],
-        ) not in chunk.blocks:
-            pyglet.clock.schedule_once(self.fall, 0.5)
-            self.falling = True
+        block = chunk.blocks.get(
+            (
+                self.position[0],
+                self.position[1] - 1,
+                self.position[2],
+            )
+        )
 
-    def fall(self, _):
+        if not block or (isinstance(block, Sand) and block.falling):
+            self.set_ticking(True)
+            self.ticks_to_fall = 3
+            self.falling = True
+            if block:
+                block.on_block_updated(world)
+
+    def on_tick(self):
+        if not self.falling:
+            self.set_ticking(False)
+            return
+
+        self.ticks_to_fall -= 1
+        if self.ticks_to_fall <= 0:
+            self.fall()
+
+    def fall(self):
         from mcpython.world.World import World
 
         self.falling = False
@@ -172,10 +205,15 @@ class Sand(AbstractBlock):
         ):
             World.INSTANCE.remove_block(self.position, block_update=False)
             old_pos = self.position
-            World.INSTANCE.add_block(
-                (self.position[0], self.position[1] - 1, self.position[2]), self
-            )
+            if self.position[1] > -20:
+                World.INSTANCE.add_block(
+                    (self.position[0], self.position[1] - 1, self.position[2]), self
+                )
+            else:
+                self.set_ticking(False)
             World.INSTANCE.send_block_update(old_pos)
+        else:
+            self.set_ticking(False)
 
 
 class LogAxis(enum.Enum):

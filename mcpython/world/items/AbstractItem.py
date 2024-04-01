@@ -111,4 +111,5 @@ def create_basic_item(name: str) -> type[AbstractItem]:
 
 Bedrock = create_item_for_block(AbstractBlock.Bedrock)
 CraftingTable = create_item_for_block(AbstractBlock.CraftingTable)
+Sand = create_item_for_block(AbstractBlock.Sand)
 Stick = create_basic_item("minecraft:stick")
