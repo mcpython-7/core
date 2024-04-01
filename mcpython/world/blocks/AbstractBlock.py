@@ -15,6 +15,7 @@ from mcpython.world.serialization.DataBuffer import (
     ReadBuffer,
     WriteBuffer,
 )
+from mcpython.world.util import Facing
 
 if typing.TYPE_CHECKING:
     from mcpython.world.items.AbstractItem import AbstractItem
@@ -112,6 +113,9 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         Should return 'True' if the normal logic should NOT continue.
         """
         return False
+
+    def is_solid(self, face: Facing) -> bool:
+        return True
 
     def __repr__(self):
         return f"{self.__class__.__name__}{self.position}"
@@ -227,6 +231,9 @@ class FenceLikeBlock(AbstractBlock):
         self.connected = random.choices([False, True], k=6)
         self.update_render_state()
 
+    def is_solid(self, face: Facing) -> bool:
+        return False
+
 
 class SlabLikeBlock(AbstractBlock):
     class SlabHalf(enum.Enum):
@@ -252,6 +259,13 @@ class SlabLikeBlock(AbstractBlock):
 
     def set_block_state(self, state: dict[str, str]):
         self.half = SlabLikeBlock.SlabHalf[state.get("half", "top").upper()]
+
+    def is_solid(self, face: Facing) -> bool:
+        return (
+            self.half == SlabLikeBlock.SlabHalf.DOUBLE
+            or (self.half == SlabLikeBlock.SlabHalf.BOTTOM and face == Facing.TOP)
+            or (self.half == SlabLikeBlock.SlabHalf.TOP and face == Facing.BOTTOM)
+        )
 
 
 @BLOCK_REGISTRY.register

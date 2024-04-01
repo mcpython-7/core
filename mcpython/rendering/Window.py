@@ -351,8 +351,12 @@ class Window(pyglet.window.Window):
             ):
                 return
 
-            if not stack.is_empty() and stack.item.on_block_interaction(
-                stack, block_chunk.blocks.get(block, None), button, modifiers
+            if (
+                block_chunk
+                and not stack.is_empty()
+                and stack.item.on_block_interaction(
+                    stack, block_chunk.blocks.get(block, None), button, modifiers
+                )
             ):
                 return
 
@@ -367,13 +371,13 @@ class Window(pyglet.window.Window):
                         )
                         b.on_block_placed(stack, block)
 
-            elif button == pyglet.window.mouse.LEFT and block:
+            elif button == pyglet.window.mouse.LEFT and block and block_chunk:
                 instance = block_chunk.blocks[block]
 
                 if instance.BREAKABLE:
                     self.world.remove_block(block)
 
-            elif button == pyglet.window.mouse.MIDDLE and block:
+            elif button == pyglet.window.mouse.MIDDLE and block and block_chunk:
                 instance = block_chunk.blocks[block]
 
                 slot = self.player_inventory.find_item(instance.NAME)

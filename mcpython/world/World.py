@@ -18,7 +18,7 @@ from mcpython.world.serialization.DataBuffer import (
     ReadBuffer,
     WriteBuffer,
 )
-from mcpython.world.util import normalize, sectorize
+from mcpython.world.util import normalize, sectorize, Facing
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
     BLOCK_REGISTRY,
@@ -213,11 +213,10 @@ class World:
         blocks, True otherwise.
 
         """
-        x, y, z = position
-        for dx, dy, dz in FACES:
-            if (x + dx, y + dy, z + dz) not in self.get_or_create_chunk(
-                (x + dx, y + dy, z + dz)
-            ).blocks:
+        for face in Facing:
+            pos = face.position_offset(position)
+            block = self.get_or_create_chunk(pos).blocks.get(pos)
+            if not block or not block.is_solid(face):
                 return True
 
         return False
