@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import time
 
 import pyglet
 from pyglet.gl import (
@@ -126,10 +127,6 @@ class Window(pyglet.window.Window):
             color=(0, 0, 0, 255),
         )
 
-        # This call schedules the `update()` method to be called
-        # TICKS_PER_SEC. This is the main game event loop.
-        pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
-
         self.inventory_scale = 2
 
         self.slot_hover_info = ItemInformationScreen()
@@ -142,6 +139,11 @@ class Window(pyglet.window.Window):
         self.moving_player_slot = Slot(
             self.player_inventory, (0, 0), on_update=self._update_moving_slot
         )
+
+        # This call schedules the `update()` method to be called
+        # TICKS_PER_SEC. This is the main game event loop.
+        self.last_tick = time.time()
+        pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
 
     def _update_moving_slot(self, slot, old_stack):
         if not slot.itemstack.is_empty():
@@ -237,6 +239,12 @@ class Window(pyglet.window.Window):
         dt = min(dt, 0.2)
         for _ in range(m):
             self._update(dt / m)
+
+        delta = time.time() - self.last_tick
+        self.last_tick = time.time()
+
+        for _ in range(int(delta * 20)):
+            self.world.tick()
 
     def _update(self, dt: float):
         """Private implementation of the `update()` method. This is where most

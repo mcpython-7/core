@@ -29,6 +29,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     NAME: str | None = None
     STATE_FILE: BlockStateFile | None = None
     BREAKABLE = True
+    SHOULD_TICK = False
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -103,6 +104,13 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
 
     def on_block_updated(self, world):
         pass
+
+    def on_tick(self):
+        """
+        Called every tick when loaded and SHOULD_TICK is True
+
+        WARNING: modifying SHOULD_TICK at in-game time is fatal!
+        """
 
     def on_block_interaction(
         self, itemstack: ItemStack, button: int, modifiers: int

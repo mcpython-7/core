@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import random
+import sys
 import time
 import typing
 from collections import deque
@@ -35,6 +36,11 @@ class Chunk(IBufferSerializableWithVersion):
         self.position = position
         self.blocks: dict[tuple[int, int, int], AbstractBlock] = {}
         self.shown = False
+        self.tick_list: list[AbstractBlock] = []
+
+    def tick(self):
+        for block in self.tick_list:
+            block.on_tick()
 
     def decode_instance(self, buffer: ReadBuffer):
         sector = buffer.read_int32(), buffer.read_int32()
@@ -108,6 +114,10 @@ class World:
         self.queue = deque()
 
         self._initialize()
+
+    def tick(self):
+        for chunk in self.chunks.values():
+            chunk.tick()
 
     def get_or_create_chunk(
         self, position: tuple[int, int, int] | tuple[int, int]
@@ -267,6 +277,9 @@ class World:
             instance.on_block_updated(self)
             self.send_block_update(position)
 
+        if instance.SHOULD_TICK:
+            chunk.tick_list.append(instance)
+
     def remove_block(
         self,
         position: tuple[int, int, int],
@@ -295,6 +308,15 @@ class World:
         instance.on_block_removed()
         if block_update:
             self.send_block_update(position)
+
+        if instance.SHOULD_TICK:
+            try:
+                chunk.tick_list.remove(instance)
+            except ValueError:
+                print(
+                    f"WARN: block {instance} is in the world and was scheduled to be ticked, but is not registered for ticking!",
+                    file=sys.stderr,
+                )
 
     def check_neighbors(self, position: tuple[int, int, int]):
         """Check all blocks surrounding `position` and ensure their visual
