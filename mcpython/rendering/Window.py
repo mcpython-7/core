@@ -337,8 +337,10 @@ class Window(pyglet.window.Window):
 
             vector = self.get_sight_vector()
             block, previous = self.world.hit_test(self.position, vector)
-            block_chunk = self.world.get_or_create_chunk(block)
-            previous_chunk = self.world.get_or_create_chunk(previous)
+            block_chunk = self.world.get_or_create_chunk(block) if block else None
+            previous_chunk = (
+                self.world.get_or_create_chunk(previous) if previous else None
+            )
 
             if block in block_chunk.blocks and block_chunk.blocks[
                 block

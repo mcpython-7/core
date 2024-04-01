@@ -13,42 +13,56 @@ class AtlasReference:
     def __init__(
         self,
         atlas: TextureAtlas,
-        position: tuple[float, float],
-        size: tuple[float, float],
+        start: tuple[float, float],
+        end: tuple[float, float],
     ):
         self.atlas = atlas
-        self.position = position
-        self.size = size
+        self.start = start
+        self.end = end
+
+    def get_span_normalised(self) -> tuple[float, float, float, float]:
+        mx, my = self.atlas.size
+        bx, by = self.atlas.block_size
+        x1, y1 = self.start
+        x2, y2 = self.end
+        x1 /= mx * bx
+        y1 /= my * by
+        x2 /= mx * bx
+        y2 /= my * by
+        return x1, y1, x2, y2
 
     def uv_section(self, uv: tuple[float, ...]) -> AtlasReference:
         if uv == (0, 0, 1, 1):
             return self
+
+        if any(x < 0 or x > 1 for x in uv):
+            raise ValueError("section must be in range [0; 1]!")
+
         a, b, c, d = uv
-        x, y = self.position
-        dx, dy = self.size
-        sx, sy = self.atlas.size
+        x1, y1 = self.start
+        x2, y2 = self.end
+
         return AtlasReference(
-            self.atlas, (x + a / sx, y + b / sy), ((c - a) * dx, (d - b) * dy)
+            self.atlas,
+            (x1 + (x2 - x1) * a, y1 + (y2 - y1) * c),
+            (x1 + (x2 - x1) * b, y1 + (y2 - y1) * d),
         )
 
     def tex_coord(self) -> tuple[float, ...]:
         """Return the bounding vertices of the texture square."""
-        mx, my = self.atlas.size
-        dx = self.position[0] / mx
-        dy = self.position[1] / my
+        x1, y1, x2, y2 = self.get_span_normalised()
         # fmt: off
         return (
-            dx, dy, dx + self.size[0] / mx / self.atlas.block_size[0], dy, dx + self.size[0] / mx / self.atlas.block_size[0], dy + self.size[1] / my / self.atlas.block_size[1],  # Triangle 1
-            dx, dy, dx + self.size[0] / mx / self.atlas.block_size[0], dy + self.size[1] / my / self.atlas.block_size[1], dx, dy + self.size[1] / my / self.atlas.block_size[1],  # Triangle 2
+            x1, y1, x2, y1, x2, y2,  # Triangle 1
+            x1, y1, x2, y2, x1, y2,  # Triangle 2
         )
         # fmt: on
 
     def get_texture(self) -> pyglet.image.AbstractImage:
         texture = self.atlas.get_texture()
-        x, y = self.position
-        dx, dy = self.size
-        sx, sy = self.atlas.block_size
-        return texture.get_region(x * sx, y * sy, sx, sy)
+        x1, y1 = self.start
+        x2, y2 = self.end
+        return texture.get_region(x1, y1, x2 - x1, y2 - y1)
 
 
 class TextureAtlas:
@@ -91,7 +105,13 @@ class TextureAtlas:
         for i, (location, free_size) in enumerate(self.free_slots):
             if free_size[0] >= blocks[0] and free_size[1] >= blocks[1]:
                 self.free_slots.pop(i)
-                reference = AtlasReference(self, location, size)
+                base = (
+                    location[0] * self.block_size[0],
+                    location[1] * self.block_size[1],
+                )
+                reference = AtlasReference(
+                    self, base, (base[0] + size[0], base[1] + size[1])
+                )
                 if free_size[0] > blocks[0]:
                     self.free_slots.append(
                         (

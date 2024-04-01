@@ -241,9 +241,12 @@ class Model:
             vertex_cache = self.vertex_data_cache[i]
 
             if rotation not in vertex_cache:
-                rotation_matrix = Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
-                rotation_matrix @= Mat4.from_rotation(rotation[1], Vec3(0, 1, 0))
-                rotation_matrix @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
+                rotation_matrix = Mat4()
+
+                if rotation != (0, 0, 0):
+                    rotation_matrix @= Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
+                    rotation_matrix @= Mat4.from_rotation(rotation[1], Vec3(0, 1, 0))
+                    rotation_matrix @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
 
                 vertex_data = cube_vertices(center, size / 2)
                 vertex_data = sum(
