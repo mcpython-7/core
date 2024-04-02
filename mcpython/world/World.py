@@ -265,6 +265,7 @@ class World:
             instance = block_type(position)
 
         chunk.blocks[position] = instance
+        instance.chunk = chunk
 
         instance.on_block_added(*block_added_parms)
 
@@ -274,7 +275,7 @@ class World:
             self.check_neighbors(position)
 
         if block_update:
-            instance.on_block_updated(self)
+            instance.on_block_updated()
             self.send_block_update(position)
 
         if instance.SHOULD_TICK:
@@ -347,7 +348,7 @@ class World:
             if key not in chunk.blocks:
                 continue
             instance = chunk.blocks[key]
-            instance.on_block_updated(self)
+            instance.on_block_updated()
 
     def show_block(self, instance: AbstractBlock, immediate=True):
         """Show the block at the given `position`. This method assumes the

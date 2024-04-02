@@ -18,7 +18,7 @@ from mcpython.world.serialization.DataBuffer import (
 from mcpython.world.util import Facing
 
 if typing.TYPE_CHECKING:
-    from mcpython.world.items.AbstractItem import AbstractItem
+    from mcpython.world.World import Chunk
     from mcpython.containers.ItemStack import ItemStack
 
 
@@ -61,6 +61,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         self.position = position
         self.shown = False
         self.vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
+        self.chunk: Chunk = None
 
     def encode(self, buffer: WriteBuffer):
         buffer.write_string(self.NAME)
@@ -84,9 +85,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         if not self.shown:
             return
 
-        from mcpython.rendering.Window import Window
-
-        world = Window.INSTANCE.world
+        world = self.chunk.world
         world.hide_block(self)
         world.show_block(self)
 
@@ -102,7 +101,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     def on_block_removed(self):
         pass
 
-    def on_block_updated(self, world):
+    def on_block_updated(self):
         pass
 
     def on_tick(self):
@@ -115,15 +114,11 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         """
 
     def set_ticking(self, ticking: bool):
-        from mcpython.rendering.Window import Window
-
-        chunk = Window.INSTANCE.world.get_or_create_chunk(self.position)
-
         if ticking:
-            if self not in chunk.tick_list:
-                chunk.tick_list.append(self)
-        elif self in chunk.tick_list:
-            chunk.tick_list.remove(self)
+            if self not in self.chunk.tick_list:
+                self.chunk.tick_list.append(self)
+        elif self in self.chunk.tick_list:
+            self.chunk.tick_list.remove(self)
 
     def on_block_interaction(
         self, itemstack: ItemStack, button: int, modifiers: int
@@ -155,15 +150,13 @@ class Sand(AbstractBlock):
         self.falling = False
         self.ticks_to_fall = 3
 
-    def on_block_updated(self, world):
+    def on_block_updated(self):
         if self.falling:
             return
 
         from mcpython.world.World import World
 
-        chunk = World.INSTANCE.get_or_create_chunk(self.position)
-
-        block = chunk.blocks.get(
+        block = self.chunk.blocks.get(
             (
                 self.position[0],
                 self.position[1] - 1,
@@ -176,7 +169,7 @@ class Sand(AbstractBlock):
             self.ticks_to_fall = 3
             self.falling = True
             if block:
-                block.on_block_updated(world)
+                block.on_block_updated()
 
     def on_tick(self):
         if not self.falling:
@@ -188,30 +181,26 @@ class Sand(AbstractBlock):
             self.fall()
 
     def fall(self):
-        from mcpython.world.World import World
-
         self.falling = False
 
-        chunk = World.INSTANCE.get_or_create_chunk(self.position)
-
         if (
-            chunk.blocks.get(self.position, None) is self
+            self.chunk.blocks.get(self.position, None) is self
             and (
                 self.position[0],
                 self.position[1] - 1,
                 self.position[2],
             )
-            not in chunk.blocks
+            not in self.chunk.blocks
         ):
-            World.INSTANCE.remove_block(self.position, block_update=False)
+            self.chunk.world.INSTANCE.remove_block(self.position, block_update=False)
             old_pos = self.position
             if self.position[1] > -20:
-                World.INSTANCE.add_block(
+                self.chunk.world.add_block(
                     (self.position[0], self.position[1] - 1, self.position[2]), self
                 )
             else:
                 self.set_ticking(False)
-            World.INSTANCE.send_block_update(old_pos)
+            self.chunk.world.send_block_update(old_pos)
         else:
             self.set_ticking(False)
 
@@ -233,7 +222,6 @@ class LogLikeBlock(AbstractBlock):
             self.position[1] - onto[1],
             self.position[2] - onto[2],
         )
-        print(dx, dy, dz)
 
         if dy != 0:
             self.axis = LogAxis.Y
@@ -278,15 +266,12 @@ class FenceLikeBlock(AbstractBlock):
                 state == "true"
             )
 
-    def on_block_updated(self, world):
-        from mcpython.rendering.Window import Window
-
+    def on_block_updated(self):
         pos = self.position
-        world = Window.INSTANCE.world
 
         for i, face in enumerate(self.FACE_ORDER):
             p = face.position_offset(pos)
-            block = world.get_or_create_chunk(p).blocks.get(p)
+            block = self.chunk.world.get_or_create_chunk(p).blocks.get(p)
 
             if block and (
                 block.is_solid(face.opposite)
