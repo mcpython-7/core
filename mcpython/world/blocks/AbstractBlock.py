@@ -315,8 +315,8 @@ class SlabLikeBlock(AbstractBlock):
     def is_solid(self, face: Facing) -> bool:
         return (
             self.half == SlabLikeBlock.SlabHalf.DOUBLE
-            or (self.half == SlabLikeBlock.SlabHalf.BOTTOM and face == Facing.TOP)
-            or (self.half == SlabLikeBlock.SlabHalf.TOP and face == Facing.BOTTOM)
+            or (self.half == SlabLikeBlock.SlabHalf.BOTTOM and face == Facing.UP)
+            or (self.half == SlabLikeBlock.SlabHalf.TOP and face == Facing.DOWN)
         )
 
 
@@ -351,9 +351,9 @@ class StairsLikeBlock(AbstractBlock):
         self.shape = StairsLikeBlock.StairShape[state.get("shape", "straight").upper()]
 
     def is_solid(self, face: Facing) -> bool:
-        if face == Facing.TOP:
+        if face == Facing.UP:
             return self.half == StairsLikeBlock.StairHalf.TOP
-        elif face == Facing.BOTTOM:
+        elif face == Facing.DOWN:
             return self.half == StairsLikeBlock.StairHalf.BOTTOM
         elif self.shape in [
             StairsLikeBlock.StairShape.INNER_LEFT,

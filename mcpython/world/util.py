@@ -6,8 +6,8 @@ SECTOR_SIZE = 16
 
 
 class Facing(enum.Enum):
-    TOP = ((0, 1, 0),)
-    BOTTOM = ((0, -1, 0),)
+    UP = ((0, 1, 0),)
+    DOWN = ((0, -1, 0),)
     NORTH = ((0, 0, -1),)
     SOUTH = ((0, 0, 1),)
     EAST = ((-1, 0, 0),)
@@ -32,8 +32,8 @@ class Facing(enum.Enum):
         )
 
 
-Facing.TOP.opposite = Facing.BOTTOM
-Facing.BOTTOM.opposite = Facing.TOP
+Facing.UP.opposite = Facing.DOWN
+Facing.DOWN.opposite = Facing.UP
 Facing.NORTH.opposite = Facing.SOUTH
 Facing.SOUTH.opposite = Facing.NORTH
 Facing.WEST.opposite = Facing.EAST

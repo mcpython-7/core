@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import math
+import random
 
 import PIL.Image
 import pyglet
 
+from mcpython.config import TMP
 from mcpython.resources.ResourceManager import ResourceManager
 from mcpython import config
 
@@ -44,8 +46,8 @@ class AtlasReference:
 
         return AtlasReference(
             self.atlas,
-            (x1 + (x2 - x1) * a, y1 + (y2 - y1) * c),
-            (x1 + (x2 - x1) * b, y1 + (y2 - y1) * d),
+            (x1 + (x2 - x1) * a, y1 + (y2 - y1) * b),
+            (x1 + (x2 - x1) * c, y1 + (y2 - y1) * d),
         )
 
     def tex_coord(self) -> tuple[float, ...]:

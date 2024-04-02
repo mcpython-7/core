@@ -13,7 +13,7 @@ from pyglet.math import Vec3, Vec2, Mat4, Vec4
 
 from mcpython.resources.ResourceManager import ResourceManager
 from mcpython.rendering.TextureAtlas import TextureAtlas, AtlasReference
-
+from mcpython.world.util import Facing
 
 _TEXTURE_ATLAS = TextureAtlas()
 
@@ -26,10 +26,11 @@ def _parse_stringfieid_blockstate(string: str) -> dict[str, str]:
     )
 
 
-def _try_resolve_texture(model: Model, element: dict, face: str) -> str | None:
-    if face not in element["faces"]:
+def _try_resolve_texture(model: Model, element: dict, face: Facing) -> str | None:
+    if face.name.lower() not in element["faces"]:
         return
-    return model.resolve_texture_name(element["faces"][face]["texture"])
+
+    return model.resolve_texture_name(element["faces"][face.name.lower()]["texture"])
 
 
 def _textured_cube(
@@ -43,8 +44,15 @@ def _textured_cube(
     return result
 
 
-FACE_ORDER = ["up", "down", "north", "east", "south", "west"]
-FACE_ORDER_UV = ["up", "down", "east", "west", "north", "south"]
+FACE_ORDER = list(Facing)
+FACE_ORDER_UV = [
+    Facing.UP,
+    Facing.DOWN,
+    Facing.EAST,
+    Facing.WEST,
+    Facing.NORTH,
+    Facing.SOUTH,
+]
 
 
 class Model:
@@ -126,7 +134,7 @@ class Model:
                     tuple(
                         e / 16
                         for e in element["faces"]
-                        .get(FACE_ORDER_UV[i], {})
+                        .get(FACE_ORDER_UV[i].name.lower(), {})
                         .get("uv", [])
                     )
                     for i in range(6)

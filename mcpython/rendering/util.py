@@ -4,7 +4,7 @@ import math
 import pathlib
 
 import pyglet
-from pyglet.math import Vec3, Mat4
+from pyglet.math import Vec3, Mat4, Vec4
 
 from mcpython.rendering.Models import _TEXTURE_ATLAS
 
@@ -68,10 +68,6 @@ def cube_vertices(
         (Vec3(x-nx, y-ny, z-nz), Vec3(x+nx, y-ny, z-nz), Vec3(x+nx, y-ny, z+nz),  # Triangle 1
         Vec3(x-nx, y-ny, z-nz), Vec3(x+nx, y-ny, z+nz), Vec3(x-nx, y-ny, z+nz)),  # Triangle 2
 
-        # Left
-        (Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y-ny, z+nz), Vec3(x-nx, y+ny, z+nz),  # Triangle 1
-        Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y+ny, z+nz), Vec3(x-nx, y+ny, z-nz)),  # Triangle 2
-
         # Right
         (Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y-ny, z-nz), Vec3(x+nx, y+ny, z-nz),  # Triangle 1
         Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y+ny, z-nz), Vec3(x+nx, y+ny, z+nz)),  # Triangle 2
@@ -79,6 +75,10 @@ def cube_vertices(
         # Front
         (Vec3(x-nx, y-ny, z+nz), Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y+ny, z+nz),  # Triangle 1
         Vec3(x-nx, y-ny, z+nz), Vec3(x+nx, y+ny, z+nz), Vec3(x-nx, y+ny, z+nz)),  # Triangle 2
+
+        # Left
+        (Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y-ny, z+nz), Vec3(x-nx, y+ny, z+nz),  # Triangle 1
+        Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y+ny, z+nz), Vec3(x-nx, y+ny, z-nz)),  # Triangle 2
 
         # Back
         (Vec3(x+nx, y-ny, z-nz), Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y+ny, z-nz),  # Triangle 1
