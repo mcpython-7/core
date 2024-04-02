@@ -49,6 +49,23 @@ def add_simple_block(name: str):
     create_item_for_block(SimpleBlock)
 
 
+def add_simple_block_set(name: str, base_name: str = None):
+    base_name = base_name or name
+
+    @BLOCK_REGISTRY.register
+    class Block(AbstractBlock):
+        NAME = name if ":" in name else f"minecraft:{name}"
+
+    @BLOCK_REGISTRY.register
+    class Slab(SlabLikeBlock):
+        NAME = (
+            f"{base_name}_slab" if ":" in base_name else f"minecraft:{base_name}_slab"
+        )
+
+    create_item_for_block(Block)
+    create_item_for_block(Slab)
+
+
 add_wooden_set("acacia")
 add_wooden_set("birch")
 add_wooden_set("dark_oak")
@@ -58,12 +75,12 @@ add_wooden_set("spruce")
 add_wooden_set("mangrove")
 add_wooden_set("cherry")
 
-add_simple_block("bricks")
+add_simple_block_set("bricks", "brick")
 
 add_simple_block("dirt")
 add_simple_block("coarse_dirt")
 
-add_simple_block("stone")
-add_simple_block("diorite")
-add_simple_block("andesite")
-add_simple_block("granite")
+add_simple_block_set("stone")
+add_simple_block_set("diorite")
+add_simple_block_set("andesite")
+add_simple_block_set("granite")
