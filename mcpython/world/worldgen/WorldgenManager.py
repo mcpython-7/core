@@ -27,6 +27,15 @@ noise6 = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
 noise7 = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
 
 
+ORES = [
+    "minecraft:coal_ore",
+    "minecraft:iron_ore",
+    "minecraft:diamond_ore",
+    "minecraft:gold_ore",
+    "minecraft:lapis_ore",
+]
+
+
 def generate_chunk(chunk: Chunk):
     cx, cz = chunk.position
 
@@ -79,3 +88,15 @@ def generate_chunk(chunk: Chunk):
             chunk.world.add_block(
                 (x, y, z), "minecraft:dirt", immediate=False, block_update=False
             )
+
+    r = random.Random(random.randint(1, 1 << 256))
+    for _ in range(r.randint(200, 800)):
+        ore = r.choice(ORES)
+        pos = (
+            r.randrange(cx * 16, cx * 16 + 16),
+            r.randrange(0, 256),
+            r.randrange(cz * 16, cz * 16 + 16),
+        )
+        block = chunk.blocks.get(pos)
+        if block and block.NAME == "minecraft:stone":
+            chunk.world.add_block(pos, ore, immediate=False, block_update=False)
