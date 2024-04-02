@@ -25,6 +25,7 @@ from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
     BLOCK_REGISTRY,
 )
+from mcpython.world.worldgen.WorldgenManager import generate_chunk
 
 
 class Chunk(IBufferSerializableWithVersion):
@@ -141,54 +142,9 @@ class World:
 
     def _initialize(self):
         """Initialize the world by placing all the blocks."""
-        n = 100  # 1/2 width and height of world
-        s = 1  # step size
-        y = 0  # initial y height
-        for x, z in itertools.product(range(-n, n + 1, s), range(-n, n + 1, s)):
-            # create a layer stone a grass everywhere.
-            self.add_block(
-                (x, y - 2, z), "minecraft:dirt", immediate=False, block_update=False
-            )
-            self.add_block(
-                (x, y - 3, z),
-                "minecraft:bedrock",
-                immediate=False,
-                block_update=False,
-            )
-            if x in (-n, n) or z in (-n, n):
-                # create outer walls.
-                for dy in range(-2, 3):
-                    self.add_block(
-                        (x, y + dy, z),
-                        "minecraft:bedrock",
-                        immediate=False,
-                        block_update=False,
-                    )
 
-        blocks = list(
-            filter(lambda e: e.BREAKABLE, list(BLOCK_REGISTRY._registry.values()))
-        )
-
-        # generate the hills randomly
-        o = n - 10
-        c = -1  # base of the hill
-        d = 1  # how quickly to taper off the hills
-        for _ in range(120):
-            a = random.randint(-o, o)  # x position of the hill
-            b = random.randint(-o, o)  # z position of the hill
-            h = random.randint(1, 6)  # height of the hill
-            s = random.randint(4, 8)  # 2 * s is the side length of the hill
-            t = random.choice(blocks)
-            for y in range(c, c + h):
-                for x, z in itertools.product(
-                    range(a - s, a + s + 1), range(b - s, b + s + 1)
-                ):
-                    if (x - a) ** 2 + (z - b) ** 2 > (s + 1) ** 2:
-                        continue
-                    if (x - 0) ** 2 + (z - 0) ** 2 < 5**2:
-                        continue
-                    self.add_block((x, y, z), t, immediate=False, block_update=False)
-                s -= d  # decrement side length so hills taper off
+        for cx, cz in itertools.product(range(-3, 4), range(-3, 4)):
+            generate_chunk(self.get_or_create_chunk_by_coord((cx, cz)))
 
         self.ensure_chunks_shown()
 
