@@ -352,9 +352,9 @@ class StairsLikeBlock(AbstractBlock):
 
     def is_solid(self, face: Facing) -> bool:
         if face == Facing.UP:
-            return self.half == StairsLikeBlock.StairHalf.TOP
-        elif face == Facing.DOWN:
             return self.half == StairsLikeBlock.StairHalf.BOTTOM
+        elif face == Facing.DOWN:
+            return self.half == StairsLikeBlock.StairHalf.TOP
         elif self.shape in [
             StairsLikeBlock.StairShape.INNER_LEFT,
             StairsLikeBlock.StairShape.INNER_RIGHT,
@@ -410,6 +410,30 @@ class StairsLikeBlock(AbstractBlock):
             )
         else:
             return False
+
+    def on_block_added(self, hit_position: tuple[float, float, float] = None):
+        if hit_position is None:
+            return
+
+        dx, dy, dz = (
+            self.position[0] - hit_position[0],
+            self.position[1] - hit_position[1],
+            self.position[2] - hit_position[2],
+        )
+
+        if abs(dx) > abs(dz):
+            self.facing = Facing.WEST if dx > 0 else Facing.EAST
+        else:
+            self.facing = Facing.NORTH if (dz > 0 != dy < 0) else Facing.SOUTH
+
+        self.half = (
+            StairsLikeBlock.StairHalf.TOP
+            if dy < 0
+            else StairsLikeBlock.StairHalf.BOTTOM
+        )
+
+    def on_block_updated(self):
+        pass
 
 
 @BLOCK_REGISTRY.register

@@ -54,7 +54,7 @@ def main():
 
     RECIPE_MANAGER.discover_recipes()
 
-    pyglet.app.run()
+    pyglet.app.run(1 / 60)
 
 
 if __name__ == "__main__":
