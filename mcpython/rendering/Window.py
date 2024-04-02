@@ -235,7 +235,7 @@ class Window(pyglet.window.Window):
                 self.world.process_entire_queue()
 
             self.sector = sector
-        m = 8
+        m = 20
         dt = min(dt, 0.2)
         for _ in range(m):
             self._update(dt / m)

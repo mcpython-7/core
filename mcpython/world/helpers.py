@@ -4,6 +4,7 @@ from mcpython.world.blocks.AbstractBlock import (
     FenceLikeBlock,
     BLOCK_REGISTRY,
     SlabLikeBlock,
+    StairsLikeBlock,
 )
 from mcpython.world.items.AbstractItem import (
     AbstractItem,
@@ -34,11 +35,16 @@ def add_wooden_set(wood_name: str, namespace="minecraft"):
     class Slab(SlabLikeBlock):
         NAME = f"{namespace}:{wood_name}_slab"
 
+    @BLOCK_REGISTRY.register
+    class Stairs(StairsLikeBlock):
+        NAME = f"{namespace}:{wood_name}_stairs"
+
     create_item_for_block(Planks)
     create_item_for_block(Log)
     create_item_for_block(Wood)
     create_item_for_block(Fence)
     create_item_for_block(Slab)
+    create_item_for_block(Stairs)
 
 
 def add_simple_block(name: str):
@@ -62,8 +68,17 @@ def add_simple_block_set(name: str, base_name: str = None):
             f"{base_name}_slab" if ":" in base_name else f"minecraft:{base_name}_slab"
         )
 
+    @BLOCK_REGISTRY.register
+    class Stairs(StairsLikeBlock):
+        NAME = (
+            f"{base_name}_stairs"
+            if ":" in base_name
+            else f"minecraft:{base_name}_stairs"
+        )
+
     create_item_for_block(Block)
     create_item_for_block(Slab)
+    create_item_for_block(Stairs)
 
 
 add_wooden_set("acacia")

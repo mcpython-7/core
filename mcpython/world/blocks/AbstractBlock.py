@@ -320,6 +320,98 @@ class SlabLikeBlock(AbstractBlock):
         )
 
 
+class StairsLikeBlock(AbstractBlock):
+    class StairHalf(enum.Enum):
+        TOP = 0
+        BOTTOM = 1
+
+    class StairShape(enum.Enum):
+        STRAIGHT = 0
+        INNER_LEFT = 1
+        INNER_RIGHT = 2
+        OUTER_LEFT = 3
+        OUTER_RIGHT = 4
+
+    def __init__(self, position: tuple[int, int, int]):
+        super().__init__(position)
+        self.half = StairsLikeBlock.StairHalf.TOP
+        self.facing = Facing.NORTH
+        self.shape = StairsLikeBlock.StairShape.STRAIGHT
+
+    def get_block_state(self) -> dict[str, str]:
+        return {
+            "facing": self.facing.name.lower(),
+            "half": self.half.name.lower(),
+            "shape": self.shape.name.lower(),
+        }
+
+    def set_block_state(self, state: dict[str, str]):
+        self.facing = Facing[state.get("facing", "north").upper()]
+        self.half = StairsLikeBlock.StairHalf[state.get("half", "top").upper()]
+        self.shape = StairsLikeBlock.StairShape[state.get("shape", "straight").upper()]
+
+    def is_solid(self, face: Facing) -> bool:
+        if face == Facing.TOP:
+            return self.half == StairsLikeBlock.StairHalf.TOP
+        elif face == Facing.BOTTOM:
+            return self.half == StairsLikeBlock.StairHalf.BOTTOM
+        elif self.shape in [
+            StairsLikeBlock.StairShape.INNER_LEFT,
+            StairsLikeBlock.StairShape.INNER_RIGHT,
+        ]:
+            return False
+        elif face == Facing.NORTH:
+            return (
+                self.facing == Facing.NORTH
+                or (
+                    self.facing == Facing.EAST
+                    and self.shape == StairsLikeBlock.StairShape.OUTER_LEFT
+                )
+                or (
+                    self.facing == Facing.WEST
+                    and self.shape == StairsLikeBlock.StairShape.OUTER_RIGHT
+                )
+            )
+        elif face == Facing.SOUTH:
+            return (
+                self.facing == Facing.SOUTH
+                or (
+                    self.facing == Facing.WEST
+                    and self.shape == StairsLikeBlock.StairShape.OUTER_LEFT
+                )
+                or (
+                    self.facing == Facing.EAST
+                    and self.shape == StairsLikeBlock.StairShape.OUTER_RIGHT
+                )
+            )
+        elif face == Facing.EAST:
+            return (
+                self.facing == Facing.SOUTH.EAST
+                or (
+                    self.facing == Facing.NORTH
+                    and self.shape == StairsLikeBlock.StairShape.OUTER_LEFT
+                )
+                or (
+                    self.facing == Facing.SOUTH
+                    and self.shape == StairsLikeBlock.StairShape.OUTER_RIGHT
+                )
+            )
+        elif face == Facing.WEST:
+            return (
+                self.facing == Facing.SOUTH.WEST
+                or (
+                    self.facing == Facing.SOUTH
+                    and self.shape == StairsLikeBlock.StairShape.OUTER_LEFT
+                )
+                or (
+                    self.facing == Facing.NORTH
+                    and self.shape == StairsLikeBlock.StairShape.OUTER_RIGHT
+                )
+            )
+        else:
+            return False
+
+
 @BLOCK_REGISTRY.register
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
