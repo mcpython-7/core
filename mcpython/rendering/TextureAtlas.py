@@ -70,7 +70,7 @@ class AtlasReference:
 class TextureAtlas:
     def __init__(
         self,
-        start_size: tuple[int, int] = (8, 8),
+        start_size: tuple[int, int] = (16, 16),
         block_size: tuple[int, int] = (16, 16),
     ):
         self.size = start_size
