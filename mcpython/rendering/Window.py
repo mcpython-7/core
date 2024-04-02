@@ -312,7 +312,10 @@ class Window(pyglet.window.Window):
                     op = list(np)
                     op[1] -= dy
                     op[i] += face[i]
-                    if tuple(op) not in self.world.get_or_create_chunk(op).blocks:
+                    if (
+                        tuple(op)
+                        not in self.world.get_or_create_chunk_by_position(op).blocks
+                    ):
                         continue
                     p[i] -= (d - pad) * face[i]
                     if face == (0, -1, 0) or face == (0, 1, 0):
@@ -345,9 +348,13 @@ class Window(pyglet.window.Window):
 
             vector = self.get_sight_vector()
             block, previous, block_raw = self.world.hit_test(self.position, vector)
-            block_chunk = self.world.get_or_create_chunk(block) if block else None
+            block_chunk = (
+                self.world.get_or_create_chunk_by_position(block) if block else None
+            )
             previous_chunk = (
-                self.world.get_or_create_chunk(previous) if previous else None
+                self.world.get_or_create_chunk_by_position(previous)
+                if previous
+                else None
             )
 
             if (
@@ -692,7 +699,7 @@ class Window(pyglet.window.Window):
             y,
             z,
             len(self.world.chunks),
-            len(self.world.get_or_create_chunk(self.position).blocks),
+            len(self.world.get_or_create_chunk_by_position(self.position).blocks),
         )
         self.label.draw()
 

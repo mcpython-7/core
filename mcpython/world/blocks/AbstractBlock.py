@@ -41,6 +41,9 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     def decode(cls, buffer: ReadBuffer):
         name = buffer.read_string()
 
+        if not name:
+            return
+
         block_type = typing.cast(
             AbstractBlock, BLOCK_REGISTRY.lookup(name, raise_on_error=True)
         )
@@ -271,7 +274,7 @@ class FenceLikeBlock(AbstractBlock):
 
         for i, face in enumerate(self.FACE_ORDER):
             p = face.position_offset(pos)
-            block = self.chunk.world.get_or_create_chunk(p).blocks.get(p)
+            block = self.chunk.world.get_or_create_chunk_by_position(p).blocks.get(p)
 
             if block and (
                 block.is_solid(face.opposite)

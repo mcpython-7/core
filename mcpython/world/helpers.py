@@ -96,6 +96,7 @@ add_simple_block("dirt")
 add_simple_block("coarse_dirt")
 
 add_simple_block_set("stone")
+add_simple_block_set("stone_bricks", "stone_brick")
 add_simple_block_set("diorite")
 add_simple_block_set("andesite")
 add_simple_block_set("granite")

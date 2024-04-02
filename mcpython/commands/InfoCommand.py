@@ -27,7 +27,9 @@ def execute_block_info(chat, results):
 
     vector = Window.INSTANCE.get_sight_vector()
     pos, *_ = Window.INSTANCE.world.hit_test(Window.INSTANCE.position, vector)
-    instance = Window.INSTANCE.world.get_or_create_chunk(pos).blocks.get(pos)
+    instance = Window.INSTANCE.world.get_or_create_chunk_by_position(pos).blocks.get(
+        pos
+    )
 
     if instance is None:
         chat.submit_text("<NO BLOCK>")

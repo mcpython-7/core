@@ -19,6 +19,7 @@ from mcpython.world.serialization.DataBuffer import (
     ReadBuffer,
     WriteBuffer,
 )
+from mcpython.world.serialization.WorldStorage import WorldStorage
 from mcpython.world.util import normalize, sectorize, Facing
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
@@ -56,8 +57,10 @@ class Chunk(IBufferSerializableWithVersion):
             pz = buffer.read_uint8()
             pos = px + dx, py, pz + dz
             block = AbstractBlock.decode(buffer)
-            block.position = pos
-            self.blocks[pos] = block
+
+            if block is not None:
+                block.position = pos
+                self.blocks[pos] = block
 
         for block in self.blocks.values():
             block.on_block_loaded()
@@ -104,6 +107,8 @@ class World:
     def __init__(self):
         World.INSTANCE = self
 
+        self.storage = WorldStorage()
+
         # A Batch is a collection of vertex lists for batched rendering.
         self.batch = pyglet.graphics.Batch()
 
@@ -119,13 +124,19 @@ class World:
         for chunk in self.chunks.values():
             chunk.tick()
 
-    def get_or_create_chunk(
+    def get_or_create_chunk_by_position(
         self, position: tuple[int, int, int] | tuple[int, int]
     ) -> Chunk:
         c = position[0] // 16, position[-1] // 16
         chunk = self.chunks.get(c)
         if chunk is None:
             chunk = self.chunks[c] = Chunk(self, c)
+        return chunk
+
+    def get_or_create_chunk_by_coord(self, coord: tuple[int, int]):
+        chunk = self.chunks.get(coord)
+        if chunk is None:
+            chunk = self.chunks[coord] = Chunk(self, coord)
         return chunk
 
     def _initialize(self):
@@ -211,7 +222,10 @@ class World:
         for _ in range(max_distance * m):
             key = normalize((x, y, z))
 
-            if key != previous and key in self.get_or_create_chunk(key).blocks:
+            if (
+                key != previous
+                and key in self.get_or_create_chunk_by_position(key).blocks
+            ):
                 return key, previous, (x, y, z)
 
             previous = key
@@ -225,7 +239,7 @@ class World:
         """
         for face in Facing:
             pos = face.position_offset(position)
-            block = self.get_or_create_chunk(pos).blocks.get(pos)
+            block = self.get_or_create_chunk_by_position(pos).blocks.get(pos)
             if not block or not block.is_solid(face):
                 return True
 
@@ -251,7 +265,7 @@ class World:
             Whether or not to draw the block immediately.
 
         """
-        chunk = self.get_or_create_chunk(position)
+        chunk = self.get_or_create_chunk_by_position(position)
         if position in chunk.blocks:
             self.remove_block(position, immediate, block_update=block_update)
 
@@ -297,7 +311,7 @@ class World:
             Whether or not to immediately remove block from canvas.
 
         """
-        chunk = self.get_or_create_chunk(position)
+        chunk = self.get_or_create_chunk_by_position(position)
         instance = chunk.blocks[position]
         del chunk.blocks[position]
 
@@ -329,7 +343,7 @@ class World:
         x, y, z = position
         for dx, dy, dz in FACES:
             key = (x + dx, y + dy, z + dz)
-            chunk = self.get_or_create_chunk(key)
+            chunk = self.get_or_create_chunk_by_position(key)
             if key not in chunk.blocks:
                 continue
             instance = chunk.blocks[key]
@@ -344,7 +358,7 @@ class World:
         x, y, z = position
         for dx, dy, dz in FACES:
             key = (x + dx, y + dy, z + dz)
-            chunk = self.get_or_create_chunk(key)
+            chunk = self.get_or_create_chunk_by_position(key)
             if key not in chunk.blocks:
                 continue
             instance = chunk.blocks[key]

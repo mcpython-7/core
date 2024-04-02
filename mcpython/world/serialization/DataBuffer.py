@@ -32,9 +32,7 @@ class ReadBuffer:
         return pack.unpack(data)[0]
 
     def read_uint8(self) -> int:
-        pack = _UINT8
-        data = self.source.read(pack.size)
-        return pack.unpack(data)[0]
+        return self.source.read(1)[0]
 
     def read_int16(self) -> int:
         pack = _INT16
@@ -99,7 +97,7 @@ class WriteBuffer:
         return self
 
     def write_uint8(self, value: int) -> typing.Self:
-        self.target.write(_UINT8.pack(value))
+        self.target.write(bytes((value,)))
         return self
 
     def write_int16(self, value: int) -> typing.Self:
@@ -147,7 +145,7 @@ class WriteBuffer:
         return self
 
     def get_data(self):
-        return self.target.read()
+        return self.target.getvalue()
 
 
 class WriteReadBuffer(ReadBuffer, WriteBuffer):
