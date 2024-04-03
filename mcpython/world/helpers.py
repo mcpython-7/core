@@ -66,6 +66,7 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
                 "minecraft:grass_block",
             ]
             TRANSPARENT = True
+            NO_COLLISION = True
 
             def on_block_placed(
                 self,

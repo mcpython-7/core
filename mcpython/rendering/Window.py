@@ -316,16 +316,20 @@ class Window(pyglet.window.Window):
                     op = list(np)
                     op[1] -= dy
                     op[i] += face[i]
-                    if (
+
+                    block = self.world.get_or_create_chunk_by_position(op).blocks.get(
                         tuple(op)
-                        not in self.world.get_or_create_chunk_by_position(op).blocks
-                    ):
+                    )
+
+                    if block is None or block.NO_COLLISION:
                         continue
+
                     p[i] -= (d - pad) * face[i]
-                    if face == (0, -1, 0) or face == (0, 1, 0):
+                    if face in [(0, -1, 0), (0, 1, 0)]:
                         # You are colliding with the ground or ceiling, so stop
                         # falling / rising.
                         self.dy = 0
+
                     break
 
         return tuple(p)

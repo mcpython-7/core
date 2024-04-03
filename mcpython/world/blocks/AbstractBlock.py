@@ -32,6 +32,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     BREAKABLE = True
     SHOULD_TICK = False
     TRANSPARENT = False
+    NO_COLLISION = False
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -552,6 +553,7 @@ class GrassBlock(AbstractBlock):
 class ShortGrass(AbstractBlock):
     NAME = "minecraft:short_grass"
     TRANSPARENT = True
+    NO_COLLISION = True
 
     def get_tint_colors(self) -> list[tuple[float, float, float, float]] | None:
         return [(145 / 255, 189 / 255, 89 / 255, 1)]
