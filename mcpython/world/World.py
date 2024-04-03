@@ -107,7 +107,6 @@ class Chunk(IBufferSerializableWithVersion):
         block_type: type[AbstractBlock] | AbstractBlock | str,
         immediate=True,
         block_update=True,
-        block_added_parms=(),
     ) -> AbstractBlock | None:
         """Add a block with the given `texture` and `position` to the world.
 
@@ -138,7 +137,7 @@ class Chunk(IBufferSerializableWithVersion):
         self.blocks[position] = instance
         instance.chunk = self
 
-        instance.on_block_added(*block_added_parms)
+        instance.on_block_added()
 
         if immediate:
             if self.shown and self.world.exposed(position):
@@ -305,7 +304,6 @@ class World:
         block_type: type[AbstractBlock] | AbstractBlock | str,
         immediate=True,
         block_update=True,
-        block_added_parms=(),
     ) -> AbstractBlock:
         """Add a block with the given `texture` and `position` to the world.
 
@@ -325,7 +323,6 @@ class World:
             block_type,
             immediate,
             block_update=block_update,
-            block_added_parms=block_added_parms,
         )
 
     def remove_block(

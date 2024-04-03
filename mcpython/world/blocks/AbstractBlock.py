@@ -92,13 +92,18 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         world.hide_block(self)
         world.show_block(self)
 
-    def on_block_added(self, hit_position: tuple[float, float, float] = None):
+    def on_block_added(self):
         pass
 
     def on_block_loaded(self):
         self.on_block_added()
 
-    def on_block_placed(self, itemstack: ItemStack, onto: tuple[int, int, int]):
+    def on_block_placed(
+        self,
+        itemstack: ItemStack,
+        onto: tuple[int, int, int] | None = None,
+        hit_position: tuple[float, float, float] | None = None,
+    ):
         pass
 
     def on_block_removed(self):
@@ -219,7 +224,12 @@ class LogLikeBlock(AbstractBlock):
         super().__init__(position)
         self.axis = LogAxis.Y
 
-    def on_block_placed(self, itemstack: ItemStack, onto: tuple[int, int, int]):
+    def on_block_placed(
+        self,
+        itemstack: ItemStack,
+        onto: tuple[int, int, int] | None = None,
+        hit_position: tuple[float, float, float] | None = None,
+    ):
         dx, dy, dz = (
             self.position[0] - onto[0],
             self.position[1] - onto[1],
@@ -300,7 +310,12 @@ class SlabLikeBlock(AbstractBlock):
         super().__init__(position)
         self.half: SlabLikeBlock.SlabHalf = self.SlabHalf.TOP
 
-    def on_block_added(self, hit_position: tuple[float, float, float] = None):
+    def on_block_placed(
+        self,
+        itemstack: ItemStack,
+        onto: tuple[int, int, int] | None = None,
+        hit_position: tuple[float, float, float] | None = None,
+    ):
         if hit_position:
             print(hit_position, self.position, hit_position[1] < self.position[1])
 
@@ -414,7 +429,12 @@ class StairsLikeBlock(AbstractBlock):
         else:
             return False
 
-    def on_block_added(self, hit_position: tuple[float, float, float] = None):
+    def on_block_placed(
+        self,
+        itemstack: ItemStack,
+        onto: tuple[int, int, int] | None = None,
+        hit_position: tuple[float, float, float] | None = None,
+    ):
         if hit_position is None:
             return
 

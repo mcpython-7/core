@@ -37,16 +37,16 @@ ORES = [
 
 
 # PROFILE = cProfile.Profile()
-#
-#
+
+
 def generate_chunk(chunk: Chunk):
-#     PROFILE.enable()
-#     _generate_chunk(chunk)
-#     PROFILE.disable()
-#     PROFILE.print_stats("cumulative")
-#
-#
-# def _generate_chunk(chunk: Chunk):
+    #     PROFILE.enable()
+    #     _generate_chunk(chunk)
+    #     PROFILE.disable()
+    #     PROFILE.print_stats("cumulative")
+    #
+    #
+    # def _generate_chunk(chunk: Chunk):
     cx, cz = chunk.position
 
     for dx, dz in itertools.product(range(16), range(16)):
