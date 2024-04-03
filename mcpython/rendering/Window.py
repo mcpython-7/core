@@ -11,6 +11,10 @@ from pyglet.gl import (
     glEnable,
     glClear,
     GL_DEPTH_BUFFER_BIT,
+    glBlendFunc,
+    GL_BLEND,
+    GL_ONE_MINUS_SRC_ALPHA,
+    GL_SRC_ALPHA,
 )
 from pyglet.math import Vec3, Mat4
 from pyglet.window import key, mouse
@@ -648,6 +652,12 @@ class Window(pyglet.window.Window):
         self.clear()
         self.set_3d()
         self.world.batch.draw()
+
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
+        self.world.alpha_batch.draw()
+        glDisable(GL_BLEND)
+
         self.draw_focused_block()
         self.set_2d()
         self.draw_label()

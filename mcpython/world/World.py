@@ -221,6 +221,7 @@ class World:
 
         # A Batch is a collection of vertex lists for batched rendering.
         self.batch = pyglet.graphics.Batch()
+        self.alpha_batch = pyglet.graphics.Batch()
 
         self.chunks: dict[tuple[int, int], Chunk] = {}
 
@@ -422,7 +423,9 @@ class World:
         """
         try:
             instance.vertex_data = instance.STATE_FILE.create_vertex_list(
-                self.batch, instance.position, instance.get_block_state()
+                self.alpha_batch if instance.TRANSPARENT else self.batch,
+                instance.position,
+                instance.get_block_state(),
             )
         except (KeyboardInterrupt, SystemExit):
             raise

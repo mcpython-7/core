@@ -46,6 +46,10 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
     @BLOCK_REGISTRY.register
     class Leaves(AbstractBlock):
         NAME = f"{namespace}:{wood_name}_leaves"
+        TRANSPARENT = True
+
+        def is_solid(self, face: Facing) -> bool:
+            return False
 
     if sapling:
 
@@ -58,6 +62,7 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
                 "minecraft:coarse_dirt",
                 "minecraft:grass_block",
             ]
+            TRANSPARENT = True
 
             def on_block_placed(
                 self,

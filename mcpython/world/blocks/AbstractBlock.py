@@ -31,6 +31,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     STATE_FILE: BlockStateFile | None = None
     BREAKABLE = True
     SHOULD_TICK = False
+    TRANSPARENT = False
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
