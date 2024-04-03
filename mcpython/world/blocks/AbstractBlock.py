@@ -488,3 +488,11 @@ class CraftingTable(AbstractBlock):
             self.CONTAINER.show_container()
             return True
         return False
+
+
+@BLOCK_REGISTRY.register
+class GrassBlock(AbstractBlock):
+    NAME = "minecraft:grass_block"
+
+    def get_block_state(self) -> dict[str, str]:
+        return {"snowy": "false"}

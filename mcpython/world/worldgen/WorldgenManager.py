@@ -26,6 +26,10 @@ noise6 = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
 # river base influence modifier
 noise7 = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
 
+bedrock_noise = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
+
+dirt_height_noise = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
+
 
 ORES = [
     "minecraft:coal_ore",
@@ -89,10 +93,20 @@ def generate_chunk(chunk: Chunk):
                 (x, y, z), "minecraft:stone", immediate=False, block_update=False
             )
 
-        for y in range(h - 4, h):
+        for y in range(h - 6 - int(2 * dirt_height_noise.noise2(x / 20, z / 20)), h):
             chunk.add_block(
                 (x, y, z), "minecraft:dirt", immediate=False, block_update=False
             )
+
+        chunk.add_block(
+            (x, h, z), "minecraft:grass_block", immediate=False, block_update=False
+        )
+
+        for y in range(1, 4):
+            if bedrock_noise.noise3(x, y, z) > 0.1:
+                chunk.add_block(
+                    (x, y, z), "minecraft:bedrock", immediate=False, block_update=False
+                )
 
     r = random.Random(random.randint(1, 1 << 256))
     for _ in range(r.randint(200, 800)):

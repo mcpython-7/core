@@ -5,6 +5,8 @@ import copy
 import functools
 import math
 import random
+import sys
+import traceback
 import typing
 
 import pyglet.graphics
@@ -110,6 +112,9 @@ class Model:
                                     model.resolve_texture_name(face[0])
                                 ).uv_section(face[1])
                                 if ":" in model.resolve_texture_name(face[0])
+                                or model.resolve_texture_name(face[0]).startswith(
+                                    "block/"
+                                )
                                 else model.resolve_texture_name(face[0])
                             )
                         )
@@ -147,7 +152,7 @@ class Model:
                             if not uv
                             else _TEXTURE_ATLAS.add_image_from_path(face).uv_section(uv)
                         )
-                        if face and ":" in face
+                        if face and (":" in face or face.startswith("block/"))
                         else (face, uv)
                     )
                     for face, uv in zip(_faces, uvs)
@@ -308,16 +313,22 @@ class Model:
             extra, position, flat_batch=flat_batch
         )
 
-        return [
-            DEFAULT_BLOCK_SHADER.vertex_list(
-                count,
-                GL_TRIANGLES,
-                batch,
-                DEFAULT_BLOCK_GROUP,
-                position=("f", vertex_data),
-                tex_coords=("f", texture_data),
-            )
-        ] + extra
+        try:
+            return [
+                DEFAULT_BLOCK_SHADER.vertex_list(
+                    count,
+                    GL_TRIANGLES,
+                    batch,
+                    DEFAULT_BLOCK_GROUP,
+                    position=("f", vertex_data),
+                    tex_coords=("f", texture_data),
+                )
+            ] + extra
+        except ValueError:
+            print(vertex_data, file=sys.stderr)
+            print(texture_data, file=sys.stderr)
+            traceback.print_exc()
+            return []
 
 
 class BlockState:
@@ -496,13 +507,19 @@ class BlockStateFile:
             vertex_data += v
             texture_data += t
 
-        return [
-            DEFAULT_BLOCK_SHADER.vertex_list(
-                count,
-                GL_TRIANGLES,
-                batch,
-                DEFAULT_BLOCK_GROUP,
-                position=("f", vertex_data),
-                tex_coords=("f", texture_data),
-            )
-        ] + extra
+        try:
+            return [
+                DEFAULT_BLOCK_SHADER.vertex_list(
+                    count,
+                    GL_TRIANGLES,
+                    batch,
+                    DEFAULT_BLOCK_GROUP,
+                    position=("f", vertex_data),
+                    tex_coords=("f", texture_data),
+                )
+            ] + extra
+        except ValueError:
+            print(vertex_data, file=sys.stderr)
+            print(texture_data, file=sys.stderr)
+            traceback.print_exc()
+            return []

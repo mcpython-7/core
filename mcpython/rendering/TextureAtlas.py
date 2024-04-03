@@ -94,7 +94,13 @@ class TextureAtlas:
         if path in self._cache:
             return self._cache[path]
 
-        reference = self.add_image(ResourceManager.load_pillow_image(path))
+        try:
+            image = ResourceManager.load_pillow_image(path)
+        except FileNotFoundError:
+            image = ResourceManager.load_pillow_image(
+                f"assets/minecraft/textures/{path}.png"
+            )
+        reference = self.add_image(image)
         self._cache[path] = reference
         return reference
 

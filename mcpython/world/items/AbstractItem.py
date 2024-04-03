@@ -125,3 +125,4 @@ Diamond = create_basic_item("minecraft:diamond")
 Redstone = create_basic_item("minecraft:redstone")  # for now, this is item-only
 LapisLazuli = create_basic_item("minecraft:lapis_lazuli")
 Coal = create_basic_item("minecraft:coal")
+GrassBlock = create_item_for_block(AbstractBlock.GrassBlock)

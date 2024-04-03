@@ -4,6 +4,7 @@ import itertools
 import random
 import sys
 import time
+import traceback
 import typing
 from collections import deque
 
@@ -181,6 +182,7 @@ class Chunk(IBufferSerializableWithVersion):
         if immediate:
             if instance.shown:
                 self.world.hide_block(instance)
+
             self.world.check_neighbors(position)
 
         instance.on_block_removed()
@@ -406,9 +408,15 @@ class World:
             The block instance
 
         """
-        instance.vertex_data = instance.STATE_FILE.create_vertex_list(
-            self.batch, instance.position, instance.get_block_state()
-        )
+        try:
+            instance.vertex_data = instance.STATE_FILE.create_vertex_list(
+                self.batch, instance.position, instance.get_block_state()
+            )
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            print(instance, file=sys.stderr)
+            traceback.print_exc()
 
     def hide_block(self, instance: AbstractBlock, immediate=True):
         """Hide the block at the given `position`. Hiding does not remove the

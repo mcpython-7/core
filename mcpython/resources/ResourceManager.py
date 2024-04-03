@@ -83,6 +83,7 @@ class _ResourceManager:
     def load_raw(self, file: str) -> bytes:
         if ".." in file:
             raise IOError
+
         for source in self.dynamic_source_list:
             if source.exists(file):
                 return source.load_raw(file)
