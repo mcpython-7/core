@@ -16,6 +16,7 @@ from mcpython.world.serialization.DataBuffer import (
     WriteBuffer,
 )
 from mcpython.world.util import Facing
+from mcpython.world.worldgen.WorldgenManager import Structure
 
 if typing.TYPE_CHECKING:
     from mcpython.world.World import Chunk
@@ -100,16 +101,26 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
 
     def on_block_placed(
         self,
-        itemstack: ItemStack,
+        itemstack: ItemStack | None,
         onto: tuple[int, int, int] | None = None,
         hit_position: tuple[float, float, float] | None = None,
-    ):
-        pass
+    ) -> bool:
+        """
+        Called when the block is physically placed in the world by a player-like
+
+        :param itemstack: the ItemStack used, or None
+        :param onto: which block this block was placed against, or None
+        :param hit_position: the exact position the other block was hit with during ray collision
+        :return: False if the placement is prohibited
+        """
 
     def on_block_removed(self):
         pass
 
     def on_block_updated(self):
+        pass
+
+    def on_random_update(self):
         pass
 
     def on_tick(self):
@@ -457,6 +468,37 @@ class StairsLikeBlock(AbstractBlock):
 
     def on_block_updated(self):
         pass
+
+
+class GrowToStructureBlock(AbstractBlock):
+    STRUCTURE: Structure = None
+    GROWTH_STAGES = 3
+
+    def __init__(self, position: tuple[int, int, int]):
+        super().__init__(position)
+        self.pending_growth = self.GROWTH_STAGES
+
+    def on_random_update(self):
+        if self.pending_growth == 0:
+            return
+
+        self.pending_growth -= 1
+        if self.pending_growth == 0:
+            self.grow()
+
+    def inner_encode(self, buffer: WriteBuffer):
+        super().inner_encode(buffer)
+        buffer.write_uint8(self.pending_growth)
+
+    @classmethod
+    def inner_decode(cls, obj: GrowToStructureBlock, buffer: ReadBuffer):
+        super().inner_decode(obj, buffer)
+        obj.pending_growth = buffer.read_uint8()
+
+    def grow(self):
+        print("growing", self)
+        if self.STRUCTURE:
+            self.STRUCTURE.place(self.chunk.world, self.position)
 
 
 @BLOCK_REGISTRY.register

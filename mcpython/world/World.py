@@ -45,6 +45,16 @@ class Chunk(IBufferSerializableWithVersion):
         for block in self.tick_list:
             block.on_tick()
 
+        cx, cz = self.position
+        for _ in range(3):
+            pos = (
+                random.randrange(cx * 16, cx * 16 + 16),
+                random.randrange(0, 256),
+                random.randrange(cz * 16, cz * 16 + 16),
+            )
+            if block := self.blocks.get(pos):
+                block.on_random_update()
+
     def decode_instance(self, buffer: ReadBuffer):
         sector = buffer.read_int32(), buffer.read_int32()
         if sector != self.position:
@@ -343,6 +353,8 @@ class World:
             Whether or not to immediately remove block from canvas.
 
         """
+        if isinstance(position, AbstractBlock):
+            position = position.position
         chunk = self.get_or_create_chunk_by_position(position)
         return chunk.remove_block(
             position, immediate=immediate, block_update=block_update

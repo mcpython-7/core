@@ -1,3 +1,4 @@
+from mcpython.containers.ItemStack import ItemStack
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
     LogLikeBlock,
@@ -5,6 +6,7 @@ from mcpython.world.blocks.AbstractBlock import (
     BLOCK_REGISTRY,
     SlabLikeBlock,
     StairsLikeBlock,
+    GrowToStructureBlock,
 )
 from mcpython.world.items.AbstractItem import (
     AbstractItem,
@@ -12,9 +14,11 @@ from mcpython.world.items.AbstractItem import (
     create_item_for_block,
     ITEM_REGISTRY,
 )
+from mcpython.world.util import Facing
 
 
 def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
+
     @BLOCK_REGISTRY.register
     class Planks(AbstractBlock):
         NAME = f"{namespace}:{wood_name}_planks"
@@ -46,8 +50,35 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
     if sapling:
 
         @BLOCK_REGISTRY.register
-        class Sapling(AbstractBlock):
+        class Sapling(GrowToStructureBlock):
             NAME = f"{namespace}:{wood_name}_sapling"
+            # todo: make tag
+            GROWTH_SUPPORT = [
+                "minecraft:dirt",
+                "minecraft:coarse_dirt",
+                "minecraft:grass_block",
+            ]
+
+            def on_block_placed(
+                self,
+                itemstack: ItemStack | None,
+                onto: tuple[int, int, int] | None = None,
+                hit_position: tuple[float, float, float] | None = None,
+            ) -> bool:
+                x, y, z = self.position
+                block = self.chunk.blocks.get((x, y - 1, z))
+                if block is None or block.NAME not in self.GROWTH_SUPPORT:
+                    return False
+
+            def on_block_updated(self):
+                x, y, z = self.position
+                block = self.chunk.blocks.get((x, y - 1, z))
+                if block is None or block.NAME not in self.GROWTH_SUPPORT:
+                    self.chunk.remove_block(self)
+                    # todo: drop item
+
+            def is_solid(self, face: Facing) -> bool:
+                return False
 
     create_item_for_block(Planks)
     create_item_for_block(Log)

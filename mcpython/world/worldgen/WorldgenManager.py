@@ -8,7 +8,7 @@ import cProfile
 import opensimplex
 
 if typing.TYPE_CHECKING:
-    from mcpython.world.World import Chunk
+    from mcpython.world.World import Chunk, World
 
 
 # base height noise
@@ -41,6 +41,11 @@ ORES = [
 
 
 # PROFILE = cProfile.Profile()
+
+
+class Structure:
+    def place(self, world: World, position: tuple[int, int, int]):
+        raise NotImplementedError
 
 
 def generate_chunk(chunk: Chunk):

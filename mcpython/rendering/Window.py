@@ -382,8 +382,10 @@ class Window(pyglet.window.Window):
                 if previous and not stack.is_empty():
                     if b := stack.item.create_block_to_be_placed(stack):
                         self.world.add_block(previous, b)
-                        b.on_block_placed(stack, block, block_raw)
-                        b.update_render_state()
+                        if b.on_block_placed(stack, block, block_raw) is False:
+                            self.world.remove_block(b)
+                        else:
+                            b.update_render_state()
 
             elif button == pyglet.window.mouse.LEFT and block and block_chunk:
                 instance = block_chunk.blocks[block]
