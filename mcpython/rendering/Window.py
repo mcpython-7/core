@@ -381,9 +381,7 @@ class Window(pyglet.window.Window):
                 # ON OSX, control + left click = right click.
                 if previous and not stack.is_empty():
                     if b := stack.item.create_block_to_be_placed(stack):
-                        self.world.add_block(
-                            previous, b, block_added_parms=(block_raw,)
-                        )
+                        self.add_block(previous, b, block_added_parms=(block_raw,))
                         b.on_block_placed(stack, block)
 
             elif button == pyglet.window.mouse.LEFT and block and block_chunk:

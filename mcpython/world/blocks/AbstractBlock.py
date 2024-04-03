@@ -198,7 +198,7 @@ class Sand(AbstractBlock):
             self.chunk.world.INSTANCE.remove_block(self.position, block_update=False)
             old_pos = self.position
             if self.position[1] > -20:
-                self.chunk.world.add_block(
+                self.chunk.add_block(
                     (self.position[0], self.position[1] - 1, self.position[2]), self
                 )
             else:

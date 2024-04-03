@@ -101,6 +101,104 @@ class Chunk(IBufferSerializableWithVersion):
             if instance.shown:
                 self.world.hide_block(instance, immediate)
 
+    def add_block(
+        self,
+        position: tuple[int, int, int],
+        block_type: type[AbstractBlock] | AbstractBlock | str,
+        immediate=True,
+        block_update=True,
+        block_added_parms=(),
+    ) -> AbstractBlock | None:
+        """Add a block with the given `texture` and `position` to the world.
+
+        Parameters
+        ----------
+        position : tuple of len 3
+            The (x, y, z) position of the block to add.
+        block_type :
+            The block type to use
+        immediate : bool
+            Whether or not to draw the block immediately.
+
+        """
+        if position in self.blocks:
+            self.remove_block(position, immediate, block_update=block_update)
+
+        if isinstance(block_type, AbstractBlock):
+            instance = block_type
+            instance.position = position
+
+        elif isinstance(block_type, str):
+            block_type = BLOCK_REGISTRY.lookup(block_type, raise_on_error=True)
+            instance = block_type(position)
+
+        else:
+            instance = block_type(position)
+
+        self.blocks[position] = instance
+        instance.chunk = self
+
+        instance.on_block_added(*block_added_parms)
+
+        if immediate:
+            if self.shown and self.world.exposed(position):
+                self.world.show_block(instance)
+            self.world.check_neighbors(position)
+
+        if block_update:
+            instance.on_block_updated()
+            self.world.send_block_update(position)
+
+        if instance.SHOULD_TICK:
+            self.tick_list.append(instance)
+
+        return instance
+
+    def remove_block(
+        self,
+        position: tuple[int, int, int] | AbstractBlock,
+        immediate=True,
+        block_update=True,
+    ) -> AbstractBlock | None:
+        """Remove the block at the given `position`.
+
+        Parameters
+        ----------
+        position : tuple of len 3
+            The (x, y, z) position of the block to remove.
+        immediate : bool
+            Whether or not to immediately remove block from canvas.
+
+        """
+        if isinstance(position, AbstractBlock):
+            position = position.position
+
+        if position not in self.blocks:
+            return
+
+        instance = self.blocks[position]
+        del self.blocks[position]
+
+        if immediate:
+            if instance.shown:
+                self.world.hide_block(instance)
+            self.world.check_neighbors(position)
+
+        instance.on_block_removed()
+        if block_update:
+            self.world.send_block_update(position)
+
+        if instance.SHOULD_TICK:
+            try:
+                self.tick_list.remove(instance)
+            except ValueError:
+                print(
+                    f"WARN: block {instance} is in the world and was scheduled to be ticked, but is not registered for ticking!",
+                    file=sys.stderr,
+                )
+
+        return instance
+
 
 class World:
     INSTANCE: World = None
@@ -208,7 +306,7 @@ class World:
         immediate=True,
         block_update=True,
         block_added_parms=(),
-    ):
+    ) -> AbstractBlock:
         """Add a block with the given `texture` and `position` to the world.
 
         Parameters
@@ -222,41 +320,20 @@ class World:
 
         """
         chunk = self.get_or_create_chunk_by_position(position)
-        if position in chunk.blocks:
-            self.remove_block(position, immediate, block_update=block_update)
-
-        if isinstance(block_type, AbstractBlock):
-            instance = block_type
-            instance.position = position
-        elif isinstance(block_type, str):
-            block_type = BLOCK_REGISTRY.lookup(block_type, raise_on_error=True)
-            instance = block_type(position)
-        else:
-            instance = block_type(position)
-
-        chunk.blocks[position] = instance
-        instance.chunk = chunk
-
-        instance.on_block_added(*block_added_parms)
-
-        if immediate:
-            if chunk.shown and self.exposed(position):
-                self.show_block(instance)
-            self.check_neighbors(position)
-
-        if block_update:
-            instance.on_block_updated()
-            self.send_block_update(position)
-
-        if instance.SHOULD_TICK:
-            chunk.tick_list.append(instance)
+        return chunk.add_block(
+            position,
+            block_type,
+            immediate,
+            block_update=block_update,
+            block_added_parms=block_added_parms,
+        )
 
     def remove_block(
         self,
-        position: tuple[int, int, int],
+        position: tuple[int, int, int] | AbstractBlock,
         immediate=True,
         block_update=True,
-    ):
+    ) -> AbstractBlock | None:
         """Remove the block at the given `position`.
 
         Parameters
@@ -268,26 +345,9 @@ class World:
 
         """
         chunk = self.get_or_create_chunk_by_position(position)
-        instance = chunk.blocks[position]
-        del chunk.blocks[position]
-
-        if immediate:
-            if instance.shown:
-                self.hide_block(instance)
-            self.check_neighbors(position)
-
-        instance.on_block_removed()
-        if block_update:
-            self.send_block_update(position)
-
-        if instance.SHOULD_TICK:
-            try:
-                chunk.tick_list.remove(instance)
-            except ValueError:
-                print(
-                    f"WARN: block {instance} is in the world and was scheduled to be ticked, but is not registered for ticking!",
-                    file=sys.stderr,
-                )
+        return chunk.remove_block(
+            position, immediate=immediate, block_update=block_update
+        )
 
     def check_neighbors(self, position: tuple[int, int, int]):
         """Check all blocks surrounding `position` and ensure their visual

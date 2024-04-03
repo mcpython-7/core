@@ -3,8 +3,8 @@ from __future__ import annotations
 import itertools
 import random
 import typing
+import cProfile
 
-import numpy
 import opensimplex
 
 if typing.TYPE_CHECKING:
@@ -36,13 +36,18 @@ ORES = [
 ]
 
 
+# PROFILE = cProfile.Profile()
+#
+#
 def generate_chunk(chunk: Chunk):
+#     PROFILE.enable()
+#     _generate_chunk(chunk)
+#     PROFILE.disable()
+#     PROFILE.print_stats("cumulative")
+#
+#
+# def _generate_chunk(chunk: Chunk):
     cx, cz = chunk.position
-
-    # height = noise.noise2array(
-    #     numpy.arange(cx * 16, cx * 16 + 16) / 60,
-    #     numpy.arange(cz * 16, cz * 16 + 16) / 60,
-    # )
 
     for dx, dz in itertools.product(range(16), range(16)):
         x = cx * 16 + dx
@@ -75,17 +80,17 @@ def generate_chunk(chunk: Chunk):
 
         h = int(h)
 
-        chunk.world.add_block(
+        chunk.add_block(
             (x, 0, z), "minecraft:bedrock", immediate=False, block_update=False
         )
 
         for y in range(1, h - 4):
-            chunk.world.add_block(
+            chunk.add_block(
                 (x, y, z), "minecraft:stone", immediate=False, block_update=False
             )
 
         for y in range(h - 4, h):
-            chunk.world.add_block(
+            chunk.add_block(
                 (x, y, z), "minecraft:dirt", immediate=False, block_update=False
             )
 
@@ -99,4 +104,4 @@ def generate_chunk(chunk: Chunk):
         )
         block = chunk.blocks.get(pos)
         if block and block.NAME == "minecraft:stone":
-            chunk.world.add_block(pos, ore, immediate=False, block_update=False)
+            chunk.add_block(pos, ore, immediate=False, block_update=False)
