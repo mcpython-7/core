@@ -51,6 +51,9 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
         def is_solid(self, face: Facing) -> bool:
             return False
 
+        def get_tint_colors(self) -> list[tuple[float, float, float, float]] | None:
+            return [(145 / 255, 189 / 255, 89 / 255, 1)]
+
     if sapling:
 
         @BLOCK_REGISTRY.register
