@@ -14,7 +14,7 @@ from mcpython.world.items.AbstractItem import (
 )
 
 
-def add_wooden_set(wood_name: str, namespace="minecraft"):
+def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
     @BLOCK_REGISTRY.register
     class Planks(AbstractBlock):
         NAME = f"{namespace}:{wood_name}_planks"
@@ -39,12 +39,25 @@ def add_wooden_set(wood_name: str, namespace="minecraft"):
     class Stairs(StairsLikeBlock):
         NAME = f"{namespace}:{wood_name}_stairs"
 
+    @BLOCK_REGISTRY.register
+    class Leaves(AbstractBlock):
+        NAME = f"{namespace}:{wood_name}_leaves"
+
+    if sapling:
+
+        @BLOCK_REGISTRY.register
+        class Sapling(AbstractBlock):
+            NAME = f"{namespace}:{wood_name}_sapling"
+
     create_item_for_block(Planks)
     create_item_for_block(Log)
     create_item_for_block(Wood)
     create_item_for_block(Fence)
     create_item_for_block(Slab)
     create_item_for_block(Stairs)
+    create_item_for_block(Leaves)
+    if sapling:
+        create_item_for_block(Sapling)
 
 
 def add_simple_block(name: str):
@@ -87,7 +100,7 @@ add_wooden_set("dark_oak")
 add_wooden_set("jungle")
 add_wooden_set("oak")
 add_wooden_set("spruce")
-add_wooden_set("mangrove")
+add_wooden_set("mangrove", sapling=False)
 add_wooden_set("cherry")
 
 add_simple_block_set("bricks", "brick")

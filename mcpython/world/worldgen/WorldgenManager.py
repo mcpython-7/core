@@ -103,7 +103,7 @@ def generate_chunk(chunk: Chunk):
         )
 
         for y in range(1, 4):
-            if bedrock_noise.noise3(x, y, z) > 0.1:
+            if bedrock_noise.noise3(x, y, z) >= 0:
                 chunk.add_block(
                     (x, y, z), "minecraft:bedrock", immediate=False, block_update=False
                 )
