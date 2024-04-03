@@ -11,6 +11,7 @@ from mcpython.world.serialization.DataBuffer import (
     ReadBuffer,
     WriteBuffer,
 )
+from mcpython.world.util import normalize
 
 if typing.TYPE_CHECKING:
     from mcpython.containers.AbstractContainer import Slot
@@ -80,6 +81,12 @@ class AbstractItem(IRegisterAble, ABC):
         """
         return []
 
+    @classmethod
+    def get_tint_colors(
+        cls, itemstack: ItemStack, slot: Slot
+    ) -> list[tuple[int, int, int]] | None:
+        pass
+
 
 ITEM_REGISTRY = Registry("minecraft:item", AbstractItem)
 
@@ -87,6 +94,8 @@ ITEM_REGISTRY = Registry("minecraft:item", AbstractItem)
 def create_item_for_block(
     block: type[AbstractBlock.AbstractBlock],
 ) -> type[AbstractItem]:
+    probe_block = block((0, 0, 0))
+
     @ITEM_REGISTRY.register
     class BlockItem(AbstractItem):
         NAME = block.NAME
@@ -98,6 +107,18 @@ def create_item_for_block(
             cls, stack: ItemStack
         ) -> AbstractBlock.AbstractBlock | None:
             return block((0, 0, 0))
+
+        @classmethod
+        def get_tint_colors(
+            cls, itemstack: ItemStack, slot: Slot
+        ) -> list[tuple[int, int, int]] | None:
+            from mcpython.rendering.Window import Window
+
+            probe_block.position = pos = normalize(Window.INSTANCE.position)
+            probe_block.chunk = Window.INSTANCE.world.get_or_create_chunk_by_position(
+                pos
+            )
+            return probe_block.get_tint_colors()
 
     return typing.cast(type[AbstractItem], BlockItem)
 

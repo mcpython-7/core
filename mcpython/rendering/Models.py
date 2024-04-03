@@ -244,6 +244,7 @@ class Model:
         position: tuple[int, int, int],
         rotation: tuple[float, float, float] = (0, 0, 0),
         flat_batch=None,
+        tint_colors: list[tuple[int, int, int]] = None,
     ) -> tuple[int, list[float], list[float]]:
         v = Vec3(*position)
         count = 0
@@ -303,6 +304,7 @@ class Model:
         batch: pyglet.graphics.Batch,
         position: tuple[int, int, int],
         flat_batch=None,
+        tint_colors: list[tuple[int, int, int]] = None,
     ):
         from mcpython.rendering.util import (
             DEFAULT_BLOCK_SHADER,
@@ -314,7 +316,7 @@ class Model:
 
         extra = []
         count, vertex_data, texture_data = self.get_rendering_data(
-            extra, position, flat_batch=flat_batch
+            extra, position, flat_batch=flat_batch, tint_colors=tint_colors
         )
 
         try:
@@ -384,9 +386,12 @@ class BlockState:
         self,
         extra: list[pyglet.graphics.vertexdomain.VertexList],
         position: tuple[int, int, int],
+        tint_colors: list[tuple[int, int, int]] = None,
     ) -> tuple[int, list[float], list[float]]:
         name, model, x, y, z, uvlock, _ = self.get_model(position)
-        return model.get_rendering_data(extra, position, (x, y, z))
+        return model.get_rendering_data(
+            extra, position, (x, y, z), tint_colors=tint_colors
+        )
 
 
 class AbstractBlockStateCondition(abc.ABC):
@@ -494,6 +499,7 @@ class BlockStateFile:
         batch: pyglet.graphics.Batch,
         position: tuple[int, int, int],
         state: dict[str, str],
+        tint_colors: list[tuple[int, int, int]] = None,
     ):
         from mcpython.rendering.util import (
             DEFAULT_BLOCK_SHADER,
@@ -506,7 +512,9 @@ class BlockStateFile:
         extra = []
 
         for blockstate in self.get_blockstates(state):
-            c, v, t = blockstate.get_rendering_data(extra, position)
+            c, v, t = blockstate.get_rendering_data(
+                extra, position, tint_colors=tint_colors
+            )
             count += c
             vertex_data += v
             texture_data += t

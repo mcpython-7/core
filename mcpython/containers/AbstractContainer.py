@@ -137,6 +137,9 @@ class Slot(IBufferSerializable):
                     self.slot_batch,
                     (0, 0, 0),
                     flat_batch=self.flat_batch,
+                    tint_colors=self._itemstack.item.get_tint_colors(
+                        self._itemstack, self
+                    ),
                 ),
             )
             self.number_label.text = str(self._itemstack.count)

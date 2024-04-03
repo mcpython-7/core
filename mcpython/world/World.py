@@ -426,6 +426,7 @@ class World:
                 self.alpha_batch if instance.TRANSPARENT else self.batch,
                 instance.position,
                 instance.get_block_state(),
+                tint_colors=instance.get_tint_colors(),
             )
         except (KeyboardInterrupt, SystemExit):
             raise
