@@ -56,6 +56,12 @@ FACE_ORDER_UV = [
     Facing.SOUTH,
 ]
 
+AXIS_LOOKUP = {
+    "x": Vec3(1, 0, 0),
+    "y": Vec3(0, 1, 0),
+    "z": Vec3(0, 0, 1),
+}
+
 
 class Model:
     _MODEL_CACHE: dict[str, Model] = {"minecraft:builtin/generated": None}
@@ -98,7 +104,7 @@ class Model:
                 _TEXTURE_ATLAS.add_image_from_path(tex)
             model.item_layer_count += 1
 
-        for _, __, faces, ___, ____ in model.elements:
+        for _, __, faces, *___ in model.elements:
             faces[:] = [
                 (
                     (
@@ -164,6 +170,19 @@ class Model:
                     for face in FACE_ORDER
                 )
 
+                base_matrix = Mat4()
+                if "rotation" in element:
+                    origin = Vec3(*element["rotation"].get("origin", (0, 0, 0))) - Vec3(
+                        0.5, 0.5, 0.5
+                    )
+                    axis = element["rotation"]["axis"]
+                    angle = element["rotation"]["angle"] / 180 * math.pi
+                    base_matrix @= (
+                        Mat4.from_translation(origin)
+                        @ Mat4.from_rotation(angle, AXIS_LOOKUP[axis])
+                        @ Mat4.from_translation(-origin)
+                    )
+
                 model.elements.append(
                     (
                         (from_coord + to_coord) / 2 - Vec3(0.5, 0.5, 0.5),
@@ -171,6 +190,7 @@ class Model:
                         faces,
                         tuple(face is not None for face in _faces),
                         tint_index if tint_index != (-1, -1, -1, -1, -1, -1) else None,
+                        base_matrix,
                     )
                 )
                 model.vertex_data_cache.append({})
@@ -189,6 +209,7 @@ class Model:
                 list[float | None] | list[AtlasReference | str | None],
                 tuple[bool, ...],
                 tuple[int, ...] | None,
+                Mat4,
             ]
         ] = []
         self.name = name
@@ -222,7 +243,7 @@ class Model:
         if self.parent:
             self.parent.bake()
 
-        for _, __, textures, ___, ____ in self.elements:
+        for _, __, textures, *___ in self.elements:
             if None in textures:
                 continue
 
@@ -259,13 +280,18 @@ class Model:
 
         from mcpython.rendering.util import cube_vertices
 
-        for i, (center, size, textures, enabled, tint_indices) in enumerate(
-            self.elements
-        ):
+        for i, (
+            center,
+            size,
+            textures,
+            enabled,
+            tint_indices,
+            base_matrix,
+        ) in enumerate(self.elements):
             vertex_cache = self.vertex_data_cache[i]
 
             if rotation not in vertex_cache:
-                rotation_matrix = Mat4()
+                rotation_matrix = base_matrix
 
                 if rotation != (0, 0, 0):
                     rotation_matrix @= Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
