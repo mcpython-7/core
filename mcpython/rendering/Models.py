@@ -183,6 +183,13 @@ class Model:
                         @ Mat4.from_translation(-origin)
                     )
 
+                    if element["rotation"].get("rescale"):
+                        scale_vector = Vec3(1, 1, 1) - AXIS_LOOKUP[axis]
+                        base_matrix @= Mat4.from_scale(
+                            (scale_vector / math.cos(angle / 180 * math.pi))
+                            + AXIS_LOOKUP[axis]
+                        )
+
                 model.elements.append(
                     (
                         (from_coord + to_coord) / 2 - Vec3(0.5, 0.5, 0.5),
