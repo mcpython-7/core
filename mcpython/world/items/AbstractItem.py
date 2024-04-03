@@ -84,7 +84,7 @@ class AbstractItem(IRegisterAble, ABC):
     @classmethod
     def get_tint_colors(
         cls, itemstack: ItemStack, slot: Slot
-    ) -> list[tuple[int, int, int]] | None:
+    ) -> list[tuple[float, float, float, float]] | None:
         pass
 
 
@@ -111,7 +111,7 @@ def create_item_for_block(
         @classmethod
         def get_tint_colors(
             cls, itemstack: ItemStack, slot: Slot
-        ) -> list[tuple[int, int, int]] | None:
+        ) -> list[tuple[float, float, float, float]] | None:
             from mcpython.rendering.Window import Window
 
             probe_block.position = pos = normalize(Window.INSTANCE.position)

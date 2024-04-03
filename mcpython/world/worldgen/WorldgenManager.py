@@ -61,6 +61,7 @@ def generate_chunk(chunk: Chunk):
     for dx, dz in itertools.product(range(16), range(16)):
         x = cx * 16 + dx
         z = cz * 16 + dz
+
         hn: float = noise.noise3(
             x / 60,
             z / 60,

@@ -86,7 +86,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     def get_block_state(self) -> dict[str, str]:
         return _EMPTY_STATE
 
-    def get_tint_colors(self) -> list[tuple[int, int, int]] | None:
+    def get_tint_colors(self) -> list[tuple[float, float, float, float]] | None:
         pass
 
     def update_render_state(self):
@@ -505,11 +505,6 @@ class GrowToStructureBlock(AbstractBlock):
             self.STRUCTURE.place(self.chunk.world, self.position)
 
 
-class IGrassColoringBlock:
-    def get_tint_colors(self) -> list[tuple[int, int, int]] | None:
-        return [(145, 189, 89)]
-
-
 @BLOCK_REGISTRY.register
 class Bedrock(AbstractBlock):
     NAME = "minecraft:bedrock"
@@ -538,12 +533,16 @@ class CraftingTable(AbstractBlock):
             Window.INSTANCE.set_exclusive_mouse(False)
             self.CONTAINER.show_container()
             return True
+
         return False
 
 
 @BLOCK_REGISTRY.register
-class GrassBlock(AbstractBlock, IGrassColoringBlock):
+class GrassBlock(AbstractBlock):
     NAME = "minecraft:grass_block"
 
     def get_block_state(self) -> dict[str, str]:
         return {"snowy": "false"}
+
+    def get_tint_colors(self) -> list[tuple[float, float, float, float]] | None:
+        return [(145 / 255, 189 / 255, 89 / 255, 1)]

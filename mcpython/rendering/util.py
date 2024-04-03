@@ -20,7 +20,7 @@ def update_texture_atlas_references():
 
 def create_shader_group(
     name: str,
-) -> tuple[pyglet.graphics.Shader, pyglet.model.TexturedMaterialGroup]:
+) -> tuple[pyglet.graphics.shader.Shader, pyglet.model.TexturedMaterialGroup]:
     path = pathlib.Path(__file__).parent
     vertex_file = path.joinpath("shaders", f"{name}_vertex.glsl")
     fragment_file = path.joinpath("shaders", f"{name}_fragment.glsl")

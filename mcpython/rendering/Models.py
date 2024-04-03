@@ -159,13 +159,18 @@ class Model:
                     if face is not None
                 ]
 
+                tint_index = tuple(
+                    element["faces"].get(face.name.lower(), {}).get("tintindex", -1)
+                    for face in FACE_ORDER
+                )
+
                 model.elements.append(
                     (
                         (from_coord + to_coord) / 2 - Vec3(0.5, 0.5, 0.5),
                         (to_coord - from_coord),
                         faces,
                         tuple(face is not None for face in _faces),
-                        (-1,) * 6,
+                        tint_index if tint_index != (-1, -1, -1, -1, -1, -1) else None,
                     )
                 )
                 model.vertex_data_cache.append({})
@@ -183,7 +188,7 @@ class Model:
                 Vec3,
                 list[float | None] | list[AtlasReference | str | None],
                 tuple[bool, ...],
-                tuple[int, ...],
+                tuple[int, ...] | None,
             ]
         ] = []
         self.name = name
@@ -241,6 +246,7 @@ class Model:
     def get_rendering_data(
         self,
         extra: list[pyglet.graphics.vertexdomain.VertexList],
+        batch: pyglet.graphics.Batch | None,
         position: tuple[int, int, int],
         rotation: tuple[float, float, float] = (0, 0, 0),
         flat_batch=None,
@@ -286,10 +292,44 @@ class Model:
             else:
                 vertex_data = vertex_cache[rotation]
 
-            count += 6 * enabled.count(True)
-            vertex_data = [vertex + v for vertex in vertex_data]
-            vertex += sum(map(tuple, vertex_data), ())
-            texture.extend(textures)
+            if tint_indices is None or tint_colors is None:
+                count += 6 * enabled.count(True)
+                vertex_data = [vertex + v for vertex in vertex_data]
+                vertex += sum(map(tuple, vertex_data), ())
+                texture.extend(textures)
+            else:
+                from mcpython.rendering.util import (
+                    COLORED_BLOCK_SHADER,
+                    COLORED_BLOCK_GROUP,
+                )
+                from mcpython.rendering.util import (
+                    DEFAULT_BLOCK_SHADER,
+                    DEFAULT_BLOCK_GROUP,
+                )
+
+                tinting = sum(
+                    (
+                        (tint_colors[x] * 6) if x >= 0 else ((1,) * (4 * 6))
+                        for i, x in enumerate(tint_indices)
+                        if enabled[i]
+                    ),
+                    (),
+                )
+
+                extra.append(
+                    COLORED_BLOCK_SHADER.vertex_list(
+                        6 * enabled.count(True),
+                        GL_TRIANGLES,
+                        batch,
+                        COLORED_BLOCK_GROUP,
+                        position=(
+                            "f",
+                            sum(map(tuple, [vertex + v for vertex in vertex_data]), ()),
+                        ),
+                        tex_coords=("f", textures),
+                        colors=("f", tinting),
+                    )
+                )
 
         if flat_batch and self.item_layer_count:
             for i in range(self.item_layer_count):
@@ -316,7 +356,7 @@ class Model:
 
         extra = []
         count, vertex_data, texture_data = self.get_rendering_data(
-            extra, position, flat_batch=flat_batch, tint_colors=tint_colors
+            extra, batch, position, flat_batch=flat_batch, tint_colors=tint_colors
         )
 
         try:
@@ -330,6 +370,7 @@ class Model:
                     tex_coords=("f", texture_data),
                 )
             ] + extra
+
         except ValueError:
             print(vertex_data, file=sys.stderr)
             print(texture_data, file=sys.stderr)
@@ -385,12 +426,13 @@ class BlockState:
     def get_rendering_data(
         self,
         extra: list[pyglet.graphics.vertexdomain.VertexList],
+        batch: pyglet.graphics.Batch | None,
         position: tuple[int, int, int],
         tint_colors: list[tuple[int, int, int]] = None,
     ) -> tuple[int, list[float], list[float]]:
         name, model, x, y, z, uvlock, _ = self.get_model(position)
         return model.get_rendering_data(
-            extra, position, (x, y, z), tint_colors=tint_colors
+            extra, batch, position, (x, y, z), tint_colors=tint_colors
         )
 
 
@@ -513,23 +555,27 @@ class BlockStateFile:
 
         for blockstate in self.get_blockstates(state):
             c, v, t = blockstate.get_rendering_data(
-                extra, position, tint_colors=tint_colors
+                extra, batch, position, tint_colors=tint_colors
             )
             count += c
             vertex_data += v
             texture_data += t
 
         try:
-            return [
-                DEFAULT_BLOCK_SHADER.vertex_list(
-                    count,
-                    GL_TRIANGLES,
-                    batch,
-                    DEFAULT_BLOCK_GROUP,
-                    position=("f", vertex_data),
-                    tex_coords=("f", texture_data),
-                )
-            ] + extra
+            return (
+                [
+                    DEFAULT_BLOCK_SHADER.vertex_list(
+                        count,
+                        GL_TRIANGLES,
+                        batch,
+                        DEFAULT_BLOCK_GROUP,
+                        position=("f", vertex_data),
+                        tex_coords=("f", texture_data),
+                    )
+                ]
+                if count > 0
+                else []
+            ) + extra
         except ValueError:
             print(vertex_data, file=sys.stderr)
             print(texture_data, file=sys.stderr)
