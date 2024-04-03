@@ -4,6 +4,14 @@ import math
 import typing
 
 import pyglet.graphics
+from pyglet.gl import (
+    glBlendFunc,
+    GL_SRC_ALPHA,
+    GL_ONE_MINUS_SRC_ALPHA,
+    glEnable,
+    GL_BLEND,
+    glDisable,
+)
 from pyglet.math import Mat4, Vec3, Vec4, Vec2
 from pyglet.window import mouse
 
@@ -71,10 +79,8 @@ class Slot(IBufferSerializable):
         if not offset:
             offset = self._calculate_offset(window)
 
-        window.set_preview_3d(offset + Vec3(8, 7, 0))
-        self.slot_batch.draw()
-        window.set_2d_centered_for_inventory(self.container, offset=offset)
-        self.flat_batch.draw()
+        if not self.itemstack.is_empty():
+            self.draw_item(window, offset)
         window.set_2d_centered_for_inventory(self.container, scale=0.25)
 
         if not self.itemstack.is_empty():
@@ -86,6 +92,19 @@ class Slot(IBufferSerializable):
             self.number_label.draw()
 
         window.set_2d_centered_for_inventory(self.container)
+
+    def draw_item(self, window, offset):
+        window.set_preview_3d(offset + Vec3(8, 7, 0))
+
+        if self.itemstack.item.TRANSPARENT:
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glEnable(GL_BLEND)
+        self.slot_batch.draw()
+        if self.itemstack.item.TRANSPARENT:
+            glDisable(GL_BLEND)
+
+        window.set_2d_centered_for_inventory(self.container, offset=offset)
+        self.flat_batch.draw()
 
     def _calculate_offset(self, window: Window):
         return Vec3(

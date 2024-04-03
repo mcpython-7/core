@@ -98,7 +98,7 @@ class Model:
                 _TEXTURE_ATLAS.add_image_from_path(tex)
             model.item_layer_count += 1
 
-        for _, __, faces, ___ in model.elements:
+        for _, __, faces, ___, ____ in model.elements:
             faces[:] = [
                 (
                     (
@@ -165,6 +165,7 @@ class Model:
                         (to_coord - from_coord),
                         faces,
                         tuple(face is not None for face in _faces),
+                        (-1,) * 6,
                     )
                 )
                 model.vertex_data_cache.append({})
@@ -182,6 +183,7 @@ class Model:
                 Vec3,
                 list[float | None] | list[AtlasReference | str | None],
                 tuple[bool, ...],
+                tuple[int, ...],
             ]
         ] = []
         self.name = name
@@ -215,7 +217,7 @@ class Model:
         if self.parent:
             self.parent.bake()
 
-        for _, __, textures, ___ in self.elements:
+        for _, __, textures, ___, ____ in self.elements:
             if None in textures:
                 continue
 
@@ -250,7 +252,9 @@ class Model:
 
         from mcpython.rendering.util import cube_vertices
 
-        for i, (center, size, textures, enabled) in enumerate(self.elements):
+        for i, (center, size, textures, enabled, tint_indices) in enumerate(
+            self.elements
+        ):
             vertex_cache = self.vertex_data_cache[i]
 
             if rotation not in vertex_cache:

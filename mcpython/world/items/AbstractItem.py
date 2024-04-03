@@ -24,6 +24,7 @@ class AbstractItem(IRegisterAble, ABC):
     NAME: str | None = None
     MODEL: Model | None = None
     MAX_STACK_SIZE = 64
+    TRANSPARENT = False
 
     VERSION = 0
     DATA_FIXERS: dict[int, AbstractDataFixer] = {}
@@ -90,6 +91,7 @@ def create_item_for_block(
     class BlockItem(AbstractItem):
         NAME = block.NAME
         MODEL = Model.by_name("{}:item/{}".format(*NAME.split(":")))
+        TRANSPARENT = block.TRANSPARENT
 
         @classmethod
         def create_block_to_be_placed(
