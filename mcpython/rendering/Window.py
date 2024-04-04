@@ -723,6 +723,7 @@ class Window(pyglet.window.Window):
 
             if self.focused_box_vertex:
                 self.focused_box_vertex.delete()
+                self.focused_box_vertex = None
 
     def draw_label(self):
         """Draw the label in the top left of the screen."""

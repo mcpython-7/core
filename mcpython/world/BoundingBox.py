@@ -27,3 +27,7 @@ class AABB:
 
     def check_axis_intersection(self) -> float:
         pass
+
+    def point_intersect(self, position: Vec3) -> bool:
+        diff = position - self.offset + Vec3(0.5, 0.5, 0.5)
+        return all(0 <= d <= s for d, s in zip(diff, self.size))

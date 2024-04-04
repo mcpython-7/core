@@ -285,17 +285,22 @@ class World:
         x, y, z = position
         dx, dy, dz = vector
         previous = None
+        block = None
+
         for _ in range(max_distance * m):
             key = normalize((x, y, z))
 
-            if (
-                key != previous
-                and key in self.get_or_create_chunk_by_position(key).blocks
+            if key != previous:
+                block = self.get_or_create_chunk_by_position(key).blocks.get(key)
+
+            if block and block.get_bounding_box().point_intersect(
+                Vec3(x, y, z) - Vec3(*block.position)
             ):
                 return key, previous, (x, y, z)
 
             previous = key
             x, y, z = x + dx / m, y + dy / m, z + dz / m
+
         return None, None, None
 
     def exposed(self, position: tuple[int, int, int]) -> bool:
