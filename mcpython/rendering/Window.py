@@ -42,12 +42,11 @@ from mcpython.containers.PlayerInventoryContainer import (
     HotbarContainer,
 )
 from mcpython.rendering.util import (
-    COLORED_LINE_GROUP,
-    cube_line_vertices,
     FACES,
     off_axis_projection_matrix,
 )
 from mcpython.world.World import World
+from mcpython.world.blocks.AbstractBlock import AbstractBlock
 from mcpython.world.util import sectorize, normalize
 
 
@@ -91,15 +90,9 @@ class Window(pyglet.window.Window):
 
         # The crosshairs at the center of the screen.
         self.reticle: tuple[pyglet.shapes.Line, pyglet.shapes.Line] | None = None
-        self.focused_block_batch = pyglet.graphics.Batch()
-        self.focused_block = pyglet.graphics.get_default_shader().vertex_list(
-            24,
-            GL_LINES,
-            self.focused_block_batch,
-            COLORED_LINE_GROUP,
-            position=("f", cube_line_vertices(0, 0, 0, 0.51)),
-            colors=("f", (0, 0, 0, 255) * 24),
-        )
+        self.focused_block: AbstractBlock | None = None
+        self.focused_box_vertex: pyglet.graphics.vertexdomain.VertexList | None = None
+        self.focused_batch = pyglet.graphics.Batch()
 
         # Velocity in the y (upward) direction.
         self.dy = 0
@@ -704,12 +697,30 @@ class Window(pyglet.window.Window):
 
         """
         vector = self.get_sight_vector()
-
         if block := self.world.hit_test(self.position, vector)[0]:
-            x, y, z = block
-            vertex_data = cube_line_vertices(x, y, z, 0.51)
-            self.focused_block.set_attribute_data("position", vertex_data)
-            self.focused_block_batch.draw()
+            instance = self.world.get_or_create_chunk_by_position(block).blocks.get(
+                block
+            )
+            if instance is None:
+                return
+
+            if instance != self.focused_block:
+                self.focused_block = instance
+
+                if self.focused_box_vertex:
+                    self.focused_box_vertex.delete()
+
+                self.focused_box_vertex = instance.BOUNDING_BOX.create_vertex_list(
+                    self.focused_batch, Vec3(*instance.position)
+                )
+
+            self.focused_batch.draw()
+
+        else:
+            self.focused_block = None
+
+            if self.focused_box_vertex:
+                self.focused_box_vertex.delete()
 
     def draw_label(self):
         """Draw the label in the top left of the screen."""

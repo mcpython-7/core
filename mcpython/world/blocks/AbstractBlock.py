@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import abc
 import enum
-import random
 import typing
 
 import pyglet.graphics.vertexdomain
+from pyglet.math import Vec3
 from pyglet.window import mouse, key
 
 from mcpython.rendering.Models import BlockStateFile
 from mcpython.resources.Registry import IRegisterAble, Registry
+from mcpython.world.BoundingBox import AABB
 from mcpython.world.serialization.DataBuffer import (
     IBufferSerializableWithVersion,
     ReadBuffer,
@@ -33,6 +34,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     SHOULD_TICK = False
     TRANSPARENT = False
     NO_COLLISION = False
+    BOUNDING_BOX = AABB(Vec3(0, 0, 0), Vec3(1, 1, 1))
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
