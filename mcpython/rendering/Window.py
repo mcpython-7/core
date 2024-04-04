@@ -15,6 +15,7 @@ from pyglet.gl import (
     GL_BLEND,
     GL_ONE_MINUS_SRC_ALPHA,
     GL_SRC_ALPHA,
+    GL_CULL_FACE,
 )
 from pyglet.math import Vec3, Mat4
 from pyglet.window import key, mouse
@@ -630,6 +631,7 @@ class Window(pyglet.window.Window):
         vector = self.get_sight_vector()
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
         glEnable(GL_DEPTH_TEST)
+        glEnable(GL_CULL_FACE)
 
     def set_preview_3d(self, offset: Vec3):
         self.projection = off_axis_projection_matrix(
@@ -662,6 +664,7 @@ class Window(pyglet.window.Window):
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glEnable(GL_BLEND)
+        glDisable(GL_CULL_FACE)
         self.world.alpha_batch.draw()
         glDisable(GL_BLEND)
 
