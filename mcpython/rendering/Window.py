@@ -301,17 +301,20 @@ class Window(pyglet.window.Window):
         # have to count as a collision. If 0, touching terrain at all counts as
         # a collision. If .49, you sink into the ground, as if walking through
         # tall grass. If >= .5, you'll fall through the ground.
-        pad = 0.25
+        pad = 0
         p = list(position)
         np = normalize(position)
         for face in FACES:  # check all surrounding blocks
             for i in range(3):  # check each dimension independently
                 if not face[i]:
                     continue
+
                 # How much overlap you have with this dimension.
+                # todo: here we could do a hitbox-based check instead
                 d = (p[i] - np[i]) * face[i]
                 if d < pad:
                     continue
+
                 for dy in range(height):  # check each height
                     op = list(np)
                     op[1] -= dy

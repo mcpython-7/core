@@ -367,6 +367,7 @@ class Model:
         if flat_batch and self.item_layer_count:
             for i in range(self.item_layer_count):
                 # todo: creating sprites each time here seems a bit overkill, can we do better?
+                # todo: add tinting here!
                 sprite = pyglet.sprite.Sprite(self.item_layers[i], batch=flat_batch)
                 extra.append(sprite)
 
