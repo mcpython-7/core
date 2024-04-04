@@ -710,8 +710,10 @@ class Window(pyglet.window.Window):
                 if self.focused_box_vertex:
                     self.focused_box_vertex.delete()
 
-                self.focused_box_vertex = instance.BOUNDING_BOX.create_vertex_list(
-                    self.focused_batch, Vec3(*instance.position)
+                self.focused_box_vertex = (
+                    instance.get_bounding_box().create_vertex_list(
+                        self.focused_batch, Vec3(*instance.position)
+                    )
                 )
 
             self.focused_batch.draw()

@@ -71,6 +71,9 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         self.vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
         self.chunk: Chunk = None
 
+    def get_bounding_box(self) -> AABB:
+        return self.BOUNDING_BOX
+
     def encode(self, buffer: WriteBuffer):
         buffer.write_string(self.NAME)
         self.encode_datafixable(buffer)
@@ -319,6 +322,9 @@ class FenceLikeBlock(AbstractBlock):
 
 
 class SlabLikeBlock(AbstractBlock):
+    TOP_BOUNDING_BOX = AABB(Vec3(0, 0.5, 0), Vec3(1, 0.5, 1))
+    BOTTOM_BOUNDING_BOX = AABB(Vec3(0, 0, 0), Vec3(1, 0.5, 1))
+
     class SlabHalf(enum.Enum):
         TOP = 0
         BOTTOM = 1
@@ -354,6 +360,13 @@ class SlabLikeBlock(AbstractBlock):
             or (self.half == SlabLikeBlock.SlabHalf.BOTTOM and face == Facing.UP)
             or (self.half == SlabLikeBlock.SlabHalf.TOP and face == Facing.DOWN)
         )
+
+    def get_bounding_box(self) -> AABB:
+        if self.half == SlabLikeBlock.SlabHalf.DOUBLE:
+            return self.BOUNDING_BOX
+        if self.half == SlabLikeBlock.SlabHalf.TOP:
+            return self.TOP_BOUNDING_BOX
+        return self.BOTTOM_BOUNDING_BOX
 
 
 class StairsLikeBlock(AbstractBlock):
