@@ -146,7 +146,7 @@ class Model:
                         e / 16
                         for e in element["faces"]
                         .get(FACE_ORDER_UV[i].name.lower(), {})
-                        .get("uv", (0, 0, 1, 1))
+                        .get("uv", (0, 0, 16, 16))
                     )
                     for i in range(6)
                 ]

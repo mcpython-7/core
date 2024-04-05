@@ -29,6 +29,7 @@ noise7 = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
 bedrock_noise = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
 
 dirt_height_noise = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
+grass_noise = opensimplex.OpenSimplex(random.randint(0, 1 << 256))
 
 
 ORES = [
@@ -44,8 +45,59 @@ ORES = [
 
 
 class Structure:
-    def place(self, world: World, position: tuple[int, int, int]):
+    def place(self, world: World, position: tuple[int, int, int], rng: random.Random):
         raise NotImplementedError
+
+
+class OakTree:
+    def __init__(
+        self,
+        stem: str,
+        leaves: str,
+        stem_range=range(4, 6),
+        leave_height_range=range(3, 6),
+        leave_height_offset=range(1, 2),
+        leave_size=range(3, 4),
+    ):
+        self.stem = stem
+        self.leaves = leaves
+        self.stem_range = stem_range
+        self.leave_height_range = leave_height_range
+        self.leave_height_offset = leave_height_offset
+        self.leave_size = leave_size
+
+    def place(self, world: World, position: tuple[int, int, int], rng: random.Random):
+        x, y, z = position
+        height = rng.randrange(self.stem_range.start, self.stem_range.stop + 1)
+
+        leave_height = rng.randrange(
+            self.leave_height_range.start, self.leave_height_range.stop + 1
+        )
+        leave_offset = rng.randrange(
+            self.leave_height_offset.start, self.leave_height_offset.stop + 1
+        )
+        leave_size = rng.randrange(self.leave_size.start, self.leave_size.stop + 1)
+
+        for dy in range(leave_height):
+            ry = y + dy - leave_offset + height
+            for dx in range(-leave_size, leave_size + 1):
+                for dz in range(-leave_size, leave_size + 1):
+                    if dx * dx + dz * dz + dy * dy > leave_size * leave_size:
+                        continue
+                    world.add_block(
+                        (x + dx, ry, z + dz),
+                        self.leaves,
+                        immediate=False,
+                        block_update=False,
+                    )
+
+        for dy in range(height):
+            world.add_block(
+                (x, y + dy, z), self.stem, immediate=False, block_update=False
+            )
+
+
+OAK_TREE = OakTree("minecraft:oak_log", "minecraft:oak_leaves")
 
 
 def generate_chunk(chunk: Chunk):
@@ -57,6 +109,9 @@ def generate_chunk(chunk: Chunk):
     #
     # def _generate_chunk(chunk: Chunk):
     cx, cz = chunk.position
+    heightmap: dict[tuple[int, int], int] = {}
+
+    r = random.Random(random.randint(1, 1 << 256))
 
     for dx, dz in itertools.product(range(16), range(16)):
         x = cx * 16 + dx
@@ -89,6 +144,7 @@ def generate_chunk(chunk: Chunk):
                 ) * q + h * (1 - q)
 
         h = int(h)
+        heightmap[x, z] = h
 
         chunk.add_block(
             (x, 0, z), "minecraft:bedrock", immediate=False, block_update=False
@@ -108,13 +164,20 @@ def generate_chunk(chunk: Chunk):
             (x, h, z), "minecraft:grass_block", immediate=False, block_update=False
         )
 
+        # if grass_noise.noise2(x / 10, z / 10) < 0.3:
+        #     chunk.add_block(
+        #         (x, h + 1, z),
+        #         "minecraft:short_grass",
+        #         immediate=False,
+        #         block_update=False,
+        #     )
+
         for y in range(1, 4):
             if bedrock_noise.noise3(x, y, z) >= 0:
                 chunk.add_block(
                     (x, y, z), "minecraft:bedrock", immediate=False, block_update=False
                 )
 
-    r = random.Random(random.randint(1, 1 << 256))
     for _ in range(r.randint(200, 800)):
         ore = r.choice(ORES)
         pos = (
@@ -125,3 +188,8 @@ def generate_chunk(chunk: Chunk):
         block = chunk.blocks.get(pos)
         if block and block.NAME == "minecraft:stone":
             chunk.add_block(pos, ore, immediate=False, block_update=False)
+
+    while r.random() <= 0.2:
+        x, z = r.randrange(cx * 16, cx * 16 + 16), r.randrange(cz * 16, cz * 16 + 16)
+        y = heightmap[x, z]
+        OAK_TREE.place(chunk.world, (x, y + 1, z), r)

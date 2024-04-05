@@ -421,13 +421,16 @@ class StairsLikeBlock(AbstractBlock):
     def is_solid(self, face: Facing) -> bool:
         if face == Facing.UP:
             return self.half == StairsLikeBlock.StairHalf.BOTTOM
+
         elif face == Facing.DOWN:
             return self.half == StairsLikeBlock.StairHalf.TOP
+
         elif self.shape in [
             StairsLikeBlock.StairShape.INNER_LEFT,
             StairsLikeBlock.StairShape.INNER_RIGHT,
         ]:
             return False
+
         elif face == Facing.NORTH:
             return (
                 self.facing == Facing.NORTH
@@ -537,7 +540,6 @@ class GrowToStructureBlock(AbstractBlock):
         obj.pending_growth = buffer.read_uint8()
 
     def grow(self):
-        print("growing", self)
         if self.STRUCTURE:
             self.STRUCTURE.place(self.chunk.world, self.position)
 
