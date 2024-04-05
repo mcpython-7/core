@@ -18,6 +18,59 @@ from mcpython.rendering.TextureAtlas import TextureAtlas, AtlasReference
 from mcpython.world.util import Facing
 
 _TEXTURE_ATLAS = TextureAtlas()
+STAGES = [
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_0"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_1"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_2"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_3"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_4"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_5"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_6"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_7"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_8"),
+    _TEXTURE_ATLAS.add_image_from_path("minecraft:block/destroy_stage_9"),
+]
+
+
+class BreakingTextureProvider:
+    def __init__(self):
+        from mcpython.rendering.util import (
+            COLORED_BLOCK_SHADER,
+            COLORED_BLOCK_GROUP,
+        )
+        from mcpython.rendering.util import cube_vertices
+
+        vertex_data = cube_vertices(Vec3(0, 0, 0), Vec3(1, 1, 1) * 1.005 / 2)
+        vertex_data = sum(vertex_data, ())
+        vertex_data = sum(map(tuple, vertex_data), ())
+        texture_data = _textured_cube(STAGES[0])
+
+        self.batch = pyglet.graphics.Batch()
+        self.vertex_list: pyglet.graphics.vertexdomain.VertexList = (
+            COLORED_BLOCK_SHADER.vertex_list(
+                36,
+                GL_TRIANGLES,
+                self.batch,
+                COLORED_BLOCK_GROUP,
+                position=("f", vertex_data),
+                tex_coords=("f", texture_data),
+                colors=("f", (1, 1, 1, 0.5) * 36),
+            )
+        )
+
+        self.texture_variants = [_textured_cube(STAGES[i]) for i in range(len(STAGES))]
+        self.old_state = 0
+
+    def draw(self):
+        self.batch.draw()
+
+    def update(self, progress: float):
+        state = math.floor(progress * len(STAGES))
+        if state == self.old_state:
+            return
+
+        texture = self.texture_variants[state]
+        self.vertex_list.tex_coords[:] = texture
 
 
 def _parse_stringfieid_blockstate(string: str) -> dict[str, str]:

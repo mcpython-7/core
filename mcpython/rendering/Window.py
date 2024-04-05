@@ -140,7 +140,10 @@ class Window(pyglet.window.Window):
 
         self.breaking_block: AbstractBlock | None = None
         self.breaking_block_timer: float | None = None
+        self.breaking_block_total_timer: float | None = None
         self.breaking_block_position: tuple[float, float, float] | None = None
+
+        self.breaking_block_provider = None
 
         # This call schedules the `update()` method to be called
         # TICKS_PER_SEC. This is the main game event loop.
@@ -473,8 +476,8 @@ class Window(pyglet.window.Window):
             self.breaking_block = None
         elif instance != self.breaking_block or force_reset:
             self.breaking_block = instance
-            self.breaking_block_timer = instance.on_block_starting_to_break(
-                stack, block_raw
+            self.breaking_block_timer = self.breaking_block_total_timer = (
+                instance.on_block_starting_to_break(stack, block_raw)
             )
 
     def update_breaking_block_state(self, dt: float):
@@ -682,7 +685,7 @@ class Window(pyglet.window.Window):
         )
         glDisable(GL_DEPTH_TEST)
 
-    def set_3d(self):
+    def set_3d(self, offset: Vec3 = None):
         """Configure OpenGL to draw in 3d.3"""
         self.projection = Mat4.perspective_projection(
             self.aspect_ratio, z_near=0.1, z_far=100, fov=45
@@ -690,6 +693,9 @@ class Window(pyglet.window.Window):
         position = self.position
         vector = self.get_sight_vector()
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
+        if offset:
+            self.view @= Mat4.from_translation(offset)
+
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
 
@@ -726,6 +732,18 @@ class Window(pyglet.window.Window):
         glEnable(GL_BLEND)
         glDisable(GL_CULL_FACE)
         self.world.alpha_batch.draw()
+
+        if self.breaking_block:
+            if self.breaking_block_provider is None:
+                from mcpython.rendering.Models import BreakingTextureProvider
+
+                self.breaking_block_provider = BreakingTextureProvider()
+            self.set_3d(offset=Vec3(*self.breaking_block.position))
+            self.breaking_block_provider.update(
+                1 - self.breaking_block_timer / self.breaking_block_total_timer
+            )
+            self.breaking_block_provider.draw()
+
         glDisable(GL_BLEND)
 
         self.draw_focused_block()
