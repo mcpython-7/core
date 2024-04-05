@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import itertools
+
 from mcpython.commands.Chat import Chat
 from mcpython.containers.AbstractContainer import Slot, ItemInformationScreen
 from mcpython.containers.PlayerInventoryContainer import (
@@ -13,8 +15,8 @@ from mcpython.world.entity.AbstractEntity import AbstractEntity
 class PlayerEntity(AbstractEntity):
     NAME = "minecraft:player"
 
-    def __init__(self, pos, rot):
-        super().__init__(pos, rot)
+    def __init__(self, world, pos, rot):
+        super().__init__(world, pos, rot)
         self.inventory = PlayerInventoryContainer()
         self.hotbar = HotbarContainer(self.inventory)
         self.hotbar.show_container()
@@ -33,6 +35,36 @@ class PlayerEntity(AbstractEntity):
 
         self.breaking_block_provider = None
 
+    def change_chunks(self, before: tuple[int, int], after: tuple[int, int]):
+        """Move from sector `before` to sector `after`. A sector is a
+        contiguous x, y sub-region of world. Sectors are used to speed up
+        world rendering.
+
+        """
+        before_set: set[tuple[int, int]] = set()
+        after_set: set[tuple[int, int]] = set()
+        pad = 4  # chunk range
+
+        for dx, dz in itertools.product(range(-pad, pad + 1), range(-pad, pad + 1)):
+            if dx**2 + dz**2 > (pad + 1) ** 2:
+                continue
+
+            if before:
+                x, z = before
+                before_set.add((x + dx, z + dz))
+
+            if after:
+                x, z = after
+                after_set.add((x + dx, z + dz))
+
+        show = after_set - before_set
+        hide = before_set - after_set
+        for sector in show:
+            self.world.show_chunk(sector)
+
+        for sector in hide:
+            self.world.hide_chunk(sector)
+
     def _update_moving_slot(self, slot, old_stack):
         if not slot.itemstack.is_empty():
             self.slot_hover_info.bind_to_slot(slot)
@@ -40,17 +72,15 @@ class PlayerEntity(AbstractEntity):
             self.slot_hover_info.bind_to_slot(None)
 
     def update_breaking_block(self, force_reset=False):
-        from mcpython.rendering.Window import Window
-
         stack = self.inventory.get_selected_itemstack()
 
-        vector = Window.INSTANCE.get_sight_vector()
-        block, previous, block_raw, previous_real = Window.INSTANCE.world.hit_test(
+        vector = self.world.window.get_sight_vector()
+        block, previous, block_raw, previous_real = self.world.hit_test(
             self.position, vector
         )
         if block is None:
             return
-        block_chunk = Window.INSTANCE.world.get_or_create_chunk_by_position(block)
+        block_chunk = self.world.get_or_create_chunk_by_position(block)
 
         instance = block_chunk.blocks[block]
         self.breaking_block_position = block_raw
@@ -67,8 +97,6 @@ class PlayerEntity(AbstractEntity):
         if self.breaking_block is None or self.breaking_block_timer is None:
             return
 
-        from mcpython.rendering.Window import Window
-
         self.breaking_block_timer -= dt * 20
 
         if self.breaking_block_timer <= 0:
@@ -77,7 +105,7 @@ class PlayerEntity(AbstractEntity):
                 self.breaking_block_position,
             )
             if state is None:
-                Window.INSTANCE.world.remove_block(self.breaking_block)
+                self.world.remove_block(self.breaking_block)
 
             # todo: if state is not False, deal damage to tools
 

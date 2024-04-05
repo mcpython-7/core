@@ -519,36 +519,6 @@ class World:
 
             self.show_chunk((dx, dz))
 
-    def change_chunks(self, before: tuple[int, int], after: tuple[int, int]):
-        """Move from sector `before` to sector `after`. A sector is a
-        contiguous x, y sub-region of world. Sectors are used to speed up
-        world rendering.
-
-        """
-        before_set: set[tuple[int, int]] = set()
-        after_set: set[tuple[int, int]] = set()
-        pad = 4  # chunk range
-
-        for dx, dz in itertools.product(range(-pad, pad + 1), range(-pad, pad + 1)):
-            if dx**2 + dz**2 > (pad + 1) ** 2:
-                continue
-
-            if before:
-                x, z = before
-                before_set.add((x + dx, z + dz))
-
-            if after:
-                x, z = after
-                after_set.add((x + dx, z + dz))
-
-        show = after_set - before_set
-        hide = before_set - after_set
-        for sector in show:
-            self.show_chunk(sector)
-
-        for sector in hide:
-            self.hide_chunk(sector)
-
     def _enqueue(self, func: typing.Callable, *args):
         """Add `func` to the internal queue."""
         self.queue.append((func, args))

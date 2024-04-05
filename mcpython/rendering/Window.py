@@ -51,8 +51,6 @@ class Window(pyglet.window.Window):
         super(Window, self).__init__(*args, **kwargs)
         Window.INSTANCE = self
 
-        self.player = PlayerEntity(Vec3(0, 100, 0), Vec3(0, 0, 0))
-
         self.mouse_position = 0, 0
 
         # Whether or not the window exclusively captures the mouse.
@@ -104,6 +102,8 @@ class Window(pyglet.window.Window):
 
         # Instance of the model that handles the world.
         self.world = World(self)
+
+        self.player = PlayerEntity(self.world, Vec3(0, 100, 0), Vec3(0, 0, 0))
 
         # The label that is displayed in the top left of the canvas.
         self.label = pyglet.text.Label(
@@ -202,7 +202,7 @@ class Window(pyglet.window.Window):
         self.world.process_queue()
         sector = sectorize(self.player.position)
         if sector != self.sector:
-            self.world.change_chunks(self.sector, sector)
+            self.player.change_chunks(self.sector, sector)
 
             if self.sector is None:
                 self.world.process_entire_queue()

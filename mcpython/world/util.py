@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import enum
 
+from pyglet.math import Vec3
+
 SECTOR_SIZE = 16
 
 
@@ -40,7 +42,7 @@ Facing.WEST.opposite = Facing.EAST
 Facing.EAST.opposite = Facing.WEST
 
 
-def normalize(position: tuple[float, float, float]) -> tuple[int, int, int]:
+def normalize(position: tuple[float, float, float] | Vec3) -> tuple[int, int, int]:
     """Accepts `position` of arbitrary precision and returns the block
     containing that position.
 
@@ -58,7 +60,7 @@ def normalize(position: tuple[float, float, float]) -> tuple[int, int, int]:
     return x, y, z
 
 
-def sectorize(position: tuple[float, float, float]) -> tuple[int, int]:
+def sectorize(position: tuple[float, float, float] | Vec3) -> tuple[int, int]:
     """Returns a tuple representing the sector for the given `position`.
 
     Parameters

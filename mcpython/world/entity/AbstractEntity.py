@@ -13,10 +13,12 @@ from mcpython.resources.Registry import Registry, IRegisterAble
 if typing.TYPE_CHECKING:
     from mcpython.rendering.Window import Window
     from mcpython.containers.ItemStack import ItemStack
+    from mcpython.world.World import World
 
 
 class AbstractEntity(IRegisterAble, ABC):
-    def __init__(self, position: Vec3, rotation: Vec3):
+    def __init__(self, world: World, position: Vec3, rotation: Vec3):
+        self.world = world
         self.position = position
         self.rotation = rotation
         self.motion = Vec3(0, 0, 0)
