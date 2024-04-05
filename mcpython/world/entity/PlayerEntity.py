@@ -182,7 +182,7 @@ class PlayerEntity(AbstractEntity):
             dz = math.sin(x_angle)
 
         if self.key_dy:
-            dy = self.key_dy
+            dy = self.key_dy * 0.7
 
         return dx, dy, dz
 

@@ -70,6 +70,7 @@ class Window(pyglet.window.Window):
             key._8,
             key._9,
         ]
+        self.last_space_press = 0
 
         # Instance of the model that handles the world.
         self.world = World(self)
@@ -329,6 +330,17 @@ class Window(pyglet.window.Window):
                     self.player.key_dy = 1
                 elif self.player.dy == 0:
                     self.player.dy = JUMP_SPEED
+
+                if self.player.gamemode == 1:
+                    if time.time() - self.last_space_press <= 0.3:
+                        self.player.flying = not self.player.flying
+
+                        if self.player.flying:
+                            self.player.key_dy = 1
+
+                        self.last_space_press = 0
+                    else:
+                        self.last_space_press = time.time()
 
             elif symbol == key.T:
                 self.player.chat.show_container()
