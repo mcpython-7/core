@@ -51,8 +51,8 @@ FACE_ORDER_UV = [
     Facing.UP,
     Facing.DOWN,
     Facing.EAST,
-    Facing.WEST,
     Facing.NORTH,
+    Facing.WEST,
     Facing.SOUTH,
 ]
 
@@ -146,10 +146,14 @@ class Model:
                         e / 16
                         for e in element["faces"]
                         .get(FACE_ORDER_UV[i].name.lower(), {})
-                        .get("uv", [])
+                        .get("uv", (0, 0, 1, 1))
                     )
                     for i in range(6)
                 ]
+
+                # todo: change cube_vertices instead!
+                a, b, c, d = uvs[FACE_ORDER_UV.index(Facing.UP)]
+                uvs[FACE_ORDER_UV.index(Facing.UP)] = (b, a, d, c)
 
                 faces = [
                     (

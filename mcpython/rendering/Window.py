@@ -321,6 +321,13 @@ class Window(pyglet.window.Window):
                     if block is None or block.NO_COLLISION:
                         continue
 
+                    # d = block.get_bounding_box().check_axis_intersection(
+                    #     i,
+                    #     Vec3(*block.position) - Vec3(*self.position),
+                    # )
+                    # if d == 0:
+                    #     continue
+
                     p[i] -= (d - pad) * face[i]
                     if face in [(0, -1, 0), (0, 1, 0)]:
                         # You are colliding with the ground or ceiling, so stop

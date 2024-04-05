@@ -10,7 +10,7 @@ from pyglet.window import mouse, key
 
 from mcpython.rendering.Models import BlockStateFile
 from mcpython.resources.Registry import IRegisterAble, Registry
-from mcpython.world.BoundingBox import AABB
+from mcpython.world.BoundingBox import AABB, IAABB, AABBGroup
 from mcpython.world.serialization.DataBuffer import (
     IBufferSerializableWithVersion,
     ReadBuffer,
@@ -34,7 +34,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     SHOULD_TICK = False
     TRANSPARENT = False
     NO_COLLISION = False
-    BOUNDING_BOX = AABB(Vec3(0, 0, 0), Vec3(1, 1, 1))
+    BOUNDING_BOX: IAABB = AABB(Vec3(0, 0, 0), Vec3(1, 1, 1))
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -71,7 +71,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         self.vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
         self.chunk: Chunk = None
 
-    def get_bounding_box(self) -> AABB:
+    def get_bounding_box(self) -> IAABB:
         return self.BOUNDING_BOX
 
     def encode(self, buffer: WriteBuffer):
@@ -381,11 +381,30 @@ class StairsLikeBlock(AbstractBlock):
         OUTER_LEFT = 3
         OUTER_RIGHT = 4
 
+    # fmt: off
+    BOX_VARIANTS: dict[tuple[StairHalf, Facing, StairShape], IAABB] = {
+        (StairHalf.TOP, Facing.NORTH, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0.5, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0, 0, 0), Vec3(1, 0.5, 0.5))),
+        (StairHalf.TOP, Facing.EAST, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0.5, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0.5, 0, 0), Vec3(0.5, 0.5, 1))),
+        (StairHalf.TOP, Facing.SOUTH, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0.5, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0, 0, 0.5), Vec3(1, 0.5, 0.5))),
+        (StairHalf.TOP, Facing.WEST, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0.5, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0, 0, 0), Vec3(0.5, 0.5, 1))),
+
+        (StairHalf.BOTTOM, Facing.SOUTH, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0, 0.5, 0), Vec3(1, 0.5, 0.5))),
+        (StairHalf.BOTTOM, Facing.EAST, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0.5, 0.5, 0), Vec3(0.5, 0.5, 1))),
+        (StairHalf.BOTTOM, Facing.NORTH, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0, 0.5, 0.5), Vec3(1, 0.5, 0.5))),
+        (StairHalf.BOTTOM, Facing.WEST, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0, 0.5, 0), Vec3(0.5, 0.5, 1))),
+    }
+    # fmt: on
+
     def __init__(self, position: tuple[int, int, int]):
         super().__init__(position)
         self.half = StairsLikeBlock.StairHalf.TOP
         self.facing = Facing.NORTH
         self.shape = StairsLikeBlock.StairShape.STRAIGHT
+
+    def get_bounding_box(self) -> IAABB:
+        return self.BOX_VARIANTS.get(
+            (self.half, self.facing, self.shape), self.BOUNDING_BOX
+        )
 
     def get_block_state(self) -> dict[str, str]:
         return {
@@ -475,16 +494,18 @@ class StairsLikeBlock(AbstractBlock):
             self.position[2] - hit_position[2],
         )
 
-        if abs(dx) > abs(dz):
-            self.facing = Facing.WEST if dx > 0 else Facing.EAST
-        else:
-            self.facing = Facing.NORTH if (dz > 0 != dy < 0) else Facing.SOUTH
-
         self.half = (
             StairsLikeBlock.StairHalf.TOP
             if dy < 0
             else StairsLikeBlock.StairHalf.BOTTOM
         )
+
+        if abs(dx) > abs(dz):
+            self.facing = Facing.WEST if dx > 0 else Facing.EAST
+        else:
+            self.facing = Facing.NORTH if dz > 0 else Facing.SOUTH
+            if self.half == StairsLikeBlock.StairHalf.BOTTOM:
+                self.facing = self.facing.opposite
 
     def on_block_updated(self):
         pass

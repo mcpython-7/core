@@ -87,29 +87,29 @@ def cube_vertices(
     # fmt: on
 
 
-def cube_line_vertices(pos: Vec3, size: Vec3, scale: float = 1) -> list[float]:
+def cube_line_vertices(pos: Vec3, size: Vec3, scale: float = 1) -> list[Vec3]:
     """Return the vertices of the cube at position x, y, z with size 2*n."""
     x, y, z = pos + size / 2 - Vec3(0.5, 0.5, 0.5)
     nx, ny, nz = (size / 2) * scale
     # fmt: off
     return [
         # Top
-        x-nx, y+ny, z-nz, x-nx, y+ny, z+nz,  # Line 1
-        x-nx, y+ny, z+nz, x+nx, y+ny, z+nz,  # Line 2
-        x+nx, y+ny, z+nz, x+nx, y+ny, z-nz,  # Line 3
-        x+nx, y+ny, z-nz, x-nx, y+ny, z-nz,  # Line 4
+        Vec3(x-nx, y+ny, z-nz), Vec3(x-nx, y+ny, z+nz),  # Line 1
+        Vec3(x-nx, y+ny, z+nz), Vec3(x+nx, y+ny, z+nz),  # Line 2
+        Vec3(x+nx, y+ny, z+nz), Vec3(x+nx, y+ny, z-nz),  # Line 3
+        Vec3(x+nx, y+ny, z-nz), Vec3(x-nx, y+ny, z-nz),  # Line 4
 
         # Bottom
-        x-nx, y-ny, z-nz, x-nx, y-ny, z+nz,  # Line 1
-        x-nx, y-ny, z+nz, x+nx, y-ny, z+nz,  # Line 2
-        x+nx, y-ny, z+nz, x+nx, y-ny, z-nz,  # Line 3
-        x+nx, y-ny, z-nz, x-nx, y-ny, z-nz,  # Line 4
+        Vec3(x-nx, y-ny, z-nz), Vec3(x-nx, y-ny, z+nz),  # Line 1
+        Vec3(x-nx, y-ny, z+nz), Vec3(x+nx, y-ny, z+nz),  # Line 2
+        Vec3(x+nx, y-ny, z+nz), Vec3(x+nx, y-ny, z-nz),  # Line 3
+        Vec3(x+nx, y-ny, z-nz), Vec3(x-nx, y-ny, z-nz),  # Line 4
 
         # Vertical lines connecting top and bottom
-        x-nx, y+ny, z-nz, x-nx, y-ny, z-nz,  # Line 1
-        x-nx, y+ny, z+nz, x-nx, y-ny, z+nz,  # Line 2
-        x+nx, y+ny, z+nz, x+nx, y-ny, z+nz,  # Line 3
-        x+nx, y+ny, z-nz, x+nx, y-ny, z-nz   # Line 4
+        Vec3(x-nx, y+ny, z-nz), Vec3(x-nx, y-ny, z-nz),  # Line 1
+        Vec3(x-nx, y+ny, z+nz), Vec3(x-nx, y-ny, z+nz),  # Line 2
+        Vec3(x+nx, y+ny, z+nz), Vec3(x+nx, y-ny, z+nz),  # Line 3
+        Vec3(x+nx, y+ny, z-nz), Vec3(x+nx, y-ny, z-nz),  # Line 4
     ]
     # fmt: on
 
