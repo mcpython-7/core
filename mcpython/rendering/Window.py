@@ -103,6 +103,7 @@ class Window(pyglet.window.Window):
         super(Window, self).set_exclusive_mouse(exclusive)
         self.exclusive = exclusive
         self.player.strafe = [0, 0]
+        self.player.key_dy = 0
 
     def update(self, dt: float):
         """This method is scheduled to be called repeatedly by the pyglet
@@ -324,7 +325,9 @@ class Window(pyglet.window.Window):
                 self.player.strafe[1] += 1
 
             elif symbol == key.SPACE:
-                if self.player.dy == 0:
+                if self.player.flying:
+                    self.player.key_dy = 1
+                elif self.player.dy == 0:
                     self.player.dy = JUMP_SPEED
 
             elif symbol == key.T:
@@ -332,6 +335,9 @@ class Window(pyglet.window.Window):
                 self.player.chat.ignore_next_t = True
                 self.set_exclusive_mouse(False)
                 return pyglet.event.EVENT_HANDLED
+
+            elif symbol in (key.LSHIFT, key.RSHIFT):
+                self.player.key_dy = -1
 
         if symbol == key.ESCAPE:
             for container in CONTAINER_STACK:
@@ -382,13 +388,15 @@ class Window(pyglet.window.Window):
         """
         if self.exclusive:
             if symbol == key.W:
-                self.player.strafe[0] += 1
+                self.player.strafe[0] = 0
             elif symbol == key.S:
-                self.player.strafe[0] -= 1
+                self.player.strafe[0] = 0
             elif symbol == key.A:
-                self.player.strafe[1] += 1
+                self.player.strafe[1] = 0
             elif symbol == key.D:
-                self.player.strafe[1] -= 1
+                self.player.strafe[1] = 0
+            elif symbol in (key.SPACE, key.LSHIFT, key.RSHIFT):
+                self.player.key_dy = 0
 
     def on_resize(self, width: int, height: int):
         """Called when the window is resized to a new `width` and `height`."""

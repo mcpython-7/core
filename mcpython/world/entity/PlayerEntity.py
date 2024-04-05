@@ -37,6 +37,7 @@ class PlayerEntity(AbstractEntity):
         self.flying = False
         self.no_collision = False
         self.dy = 0
+        self.key_dy = 0
 
         self.inventory = PlayerInventoryContainer()
         self.hotbar = HotbarContainer(self.inventory)
@@ -168,33 +169,21 @@ class PlayerEntity(AbstractEntity):
             Tuple containing the velocity in x, y, and z respectively.
 
         """
+        dy = 0.0
+        dx = 0.0
+        dz = 0.0
+
         if any(self.strafe):
             x, y = self.rotation
             strafe = math.degrees(math.atan2(*self.strafe))
-            y_angle = math.radians(y)
             x_angle = math.radians(x + strafe)
-            if self.flying:
-                m = math.cos(y_angle)
-                dy = math.sin(y_angle)
-                if self.strafe[1]:
-                    # Moving left or right.
-                    dy = 0.0
-                    m = 1
-                if self.strafe[0] > 0:
-                    # Moving backwards.
-                    dy *= -1
-                # When you are flying up or down, you have less left and right
-                # motion.
-                dx = math.cos(x_angle) * m
-                dz = math.sin(x_angle) * m
-            else:
-                dy = 0.0
-                dx = math.cos(x_angle)
-                dz = math.sin(x_angle)
-        else:
-            dy = 0.0
-            dx = 0.0
-            dz = 0.0
+
+            dx = math.cos(x_angle)
+            dz = math.sin(x_angle)
+
+        if self.key_dy:
+            dy = self.key_dy
+
         return dx, dy, dz
 
     def hit_test(
