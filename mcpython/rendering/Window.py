@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import time
 
 import pyglet
@@ -20,13 +19,8 @@ from pyglet.math import Vec3, Mat4
 from pyglet.window import key, mouse
 
 from mcpython.config import (
-    TICKS_PER_SEC,
-    FLYING_SPEED,
-    WALKING_SPEED,
-    GRAVITY,
-    TERMINAL_VELOCITY,
-    PLAYER_HEIGHT,
     JUMP_SPEED,
+    TICKS_PER_SEC,
 )
 from mcpython.containers.AbstractContainer import (
     CONTAINER_STACK,
@@ -41,7 +35,7 @@ from mcpython.world.World import World
 from mcpython.world.blocks.AbstractBlock import AbstractBlock
 from mcpython.world.entity.AbstractEntity import AbstractEntity
 from mcpython.world.entity.PlayerEntity import PlayerEntity
-from mcpython.world.util import sectorize, normalize
+from mcpython.world.util import sectorize
 
 
 class Window(pyglet.window.Window):
@@ -64,9 +58,6 @@ class Window(pyglet.window.Window):
         self.focused_block: AbstractBlock | None = None
         self.focused_box_vertex: pyglet.graphics.vertexdomain.VertexList | None = None
         self.focused_batch = pyglet.graphics.Batch()
-
-        # Velocity in the y (upward) direction.
-        self.dy = 0
 
         # Convenience list of num keys.
         self.num_keys = [
@@ -146,34 +137,7 @@ class Window(pyglet.window.Window):
             self.world.tick()
 
     def _update(self, dt: float):
-        """Private implementation of the `update()` method. This is where most
-        of the motion logic lives, along with gravity and collision detection.
-
-        Parameters
-        ----------
-        dt : float
-            The change in time since the last call.
-
-        """
-        # walking
-        speed = FLYING_SPEED if self.player.flying else WALKING_SPEED
-        d = dt * speed  # distance covered this tick.
-        dx, dy, dz = self.player.get_motion_vector()
-        # New position in space, before accounting for gravity.
-        dx, dy, dz = dx * d, dy * d, dz * d
-        # gravity
-        if not self.player.flying:
-            # Update your vertical speed: if you are falling, speed up until you
-            # hit terminal velocity; if you are jumping, slow down until you
-            # start falling.
-            self.dy -= dt * GRAVITY
-            self.dy = max(self.dy, -TERMINAL_VELOCITY)
-            dy += self.dy * dt
-
-        # collisions
-        x, y, z = self.player.position
-        x, y, z = self.player.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
-        self.player.position = Vec3(x, y, z)
+        self.player.tick(dt)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
         """Called when a mouse button is pressed. See pyglet docs for button
@@ -361,8 +325,8 @@ class Window(pyglet.window.Window):
                 self.player.strafe[1] += 1
 
             elif symbol == key.SPACE:
-                if self.dy == 0:
-                    self.dy = JUMP_SPEED
+                if self.player.dy == 0:
+                    self.player.dy = JUMP_SPEED
 
             elif symbol == key.T:
                 self.player.chat.show_container()

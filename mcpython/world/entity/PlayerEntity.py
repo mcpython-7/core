@@ -6,6 +6,13 @@ import math
 from pyglet.math import Vec3
 
 from mcpython.commands.Chat import Chat
+from mcpython.config import (
+    FLYING_SPEED,
+    WALKING_SPEED,
+    GRAVITY,
+    TERMINAL_VELOCITY,
+    PLAYER_HEIGHT,
+)
 from mcpython.containers.AbstractContainer import Slot, ItemInformationScreen
 from mcpython.containers.PlayerInventoryContainer import (
     PlayerInventoryContainer,
@@ -25,6 +32,7 @@ class PlayerEntity(AbstractEntity):
         self.rotation = (0, 0)
         self.strafe = [0, 0]
         self.flying = False
+        self.dy = 0
 
         self.inventory = PlayerInventoryContainer()
         self.hotbar = HotbarContainer(self.inventory)
@@ -43,6 +51,36 @@ class PlayerEntity(AbstractEntity):
         self.breaking_block_position: tuple[float, float, float] | None = None
 
         self.breaking_block_provider = None
+
+    def update_position(self, dt: float):
+        """Private implementation of the `update()` method. This is where most
+        of the motion logic lives, along with gravity and collision detection.
+
+        Parameters
+        ----------
+        dt : float
+            The change in time since the last call.
+
+        """
+        # walking
+        speed = FLYING_SPEED if self.flying else WALKING_SPEED
+        d = dt * speed  # distance covered this tick.
+        dx, dy, dz = self.get_motion_vector()
+        # New position in space, before accounting for gravity.
+        dx, dy, dz = dx * d, dy * d, dz * d
+        # gravity
+        if not self.flying:
+            # Update your vertical speed: if you are falling, speed up until you
+            # hit terminal velocity; if you are jumping, slow down until you
+            # start falling.
+            self.dy -= dt * GRAVITY
+            self.dy = max(self.dy, -TERMINAL_VELOCITY)
+            dy += self.dy * dt
+
+        # collisions
+        x, y, z = self.position
+        x, y, z = self.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
+        self.position = Vec3(x, y, z)
 
     def change_chunks(self, before: tuple[int, int], after: tuple[int, int]):
         """Move from sector `before` to sector `after`. A sector is a
