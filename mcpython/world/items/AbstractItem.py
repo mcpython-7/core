@@ -114,7 +114,7 @@ def create_item_for_block(
         ) -> list[tuple[float, float, float, float]] | None:
             from mcpython.rendering.Window import Window
 
-            probe_block.position = pos = normalize(Window.INSTANCE.position)
+            probe_block.position = pos = normalize(Window.INSTANCE.player.position)
             probe_block.chunk = Window.INSTANCE.world.get_or_create_chunk_by_position(
                 pos
             )

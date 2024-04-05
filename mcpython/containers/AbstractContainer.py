@@ -168,7 +168,7 @@ class Slot(IBufferSerializable):
 
         from mcpython.rendering.Window import Window
 
-        moving_slot = Window.INSTANCE.moving_player_slot
+        moving_slot = Window.INSTANCE.player.moving_player_slot
 
         if self.itemstack.is_empty() and self.allow_player_insertion:
             if moving_slot.itemstack.is_empty():

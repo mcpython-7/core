@@ -5,7 +5,6 @@ import time
 
 import pyglet
 from pyglet.gl import (
-    GL_LINES,
     glDisable,
     GL_DEPTH_TEST,
     glEnable,
@@ -20,7 +19,6 @@ from pyglet.gl import (
 from pyglet.math import Vec3, Mat4
 from pyglet.window import key, mouse
 
-from mcpython.commands.Chat import Chat
 from mcpython.config import (
     TICKS_PER_SEC,
     FLYING_SPEED,
@@ -32,21 +30,17 @@ from mcpython.config import (
 )
 from mcpython.containers.AbstractContainer import (
     CONTAINER_STACK,
-    Slot,
     Container,
-    ItemInformationScreen,
 )
 from mcpython.containers.ItemStack import ItemStack
-from mcpython.containers.PlayerInventoryContainer import (
-    PlayerInventoryContainer,
-    HotbarContainer,
-)
 from mcpython.rendering.util import (
     FACES,
     off_axis_projection_matrix,
 )
 from mcpython.world.World import World
 from mcpython.world.blocks.AbstractBlock import AbstractBlock
+from mcpython.world.entity.AbstractEntity import AbstractEntity
+from mcpython.world.entity.PlayerEntity import PlayerEntity
 from mcpython.world.util import sectorize, normalize
 
 
@@ -56,6 +50,8 @@ class Window(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
         super(Window, self).__init__(*args, **kwargs)
         Window.INSTANCE = self
+
+        self.player = PlayerEntity(Vec3(0, 100, 0), Vec3(0, 0, 0))
 
         self.mouse_position = 0, 0
 
@@ -72,10 +68,6 @@ class Window(pyglet.window.Window):
         # otherwise. The second element is -1 when moving left, 1 when moving
         # right, and 0 otherwise.
         self.strafe = [0, 0]
-
-        # Current (x, y, z) position in the world, specified with floats. Note
-        # that, perhaps unlike in math class, the y-axis is the vertical axis.
-        self.position = Vec3(0, 100, 0)
 
         # First element is rotation of the player in the x-z plane (ground
         # plane) measured from the z-axis down. The second is the rotation
@@ -127,34 +119,10 @@ class Window(pyglet.window.Window):
 
         self.inventory_scale = 2
 
-        self.slot_hover_info = ItemInformationScreen()
-
-        self.player_inventory = PlayerInventoryContainer()
-        self.hotbar = HotbarContainer(self.player_inventory)
-        self.hotbar.show_container()
-        self.player_chat = Chat()
-
-        self.moving_player_slot = Slot(
-            self.player_inventory, (0, 0), on_update=self._update_moving_slot
-        )
-
-        self.breaking_block: AbstractBlock | None = None
-        self.breaking_block_timer: float | None = None
-        self.breaking_block_total_timer: float | None = None
-        self.breaking_block_position: tuple[float, float, float] | None = None
-
-        self.breaking_block_provider = None
-
         # This call schedules the `update()` method to be called
         # TICKS_PER_SEC. This is the main game event loop.
         self.last_tick = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
-
-    def _update_moving_slot(self, slot, old_stack):
-        if not slot.itemstack.is_empty():
-            self.slot_hover_info.bind_to_slot(slot)
-        else:
-            self.slot_hover_info.bind_to_slot(None)
 
     def set_exclusive_mouse(self, exclusive: bool):
         """If `exclusive` is True, the game will capture the mouse, if False
@@ -232,7 +200,7 @@ class Window(pyglet.window.Window):
 
         """
         self.world.process_queue()
-        sector = sectorize(self.position)
+        sector = sectorize(self.player.position)
         if sector != self.sector:
             self.world.change_chunks(self.sector, sector)
 
@@ -247,7 +215,7 @@ class Window(pyglet.window.Window):
 
         delta = time.time() - self.last_tick
         self.last_tick = time.time()
-        self.update_breaking_block_state(dt)
+        self.player.update_breaking_block_state(dt)
 
         for _ in range(int(delta * 20)):
             self.world.tick()
@@ -278,9 +246,9 @@ class Window(pyglet.window.Window):
             dy += self.dy * dt
 
         # collisions
-        x, y, z = self.position
+        x, y, z = self.player.position
         x, y, z = self.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
-        self.position = Vec3(x, y, z)
+        self.player.position = Vec3(x, y, z)
 
     def collide(self, position: tuple[float, float, float], height: int):
         """Checks to see if the player at the given `position` and `height`
@@ -331,7 +299,7 @@ class Window(pyglet.window.Window):
 
                     # d = block.get_bounding_box().check_axis_intersection(
                     #     i,
-                    #     Vec3(*block.position) - Vec3(*self.position),
+                    #     Vec3(*block.position) - Vec3(*self.player.position),
                     # )
                     # if d == 0:
                     #     continue
@@ -364,11 +332,11 @@ class Window(pyglet.window.Window):
 
         """
         if self.exclusive:
-            stack = self.player_inventory.get_selected_itemstack()
+            stack = self.player.inventory.get_selected_itemstack()
 
             vector = self.get_sight_vector()
             block, previous, block_raw, previous_real = self.world.hit_test(
-                self.position, vector
+                self.player.position, vector
             )
             block_chunk = (
                 self.world.get_or_create_chunk_by_position(block) if block else None
@@ -417,31 +385,31 @@ class Window(pyglet.window.Window):
                             b.update_render_state()
 
             elif button == pyglet.window.mouse.LEFT and block and block_chunk:
-                self.update_breaking_block()
+                self.player.update_breaking_block()
 
             elif button == pyglet.window.mouse.MIDDLE and block and block_chunk:
                 instance = block_chunk.blocks[block]
 
-                slot = self.player_inventory.find_item(instance.NAME)
+                slot = self.player.inventory.find_item(instance.NAME)
 
                 if slot is None:
-                    itemstack = self.player_inventory.get_selected_itemstack()
-                    self.player_inventory.get_selected_slot().set_stack(
+                    itemstack = self.player.inventory.get_selected_itemstack()
+                    self.player.inventory.get_selected_slot().set_stack(
                         ItemStack(instance.NAME)
                     )
                     if not itemstack.is_empty():
-                        self.player_inventory.insert(itemstack)
+                        self.player.inventory.insert(itemstack)
 
-                elif slot not in self.player_inventory.slots[:9]:
-                    itemstack = self.player_inventory.get_selected_itemstack()
-                    self.player_inventory.get_selected_slot().set_stack(slot.itemstack)
+                elif slot not in self.player.inventory.slots[:9]:
+                    itemstack = self.player.inventory.get_selected_itemstack()
+                    self.player.inventory.get_selected_slot().set_stack(slot.itemstack)
                     slot.set_stack(itemstack)
 
                 else:
-                    self.player_inventory.selected_slot = (
-                        self.player_inventory.slots.index(slot)
+                    self.player.inventory.selected_slot = (
+                        self.player.inventory.slots.index(slot)
                     )
-                    self.update_breaking_block(force_reset=True)
+                    self.player.update_breaking_block(force_reset=True)
 
             return
 
@@ -456,50 +424,7 @@ class Window(pyglet.window.Window):
                 return
 
     def on_mouse_release(self, x, y, button, modifiers):
-        self.breaking_block = None
-
-    def update_breaking_block(self, force_reset=False):
-        stack = self.player_inventory.get_selected_itemstack()
-
-        vector = self.get_sight_vector()
-        block, previous, block_raw, previous_real = self.world.hit_test(
-            self.position, vector
-        )
-        if block is None:
-            return
-        block_chunk = self.world.get_or_create_chunk_by_position(block)
-
-        instance = block_chunk.blocks[block]
-        self.breaking_block_position = block_raw
-
-        if instance is None:
-            self.breaking_block = None
-        elif instance != self.breaking_block or force_reset:
-            self.breaking_block = instance
-            self.breaking_block_timer = self.breaking_block_total_timer = (
-                instance.on_block_starting_to_break(stack, block_raw)
-            )
-
-    def update_breaking_block_state(self, dt: float):
-        if self.breaking_block is None or self.breaking_block_timer is None:
-            return
-
-        self.breaking_block_timer -= dt * 20
-
-        if self.breaking_block_timer <= 0:
-            state = self.breaking_block.on_block_broken(
-                self.player_inventory.get_selected_itemstack(),
-                self.breaking_block_position,
-            )
-            if state is None:
-                self.world.remove_block(self.breaking_block)
-
-            # todo: if state is not False, deal damage to tools
-
-            if state is not False:
-                self.update_breaking_block()
-            else:
-                self.breaking_block = None
+        self.player.breaking_block = None
 
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
         self.on_any_mouse_motion(x, y, dx, dy, 0, 0)
@@ -578,8 +503,8 @@ class Window(pyglet.window.Window):
                     self.dy = JUMP_SPEED
 
             elif symbol == key.T:
-                self.player_chat.show_container()
-                self.player_chat.ignore_next_t = True
+                self.player.chat.show_container()
+                self.player.chat.ignore_next_t = True
                 self.set_exclusive_mouse(False)
                 return pyglet.event.EVENT_HANDLED
 
@@ -590,22 +515,22 @@ class Window(pyglet.window.Window):
             self.set_exclusive_mouse(not self.exclusive)
 
         elif symbol == key.E:
-            if self.player_chat.open:
+            if self.player.chat.open:
                 pass
-            elif self.player_inventory.open:
+            elif self.player.inventory.open:
                 self.set_exclusive_mouse(True)
-                self.player_inventory.hide_container()
+                self.player.inventory.hide_container()
             else:
                 self.set_exclusive_mouse(False)
-                self.player_inventory.show_container()
+                self.player.inventory.show_container()
 
         elif symbol == key.TAB:
             self.flying = not self.flying
 
         elif symbol in self.num_keys and self.exclusive:
             index = symbol - self.num_keys[0]
-            self.player_inventory.selected_slot = index
-            self.update_breaking_block(force_reset=True)
+            self.player.inventory.selected_slot = index
+            self.player.update_breaking_block(force_reset=True)
 
     def on_text(self, text):
         for container in CONTAINER_STACK:
@@ -614,10 +539,10 @@ class Window(pyglet.window.Window):
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         if self.exclusive:
-            self.player_inventory.selected_slot = int(
-                (self.player_inventory.selected_slot - scroll_y) % 9
+            self.player.inventory.selected_slot = int(
+                (self.player.inventory.selected_slot - scroll_y) % 9
             )
-            self.update_breaking_block(force_reset=True)
+            self.player.update_breaking_block(force_reset=True)
 
     def on_key_release(self, symbol: int, modifiers: int):
         """Called when the player releases a key. See pyglet docs for key
@@ -685,16 +610,20 @@ class Window(pyglet.window.Window):
         )
         glDisable(GL_DEPTH_TEST)
 
-    def set_3d(self, offset: Vec3 = None):
+    def set_3d(self, offset: Vec3 = None, rotation: Vec3 = None):
         """Configure OpenGL to draw in 3d.3"""
         self.projection = Mat4.perspective_projection(
             self.aspect_ratio, z_near=0.1, z_far=100, fov=45
         )
-        position = self.position
+        position = self.player.position
         vector = self.get_sight_vector()
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
         if offset:
             self.view @= Mat4.from_translation(offset)
+        if rotation:
+            self.view @= Mat4.from_rotation(rotation[0], Vec3(1, 0, 0))
+            self.view @= Mat4.from_rotation(rotation[1], Vec3(0, 1, 0))
+            self.view @= Mat4.from_rotation(rotation[2], Vec3(0, 0, 1))
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
@@ -733,16 +662,20 @@ class Window(pyglet.window.Window):
         glDisable(GL_CULL_FACE)
         self.world.alpha_batch.draw()
 
-        if self.breaking_block:
-            if self.breaking_block_provider is None:
+        if self.player.breaking_block:
+            if self.player.breaking_block_provider is None:
                 from mcpython.rendering.Models import BreakingTextureProvider
 
-                self.breaking_block_provider = BreakingTextureProvider()
-            self.set_3d(offset=Vec3(*self.breaking_block.position))
-            self.breaking_block_provider.update(
-                1 - self.breaking_block_timer / self.breaking_block_total_timer
+                self.player.breaking_block_provider = BreakingTextureProvider()
+            self.set_3d(offset=Vec3(*self.player.breaking_block.position))
+            self.player.breaking_block_provider.update(
+                1
+                - self.player.breaking_block_timer
+                / self.player.breaking_block_total_timer
+                if self.player.breaking_block_timer
+                else 0
             )
-            self.breaking_block_provider.draw()
+            self.player.breaking_block_provider.draw()
 
         glDisable(GL_BLEND)
 
@@ -752,7 +685,7 @@ class Window(pyglet.window.Window):
         self.draw_reticle()
 
         self.draw_inventories()
-        self.player_chat.draw_chat_output(self)
+        self.player.chat.draw_chat_output(self)
 
     def draw_inventories(self):
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -762,19 +695,19 @@ class Window(pyglet.window.Window):
             container.draw(self)
 
         if any(container.SHOULD_DRAW_MOVING_SLOT for container in CONTAINER_STACK):
-            self.set_2d_centered_for_inventory(self.player_inventory)
+            self.set_2d_centered_for_inventory(self.player.inventory)
 
-            self.moving_player_slot.update_position(
-                self.player_inventory.window_to_relative_world(
+            self.player.moving_player_slot.update_position(
+                self.player.inventory.window_to_relative_world(
                     (self.mouse_position[0] - 8, self.mouse_position[1] - 7),
                     self.get_size(),
                     self.inventory_scale,
                 )
             )
 
-            self.moving_player_slot.draw(self)
+            self.player.moving_player_slot.draw(self)
 
-        self.slot_hover_info.draw(self)
+        self.player.slot_hover_info.draw(self)
 
     def invalidate_focused_block(self):
         if self.focused_block:
@@ -788,7 +721,7 @@ class Window(pyglet.window.Window):
 
         """
         vector = self.get_sight_vector()
-        if block := self.world.hit_test(self.position, vector)[0]:
+        if block := self.world.hit_test(self.player.position, vector)[0]:
             instance = self.world.get_or_create_chunk_by_position(block).blocks.get(
                 block
             )
@@ -818,14 +751,16 @@ class Window(pyglet.window.Window):
 
     def draw_label(self):
         """Draw the label in the top left of the screen."""
-        x, y, z = self.position
+        x, y, z = self.player.position
         self.label.text = "%02d (%.2f, %.2f, %.2f) %d (%d)" % (
             pyglet.clock.get_frequency(),
             x,
             y,
             z,
             len(self.world.chunks),
-            len(self.world.get_or_create_chunk_by_position(self.position).blocks),
+            len(
+                self.world.get_or_create_chunk_by_position(self.player.position).blocks
+            ),
         )
         self.label.draw()
 

@@ -108,7 +108,7 @@ class CraftingTableContainer(Container):
 
         from mcpython.rendering.Window import Window
 
-        player_inventory = Window.INSTANCE.player_inventory
+        player_inventory = Window.INSTANCE.player.inventory
 
         self.slots = (
             [

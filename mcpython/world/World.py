@@ -241,7 +241,7 @@ class World:
             chunk.tick()
 
     def get_or_create_chunk_by_position(
-        self, position: tuple[int, int, int] | tuple[int, int]
+        self, position: tuple[int, int, int] | tuple[int, int] | Vec3
     ) -> Chunk:
         c = position[0] // 16, position[-1] // 16
         chunk = self.chunks.get(c)

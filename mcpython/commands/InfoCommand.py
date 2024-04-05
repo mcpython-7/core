@@ -12,7 +12,7 @@ info_command.construct().then(tags).then(block)
 def execute_info_tags(chat, results):
     from mcpython.rendering.Window import Window
 
-    itemstack = Window.INSTANCE.player_inventory.get_selected_itemstack()
+    itemstack = Window.INSTANCE.player.inventory.get_selected_itemstack()
     if itemstack.is_empty():
         chat.submit_text("Itemstack is empty")
     else:
@@ -26,7 +26,7 @@ def execute_block_info(chat, results):
     from mcpython.rendering.Window import Window
 
     vector = Window.INSTANCE.get_sight_vector()
-    pos, *_ = Window.INSTANCE.world.hit_test(Window.INSTANCE.position, vector)
+    pos, *_ = Window.INSTANCE.world.hit_test(Window.INSTANCE.player.position, vector)
     instance = Window.INSTANCE.world.get_or_create_chunk_by_position(pos).blocks.get(
         pos
     )
