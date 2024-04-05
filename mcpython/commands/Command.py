@@ -4,7 +4,7 @@ import typing
 from abc import ABC
 
 if typing.TYPE_CHECKING:
-    from mcpython.commands.Chat import Chat
+    from mcpython.world.entity.PlayerEntity import PlayerEntity
 
 
 INVALID = object()
@@ -14,13 +14,15 @@ class CommandElement(ABC):
     def __init__(self):
         self.possible_continue: list[CommandElement] = []
         self.run_action: (
-            typing.Callable[[Chat, list[tuple[CommandElement, typing.Any]]], None]
+            typing.Callable[
+                [PlayerEntity, list[tuple[CommandElement, typing.Any]]], None
+            ]
             | None
         ) = None
         self.traverse_action: (
             typing.Callable[
                 [
-                    Chat,
+                    PlayerEntity,
                     list[tuple[CommandElement, typing.Any]],
                     CommandElement,
                     typing.Any,
@@ -36,19 +38,40 @@ class CommandElement(ABC):
 
     def on_execute(
         self,
-        action: typing.Callable[[Chat, list[tuple[CommandElement, typing.Any]]], None],
-    ) -> typing.Callable[[Chat, list[tuple[CommandElement, typing.Any]]], None]:
+        action: typing.Callable[
+            [PlayerEntity, list[tuple[CommandElement, typing.Any]]], None
+        ],
+    ) -> typing.Callable[[PlayerEntity, list[tuple[CommandElement, typing.Any]]], None]:
         self.run_action = action
         return action
+
+    def executes(
+        self,
+        action: typing.Callable[
+            [PlayerEntity, list[tuple[CommandElement, typing.Any]]], None
+        ],
+    ) -> typing.Self:
+        self.run_action = action
+        return self
 
     def on_traverse(
         self,
         action: typing.Callable[
-            [Chat, list[tuple[CommandElement, typing.Any]], CommandElement, typing.Any],
+            [
+                PlayerEntity,
+                list[tuple[CommandElement, typing.Any]],
+                CommandElement,
+                typing.Any,
+            ],
             typing.Any,
         ],
     ) -> typing.Callable[
-        [Chat, list[tuple[CommandElement, typing.Any]], CommandElement, typing.Any],
+        [
+            PlayerEntity,
+            list[tuple[CommandElement, typing.Any]],
+            CommandElement,
+            typing.Any,
+        ],
         typing.Any,
     ]:
         self.traverse_action = action
@@ -174,17 +197,19 @@ class Command:
     def try_parse(self, text: str) -> list[tuple[CommandElement, typing.Any]] | None:
         return self.base_node.parse_recursive(text, [])
 
-    def run_command(self, chat: Chat, command: str):
+    def run_command(self, player: PlayerEntity, command: str):
         actions = self.try_parse(command)
         if actions is None or len(actions) == 0 or actions[-1][0].run_action is None:
-            chat.submit_text("ERROR: invalid command")
+            player.chat.submit_text("ERROR: invalid command")
             return
 
         for i, (node, value) in enumerate(actions):
             if node.traverse_action is not None:
-                actions[i] = node, node.traverse_action(chat, actions[:i], node, value)
+                actions[i] = node, node.traverse_action(
+                    player, actions[:i], node, value
+                )
 
-        actions[-1][0].run_action(chat, actions)
+        actions[-1][0].run_action(player, actions)
 
 
-from mcpython.commands import GiveCommand, InfoCommand, SaveCommand
+from mcpython.commands import GiveCommand, InfoCommand, SaveCommand, GamemodeCommand

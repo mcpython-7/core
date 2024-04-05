@@ -9,31 +9,27 @@ info_command.construct().then(tags).then(block)
 
 
 @tags.on_execute
-def execute_info_tags(chat, results):
-    from mcpython.rendering.Window import Window
-
-    itemstack = Window.INSTANCE.player.inventory.get_selected_itemstack()
+def execute_info_tags(player, results):
+    itemstack = player.inventory.get_selected_itemstack()
     if itemstack.is_empty():
-        chat.submit_text("Itemstack is empty")
+        player.chat.submit_text("Itemstack is empty")
     else:
-        chat.submit_text(f"Itemstack: {itemstack.count}x {itemstack.item.NAME}, tags:")
+        player.chat.submit_text(
+            f"Itemstack: {itemstack.count}x {itemstack.item.NAME}, tags:"
+        )
         for tag in itemstack.item.TAGS:
-            chat.submit_text(tag)
+            player.chat.submit_text(tag)
 
 
 @block.on_execute
-def execute_block_info(chat, results):
-    from mcpython.rendering.Window import Window
-
-    vector = Window.INSTANCE.player.get_sight_vector()
-    pos, *_ = Window.INSTANCE.player.hit_test(Window.INSTANCE.player.position, vector)
-    instance = Window.INSTANCE.world.get_or_create_chunk_by_position(pos).blocks.get(
-        pos
-    )
+def execute_block_info(player, results):
+    vector = player.get_sight_vector()
+    pos, *_ = player.hit_test(player.position, vector)
+    instance = player.world.get_or_create_chunk_by_position(pos).blocks.get(pos)
 
     if instance is None:
-        chat.submit_text("<NO BLOCK>")
+        player.chat.submit_text("<NO BLOCK>")
     else:
-        chat.submit_text(f"Block: '{instance.NAME}'")
-        chat.submit_text(f"State: {instance.get_block_state()}")
-        chat.submit_text(f"Tags: {', '.join(instance.TAGS)}")
+        player.chat.submit_text(f"Block: '{instance.NAME}'")
+        player.chat.submit_text(f"State: {instance.get_block_state()}")
+        player.chat.submit_text(f"Tags: {', '.join(instance.TAGS)}")

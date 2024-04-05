@@ -29,15 +29,19 @@ class PlayerEntity(AbstractEntity):
 
     def __init__(self, world, pos, rot):
         super().__init__(world, pos, rot)
+
+        self.gamemode = 0
+
         self.rotation = (0, 0)
         self.strafe = [0, 0]
         self.flying = False
+        self.no_collision = False
         self.dy = 0
 
         self.inventory = PlayerInventoryContainer()
         self.hotbar = HotbarContainer(self.inventory)
         self.hotbar.show_container()
-        self.chat = Chat()
+        self.chat = Chat(self)
 
         self.slot_hover_info = ItemInformationScreen()
 
@@ -51,6 +55,20 @@ class PlayerEntity(AbstractEntity):
         self.breaking_block_position: tuple[float, float, float] | None = None
 
         self.breaking_block_provider = None
+
+    def set_gamemode(self, gamemode: int):
+        if gamemode == self.gamemode:
+            return
+        self.gamemode = gamemode
+
+        if gamemode in {0, 2}:
+            self.flying = False
+
+        if gamemode == 3:
+            self.flying = True
+            self.no_collision = True
+        else:
+            self.no_collision = False
 
     def update_position(self, dt: float):
         """Private implementation of the `update()` method. This is where most
@@ -79,7 +97,12 @@ class PlayerEntity(AbstractEntity):
 
         # collisions
         x, y, z = self.position
-        x, y, z = self.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
+
+        if not self.no_collision:
+            x, y, z = self.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
+        else:
+            x, y, z = x + dx, y + dy, z + dz
+
         self.position = Vec3(x, y, z)
 
     def change_chunks(self, before: tuple[int, int], after: tuple[int, int]):

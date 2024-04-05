@@ -12,6 +12,7 @@ import clipboard
 
 if typing.TYPE_CHECKING:
     from mcpython.rendering.Window import Window
+    from mcpython.world.entity.PlayerEntity import PlayerEntity
 
 KEY_MAPPING: dict[int, str] = {
     getattr(key, c.upper()): c for c in "abcdefghijklmnopqrstuvwxyz"
@@ -22,8 +23,9 @@ NUMBER_MAPPING: dict[int, str] = {getattr(key, f"_{c}"): c for c in "0123456789"
 class Chat(Container):
     SHOULD_DRAW_MOVING_SLOT = False
 
-    def __init__(self):
+    def __init__(self, player: PlayerEntity):
         super().__init__((0, 0), None)
+        self.player = player
         self.render_anchor = (0, 0)
         self.render_offset = (10, 10)
 
@@ -83,7 +85,7 @@ class Chat(Container):
             if command := COMMAND_REGISTRY.get(
                 self.text.split(" ")[0].removeprefix("/")
             ):
-                command.run_command(self, self.text.removeprefix("/"))
+                command.run_command(self.player, self.text.removeprefix("/"))
             else:
                 self.submit_text("ERROR: Command not found!")
         else:

@@ -13,25 +13,19 @@ save_command.construct().then(save_world).then(load_world)
 
 
 @save_world_name.on_execute
-def execute_save_world(chat, entries):
-    from mcpython.world.World import World
-
-    w = World.INSTANCE
+def execute_save_world(player, entries):
     name = entries[-1][1]
-    w.storage.load_world(TMP / "worlds" / name)
+    player.world.storage.load_world(TMP / "worlds" / name)
 
-    for chunk in w.chunks.values():
-        w.storage.save_chunk(chunk)
+    for chunk in player.world.chunks.values():
+        player.world.storage.save_chunk(chunk)
 
 
 @load_world_name.on_execute
-def execute_load_world(chat, entries):
-    from mcpython.world.World import World
-
-    w = World.INSTANCE
+def execute_load_world(player, entries):
     name = entries[-1][1]
-    w.storage.load_world(TMP / "worlds" / name)
+    player.world.storage.load_world(TMP / "worlds" / name)
 
-    for chunk in w.storage.saved_chunks:
-        chunk = w.get_or_create_chunk_by_coord(chunk)
-        w.storage.load_chunk(chunk)
+    for chunk in player.world.storage.saved_chunks:
+        chunk = player.world.get_or_create_chunk_by_coord(chunk)
+        player.world.storage.load_chunk(chunk)

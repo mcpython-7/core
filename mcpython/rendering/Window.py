@@ -28,7 +28,6 @@ from mcpython.containers.AbstractContainer import (
 )
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.rendering.util import (
-    FACES,
     off_axis_projection_matrix,
 )
 from mcpython.world.World import World
@@ -349,9 +348,6 @@ class Window(pyglet.window.Window):
             else:
                 self.set_exclusive_mouse(False)
                 self.player.inventory.show_container()
-
-        elif symbol == key.TAB:
-            self.player.flying = not self.player.flying
 
         elif symbol in self.num_keys and self.exclusive:
             index = symbol - self.num_keys[0]
