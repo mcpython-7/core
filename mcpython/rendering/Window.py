@@ -172,72 +172,8 @@ class Window(pyglet.window.Window):
 
         # collisions
         x, y, z = self.player.position
-        x, y, z = self.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
+        x, y, z = self.player.collide((x + dx, y + dy, z + dz), PLAYER_HEIGHT)
         self.player.position = Vec3(x, y, z)
-
-    def collide(self, position: tuple[float, float, float], height: int):
-        """Checks to see if the player at the given `position` and `height`
-        is colliding with any blocks in the world.
-
-        Parameters
-        ----------
-        position : tuple of len 3
-            The (x, y, z) position to check for collisions at.
-        height : int or float
-            The height of the player.
-
-        Returns
-        -------
-        position : tuple of len 3
-            The new position of the player taking into account collisions.
-
-        """
-        # How much overlap with a dimension of a surrounding block you need to
-        # have to count as a collision. If 0, touching terrain at all counts as
-        # a collision. If .49, you sink into the ground, as if walking through
-        # tall grass. If >= .5, you'll fall through the ground.
-        pad = 0
-        p = list(position)
-        np = normalize(position)
-        for face in FACES:  # check all surrounding blocks
-            for i in range(3):  # check each dimension independently
-                if not face[i]:
-                    continue
-
-                # How much overlap you have with this dimension.
-                # todo: here we could do a hitbox-based check instead
-                d = (p[i] - np[i]) * face[i]
-                if d < pad:
-                    continue
-
-                for dy in range(height):  # check each height
-                    op = list(np)
-                    op[1] -= dy
-                    op[i] += face[i]
-
-                    block = self.world.get_or_create_chunk_by_position(op).blocks.get(
-                        tuple(op)
-                    )
-
-                    if block is None or block.NO_COLLISION:
-                        continue
-
-                    # d = block.get_bounding_box().check_axis_intersection(
-                    #     i,
-                    #     Vec3(*block.position) - Vec3(*self.player.position),
-                    # )
-                    # if d == 0:
-                    #     continue
-
-                    p[i] -= (d - pad) * face[i]
-                    if face in [(0, -1, 0), (0, 1, 0)]:
-                        # You are colliding with the ground or ceiling, so stop
-                        # falling / rising.
-                        self.dy = 0
-
-                    break
-
-        return tuple(p)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
         """Called when a mouse button is pressed. See pyglet docs for button
