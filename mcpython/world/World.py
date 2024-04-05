@@ -214,8 +214,9 @@ class Chunk(IBufferSerializableWithVersion):
 class World:
     INSTANCE: World = None
 
-    def __init__(self):
+    def __init__(self, window):
         World.INSTANCE = self
+        self.window = window
 
         self.storage = WorldStorage()
 
@@ -264,8 +265,13 @@ class World:
         vector: Vec3,
         max_distance=8,
     ) -> (
-        tuple[tuple[int, int, int], tuple[int, int, int], tuple[float, float, float]]
-        | tuple[None, None, None]
+        tuple[
+            tuple[int, int, int],
+            tuple[int, int, int],
+            tuple[float, float, float],
+            tuple[int, int, int] | None,
+        ]
+        | tuple[None, None, None, None]
     ):
         """Line of sight search from current position. If a block is
         intersected it is returned, along with the block previously in the line
@@ -286,6 +292,7 @@ class World:
         dx, dy, dz = vector
         previous = None
         block = None
+        real_previous = None
 
         for _ in range(max_distance * m):
             key = normalize((x, y, z))
@@ -296,12 +303,15 @@ class World:
             if block and block.get_bounding_box().point_intersect(
                 Vec3(x, y, z) - Vec3(*block.position)
             ):
-                return key, previous, (x, y, z)
+                return key, previous, (x, y, z), real_previous
+
+            if key != previous:
+                real_previous = previous
 
             previous = key
             x, y, z = x + dx / m, y + dy / m, z + dz / m
 
-        return None, None, None
+        return None, None, None, None
 
     def exposed(self, position: tuple[int, int, int]) -> bool:
         """Returns False is given `position` is surrounded on all 6 sides by

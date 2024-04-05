@@ -111,7 +111,7 @@ class Window(pyglet.window.Window):
         ]
 
         # Instance of the model that handles the world.
-        self.world = World()
+        self.world = World(self)
 
         # The label that is displayed in the top left of the canvas.
         self.label = pyglet.text.Label(
@@ -359,7 +359,9 @@ class Window(pyglet.window.Window):
             stack = self.player_inventory.get_selected_itemstack()
 
             vector = self.get_sight_vector()
-            block, previous, block_raw = self.world.hit_test(self.position, vector)
+            block, previous, block_raw, previous_real = self.world.hit_test(
+                self.position, vector
+            )
             block_chunk = (
                 self.world.get_or_create_chunk_by_position(block) if block else None
             )
@@ -392,12 +394,33 @@ class Window(pyglet.window.Window):
             ):
                 # ON OSX, control + left click = right click.
                 if previous and not stack.is_empty():
-                    if b := stack.item.create_block_to_be_placed(stack):
-                        self.world.add_block(previous, b)
-                        if b.on_block_placed(stack, block, block_raw) is False:
-                            self.world.remove_block(b)
-                        else:
-                            b.update_render_state()
+                    old_block = previous_chunk.blocks.get(previous)
+
+                    state = True
+                    if old_block:
+                        state2 = old_block.on_block_merging(stack, block_raw)
+                        if state2 is True:
+                            pass  # todo: reduce stack amount
+                        if state2 is False:
+                            if previous_real is None:
+                                state = False
+                            else:
+                                previous = previous_real
+                                previous_chunk = (
+                                    self.world.get_or_create_chunk_by_position(previous)
+                                )
+
+                        if state:
+                            state = state2 is False
+
+                    if state:
+                        if b := stack.item.create_block_to_be_placed(stack):
+                            self.world.add_block(previous, b)
+
+                            if b.on_block_placed(stack, block, block_raw) is False:
+                                self.world.remove_block(b)
+                            else:
+                                b.update_render_state()
 
             elif button == pyglet.window.mouse.LEFT and block and block_chunk:
                 instance = block_chunk.blocks[block]
@@ -697,6 +720,11 @@ class Window(pyglet.window.Window):
             self.moving_player_slot.draw(self)
 
         self.slot_hover_info.draw(self)
+
+    def invalidate_focused_block(self):
+        self.focused_block = None
+        self.focused_box_vertex.delete()
+        self.focused_box_vertex = None
 
     def draw_focused_block(self):
         """Draw black edges around the block that is currently under the

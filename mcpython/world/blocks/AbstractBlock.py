@@ -102,6 +102,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         world = self.chunk.world
         world.hide_block(self)
         world.show_block(self)
+        world.window.invalidate_focused_block()
 
     def on_block_added(self):
         pass
@@ -123,6 +124,21 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         :param hit_position: the exact position the other block was hit with during ray collision
         :return: False if the placement is prohibited
         """
+
+    def on_block_merging(
+        self,
+        itemstack: ItemStack | None,
+        hit_position: tuple[float, float, float] | None = None,
+    ) -> bool:
+        """
+        Called when the player places a block into this block at the given position
+
+        :param itemstack: the ItemStack used, or None
+        :param hit_position: the exact position this block was hit at
+        :return False if the block should be placed normally, True if the block is merged with this block
+            (-> consumes item) or None when it is prohibited
+        """
+        return False
 
     def on_block_removed(self):
         pass
@@ -341,12 +357,33 @@ class SlabLikeBlock(AbstractBlock):
         hit_position: tuple[float, float, float] | None = None,
     ):
         if hit_position:
-            print(hit_position, self.position, hit_position[1] < self.position[1])
-
             if hit_position[1] < self.position[1]:
                 self.half = SlabLikeBlock.SlabHalf.BOTTOM
             else:
                 self.half = SlabLikeBlock.SlabHalf.TOP
+
+    def on_block_merging(
+        self,
+        itemstack: ItemStack | None,
+        hit_position: tuple[float, float, float] | None = None,
+    ) -> bool:
+        if itemstack.item.NAME != self.NAME:
+            return False
+        if (
+            self.half == SlabLikeBlock.SlabHalf.TOP
+            and hit_position[1] < self.position[1] + 0.25
+        ):
+            self.half = SlabLikeBlock.SlabHalf.DOUBLE
+            self.update_render_state()
+            return True
+        elif (
+            self.half == SlabLikeBlock.SlabHalf.BOTTOM
+            and hit_position[1] > self.position[1] - 0.25
+        ):
+            self.half = SlabLikeBlock.SlabHalf.DOUBLE
+            self.update_render_state()
+            return True
+        return False
 
     def get_block_state(self) -> dict[str, str]:
         return {"type": self.half.name.lower()}
