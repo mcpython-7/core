@@ -396,31 +396,17 @@ class Window(pyglet.window.Window):
                 if previous and not stack.is_empty():
                     old_block = previous_chunk.blocks.get(previous)
 
-                    state = True
                     if old_block:
                         state2 = old_block.on_block_merging(stack, block_raw)
                         if state2 is True:
                             pass  # todo: reduce stack amount
-                        if state2 is False:
-                            if previous_real is None:
-                                state = False
-                            else:
-                                previous = previous_real
-                                previous_chunk = (
-                                    self.world.get_or_create_chunk_by_position(previous)
-                                )
+                    elif b := stack.item.create_block_to_be_placed(stack):
+                        self.world.add_block(previous, b)
 
-                        if state:
-                            state = state2 is False
-
-                    if state:
-                        if b := stack.item.create_block_to_be_placed(stack):
-                            self.world.add_block(previous, b)
-
-                            if b.on_block_placed(stack, block, block_raw) is False:
-                                self.world.remove_block(b)
-                            else:
-                                b.update_render_state()
+                        if b.on_block_placed(stack, block, block_raw) is False:
+                            self.world.remove_block(b)
+                        else:
+                            b.update_render_state()
 
             elif button == pyglet.window.mouse.LEFT and block and block_chunk:
                 instance = block_chunk.blocks[block]
@@ -722,9 +708,10 @@ class Window(pyglet.window.Window):
         self.slot_hover_info.draw(self)
 
     def invalidate_focused_block(self):
-        self.focused_block = None
-        self.focused_box_vertex.delete()
-        self.focused_box_vertex = None
+        if self.focused_block:
+            self.focused_block = None
+            self.focused_box_vertex.delete()
+            self.focused_box_vertex = None
 
     def draw_focused_block(self):
         """Draw black edges around the block that is currently under the

@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import random
 import typing
+import math
 import cProfile
 
 import opensimplex
@@ -98,6 +99,45 @@ class OakTree:
 
 
 OAK_TREE = OakTree("minecraft:oak_log", "minecraft:oak_leaves")
+
+
+DEBUG_WORLD_MAPPING: dict[tuple[int, int], tuple[str, dict[str, str]]] = {}
+RANGE = 0
+
+
+def setup_debug_world_registry():
+    from mcpython.world.blocks.AbstractBlock import BLOCK_REGISTRY
+
+    block_states: list[tuple[str, dict[str, str]]] = []
+    for block in BLOCK_REGISTRY:
+        block_states += map(lambda e: (block.NAME, e), block.BLOCk_STATE_LISTING)
+    block_states.reverse()
+
+    size = math.ceil(math.sqrt(len(block_states))) // 2
+    global RANGE
+    RANGE = math.floor(size / 4)
+
+    i = len(block_states) - 1
+    for dx, dz in itertools.product(range(-size, size), range(-size, size)):
+        DEBUG_WORLD_MAPPING[dx * 4, dz * 4] = block_states[i]
+        i -= 1
+        if i < 0:
+            break
+
+
+def generate_debug_world_chunk(chunk: Chunk):
+    cx, cz = chunk.position
+
+    for dx, dz in itertools.product(range(16), range(16)):
+        x = cx * 16 + dx
+        z = cz * 16 + dz
+
+        block, state = DEBUG_WORLD_MAPPING.get((x, z), (None, None))
+
+        if block:
+            instance = chunk.add_block((x, 0, z), block)
+            instance.set_block_state(state)
+            instance.update_render_state()
 
 
 def generate_chunk(chunk: Chunk):

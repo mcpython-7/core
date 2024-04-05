@@ -32,6 +32,9 @@ class Registry(IBufferSerializable):
         self._namespace_free_registry: dict[str, tuple[type[IRegisterAble], ...]] = {}
         self._on_registration_period: list[typing.Callable] = []
 
+    def __iter__(self):
+        yield from self._registry.values()
+
     def encode(self, buffer: WriteBuffer):
         encode_version = issubclass(self.data_type, IBufferSerializableWithVersion)
 

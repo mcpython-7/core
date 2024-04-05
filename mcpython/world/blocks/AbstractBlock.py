@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import enum
+import itertools
 import typing
 
 import pyglet.graphics.vertexdomain
@@ -35,6 +36,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     TRANSPARENT = False
     NO_COLLISION = False
     BOUNDING_BOX: IAABB = AABB(Vec3(0, 0, 0), Vec3(1, 1, 1))
+    BLOCk_STATE_LISTING: list[dict[str, str]] = [{}]
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
@@ -135,8 +137,7 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
 
         :param itemstack: the ItemStack used, or None
         :param hit_position: the exact position this block was hit at
-        :return False if the block should be placed normally, True if the block is merged with this block
-            (-> consumes item) or None when it is prohibited
+        :return False if the block should be placed / merged, True if the block is merged with this block (-> consumes item)
         """
         return False
 
@@ -257,6 +258,8 @@ class LogAxis(enum.Enum):
 
 
 class LogLikeBlock(AbstractBlock):
+    BLOCk_STATE_LISTING = [{"axis": "y"}, {"axis": "x"}, {"axis": "z"}]
+
     def __init__(self, position: tuple[int, int, int]):
         super().__init__(position)
         self.axis = LogAxis.Y
@@ -296,6 +299,15 @@ class LogLikeBlock(AbstractBlock):
 
 class FenceLikeBlock(AbstractBlock):
     FACE_ORDER: list[Facing] = list(Facing)[2:]
+    BLOCk_STATE_LISTING = [
+        {
+            "north": str(bool(a)).lower(),
+            "east": str(bool(b)).lower(),
+            "south": str(bool(c)).lower(),
+            "west": str(bool(d)).lower(),
+        }
+        for a, b, c, d in itertools.product(range(2), range(2), range(2), range(2))
+    ]
 
     def __init__(self, position: tuple[int, int, int]):
         super().__init__(position)
@@ -340,6 +352,11 @@ class FenceLikeBlock(AbstractBlock):
 class SlabLikeBlock(AbstractBlock):
     TOP_BOUNDING_BOX = AABB(Vec3(0, 0.5, 0), Vec3(1, 0.5, 1))
     BOTTOM_BOUNDING_BOX = AABB(Vec3(0, 0, 0), Vec3(1, 0.5, 1))
+    BLOCK_STATE_LISTING = [
+        {"half": "top"},
+        {"half": "bottom"},
+        {"half": "double"},
+    ]
 
     class SlabHalf(enum.Enum):
         TOP = 0
@@ -431,6 +448,16 @@ class StairsLikeBlock(AbstractBlock):
         (StairHalf.BOTTOM, Facing.WEST, StairShape.STRAIGHT): AABBGroup().add_box(AABB(Vec3(0, 0, 0), Vec3(1, 0.5, 1))).add_box(AABB(Vec3(0, 0.5, 0), Vec3(0.5, 0.5, 1))),
     }
     # fmt: on
+    BLOCk_STATE_LISTING = [
+        {
+            "half": half.name.lower(),
+            "facing": facing.name.lower(),
+            "shape": shape.name.lower(),
+        }
+        for half, facing, shape in itertools.product(
+            StairHalf, list(Facing)[3:], StairShape
+        )
+    ]
 
     def __init__(self, position: tuple[int, int, int]):
         super().__init__(position)
