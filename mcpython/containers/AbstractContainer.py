@@ -46,7 +46,9 @@ class Slot(IBufferSerializable):
         self.slot_batch = pyglet.graphics.Batch()
         self.flat_batch = pyglet.graphics.Batch()
         self.slot_vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
-        self.number_label = pyglet.text.Label(font_size=4 * 4, bold=True)
+        self.number_label = pyglet.text.Label(
+            font_size=4 * 4, bold=True, anchor_x="right", anchor_y="bottom"
+        )
         self.update_position(relative_position)
         self.enable_interaction = enable_interaction
         self.allow_player_insertion = allow_player_insertion
@@ -85,8 +87,8 @@ class Slot(IBufferSerializable):
 
         if not self.itemstack.is_empty():
             self.number_label.position = (
-                (offset[0] + 24 - self.number_label.content_width) * 4,
-                (offset[1]) * 4,
+                (offset[0] + 16) * window.inventory_scale * 2,
+                (offset[1]) * window.inventory_scale * 2,
                 0,
             )
             self.number_label.draw()
