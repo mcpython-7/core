@@ -137,9 +137,24 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
 
         :param itemstack: the ItemStack used, or None
         :param hit_position: the exact position this block was hit at
-        :return False if the block should be placed / merged, True if the block is merged with this block (-> consumes item)
+        :returns: False if the block should be placed / merged, True if the block is merged with this block (-> consumes item)
         """
         return False
+
+    def on_block_broken(
+        self,
+        itemstack: ItemStack | None,
+        hit_position: tuple[float, float, float] | None,
+    ) -> bool | None:
+        """
+        Called when the player broke a block with the given 'itemstack'
+
+        :param itemstack: the ItemStack used, or None
+        :param hit_position: the exact position this block was hit at or None
+        :returns: None to let the block breaking happen, False to disallow it, and True to mark that it was handled
+            (and accordingly, damage to the item should be delt)
+        """
+        return None if self.BREAKABLE else False
 
     def on_block_removed(self):
         pass

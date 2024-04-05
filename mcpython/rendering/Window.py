@@ -411,8 +411,11 @@ class Window(pyglet.window.Window):
             elif button == pyglet.window.mouse.LEFT and block and block_chunk:
                 instance = block_chunk.blocks[block]
 
-                if instance.BREAKABLE:
+                state = instance.on_block_broken(stack, block_raw)
+                if state is None:
                     self.world.remove_block(block)
+
+                # todo: if state is not False, deal damage to tools
 
             elif button == pyglet.window.mouse.MIDDLE and block and block_chunk:
                 instance = block_chunk.blocks[block]
