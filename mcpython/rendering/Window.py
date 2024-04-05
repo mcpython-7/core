@@ -56,25 +56,6 @@ class Window(pyglet.window.Window):
         # Whether or not the window exclusively captures the mouse.
         self.exclusive = False
 
-        # When flying gravity has no effect and speed is increased.
-        self.flying = False
-
-        # Strafing is moving lateral to the direction you are facing,
-        # e.g. moving to the left or right while continuing to face forward.
-        #
-        # First element is -1 when moving forward, 1 when moving back, and 0
-        # otherwise. The second element is -1 when moving left, 1 when moving
-        # right, and 0 otherwise.
-        self.strafe = [0, 0]
-
-        # First element is rotation of the player in the x-z plane (ground
-        # plane) measured from the z-axis down. The second is the rotation
-        # angle from the ground plane up. Rotation is in degrees.
-        #
-        # The vertical plane rotation ranges from -90 (looking straight down) to
-        # 90 (looking straight up). The horizontal rotation range is unbounded.
-        self.rotation: tuple[float, float] = (0, 0)
-
         # Which sector the player is currently in.
         self.sector = None
 
@@ -131,63 +112,7 @@ class Window(pyglet.window.Window):
         """
         super(Window, self).set_exclusive_mouse(exclusive)
         self.exclusive = exclusive
-        self.strafe = [0, 0]
-
-    def get_sight_vector(self) -> Vec3:
-        """Returns the current line of sight vector indicating the direction
-        the player is looking.
-
-        """
-        x, y = self.rotation
-        # y ranges from -90 to 90, or -pi/2 to pi/2, so m ranges from 0 to 1 and
-        # is 1 when looking ahead parallel to the ground and 0 when looking
-        # straight up or down.
-        m = math.cos(math.radians(y))
-        # dy ranges from -1 to 1 and is -1 when looking straight down and 1 when
-        # looking straight up.
-        dy = math.sin(math.radians(y))
-        dx = math.cos(math.radians(x - 90)) * m
-        dz = math.sin(math.radians(x - 90)) * m
-        return Vec3(dx, dy, dz)
-
-    def get_motion_vector(self) -> tuple[float, float, float]:
-        """Returns the current motion vector indicating the velocity of the
-        player.
-
-        Returns
-        -------
-        vector : tuple of len 3
-            Tuple containing the velocity in x, y, and z respectively.
-
-        """
-        if any(self.strafe):
-            x, y = self.rotation
-            strafe = math.degrees(math.atan2(*self.strafe))
-            y_angle = math.radians(y)
-            x_angle = math.radians(x + strafe)
-            if self.flying:
-                m = math.cos(y_angle)
-                dy = math.sin(y_angle)
-                if self.strafe[1]:
-                    # Moving left or right.
-                    dy = 0.0
-                    m = 1
-                if self.strafe[0] > 0:
-                    # Moving backwards.
-                    dy *= -1
-                # When you are flying up or down, you have less left and right
-                # motion.
-                dx = math.cos(x_angle) * m
-                dz = math.sin(x_angle) * m
-            else:
-                dy = 0.0
-                dx = math.cos(x_angle)
-                dz = math.sin(x_angle)
-        else:
-            dy = 0.0
-            dx = 0.0
-            dz = 0.0
-        return dx, dy, dz
+        self.player.strafe = [0, 0]
 
     def update(self, dt: float):
         """This method is scheduled to be called repeatedly by the pyglet
@@ -231,13 +156,13 @@ class Window(pyglet.window.Window):
 
         """
         # walking
-        speed = FLYING_SPEED if self.flying else WALKING_SPEED
+        speed = FLYING_SPEED if self.player.flying else WALKING_SPEED
         d = dt * speed  # distance covered this tick.
-        dx, dy, dz = self.get_motion_vector()
+        dx, dy, dz = self.player.get_motion_vector()
         # New position in space, before accounting for gravity.
         dx, dy, dz = dx * d, dy * d, dz * d
         # gravity
-        if not self.flying:
+        if not self.player.flying:
             # Update your vertical speed: if you are falling, speed up until you
             # hit terminal velocity; if you are jumping, slow down until you
             # start falling.
@@ -334,8 +259,8 @@ class Window(pyglet.window.Window):
         if self.exclusive:
             stack = self.player.inventory.get_selected_itemstack()
 
-            vector = self.get_sight_vector()
-            block, previous, block_raw, previous_real = self.world.hit_test(
+            vector = self.player.get_sight_vector()
+            block, previous, block_raw, previous_real = self.player.hit_test(
                 self.player.position, vector
             )
             block_chunk = (
@@ -409,7 +334,8 @@ class Window(pyglet.window.Window):
                     self.player.inventory.selected_slot = (
                         self.player.inventory.slots.index(slot)
                     )
-                    self.player.update_breaking_block(force_reset=True)
+                    if self.player.breaking_block is not None:
+                        self.player.update_breaking_block(force_reset=True)
 
             return
 
@@ -447,13 +373,13 @@ class Window(pyglet.window.Window):
         if self.exclusive:
             m = 0.15
 
-            x, y = self.rotation
+            x, y = self.player.rotation
             x, y = x + dx * m, y + dy * m
 
             # y = max(-90.0, min(90.0, y))
             y = max(-89.9, min(89.9, y))
 
-            self.rotation = (x, y)
+            self.player.rotation = (x, y)
 
         self.mouse_position = x, y
 
@@ -487,16 +413,16 @@ class Window(pyglet.window.Window):
 
         if self.exclusive:
             if symbol == key.W:
-                self.strafe[0] -= 1
+                self.player.strafe[0] -= 1
 
             elif symbol == key.S:
-                self.strafe[0] += 1
+                self.player.strafe[0] += 1
 
             elif symbol == key.A:
-                self.strafe[1] -= 1
+                self.player.strafe[1] -= 1
 
             elif symbol == key.D:
-                self.strafe[1] += 1
+                self.player.strafe[1] += 1
 
             elif symbol == key.SPACE:
                 if self.dy == 0:
@@ -525,12 +451,13 @@ class Window(pyglet.window.Window):
                 self.player.inventory.show_container()
 
         elif symbol == key.TAB:
-            self.flying = not self.flying
+            self.player.flying = not self.player.flying
 
         elif symbol in self.num_keys and self.exclusive:
             index = symbol - self.num_keys[0]
             self.player.inventory.selected_slot = index
-            self.player.update_breaking_block(force_reset=True)
+            if self.player.breaking_block is not None:
+                self.player.update_breaking_block(force_reset=True)
 
     def on_text(self, text):
         for container in CONTAINER_STACK:
@@ -542,7 +469,8 @@ class Window(pyglet.window.Window):
             self.player.inventory.selected_slot = int(
                 (self.player.inventory.selected_slot - scroll_y) % 9
             )
-            self.player.update_breaking_block(force_reset=True)
+            if self.player.breaking_block is not None:
+                self.player.update_breaking_block(force_reset=True)
 
     def on_key_release(self, symbol: int, modifiers: int):
         """Called when the player releases a key. See pyglet docs for key
@@ -558,13 +486,13 @@ class Window(pyglet.window.Window):
         """
         if self.exclusive:
             if symbol == key.W:
-                self.strafe[0] += 1
+                self.player.strafe[0] += 1
             elif symbol == key.S:
-                self.strafe[0] -= 1
+                self.player.strafe[0] -= 1
             elif symbol == key.A:
-                self.strafe[1] += 1
+                self.player.strafe[1] += 1
             elif symbol == key.D:
-                self.strafe[1] -= 1
+                self.player.strafe[1] -= 1
 
     def on_resize(self, width: int, height: int):
         """Called when the window is resized to a new `width` and `height`."""
@@ -616,7 +544,7 @@ class Window(pyglet.window.Window):
             self.aspect_ratio, z_near=0.1, z_far=100, fov=45
         )
         position = self.player.position
-        vector = self.get_sight_vector()
+        vector = self.player.get_sight_vector()
         self.view = Mat4.look_at(position, position + vector, Vec3(0, 1, 0))
         if offset:
             self.view @= Mat4.from_translation(offset)
@@ -720,8 +648,8 @@ class Window(pyglet.window.Window):
         crosshairs.
 
         """
-        vector = self.get_sight_vector()
-        if block := self.world.hit_test(self.player.position, vector)[0]:
+        vector = self.player.get_sight_vector()
+        if block := self.player.hit_test(self.player.position, vector)[0]:
             instance = self.world.get_or_create_chunk_by_position(block).blocks.get(
                 block
             )

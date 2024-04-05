@@ -272,60 +272,6 @@ class World:
 
         self.ensure_chunks_shown()
 
-    def hit_test(
-        self,
-        position: Vec3,
-        vector: Vec3,
-        max_distance=8,
-    ) -> (
-        tuple[
-            tuple[int, int, int],
-            tuple[int, int, int],
-            tuple[float, float, float],
-            tuple[int, int, int] | None,
-        ]
-        | tuple[None, None, None, None]
-    ):
-        """Line of sight search from current position. If a block is
-        intersected it is returned, along with the block previously in the line
-        of sight. If no block is found, return None, None.
-
-        Parameters
-        ----------
-        position : tuple of len 3
-            The (x, y, z) position to check visibility from.
-        vector : tuple of len 3
-            The line of sight vector.
-        max_distance : int
-            How many blocks away to search for a hit.
-
-        """
-        m = 8
-        x, y, z = position
-        dx, dy, dz = vector
-        previous = None
-        block = None
-        real_previous = None
-
-        for _ in range(max_distance * m):
-            key = normalize((x, y, z))
-
-            if key != previous:
-                block = self.get_or_create_chunk_by_position(key).blocks.get(key)
-
-            if block and block.get_bounding_box().point_intersect(
-                Vec3(x, y, z) - Vec3(*block.position)
-            ):
-                return key, previous, (x, y, z), real_previous
-
-            if key != previous:
-                real_previous = previous
-
-            previous = key
-            x, y, z = x + dx / m, y + dy / m, z + dz / m
-
-        return None, None, None, None
-
     def exposed(self, position: tuple[int, int, int]) -> bool:
         """Returns False is given `position` is surrounded on all 6 sides by
         blocks, True otherwise.

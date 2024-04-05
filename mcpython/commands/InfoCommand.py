@@ -25,8 +25,8 @@ def execute_info_tags(chat, results):
 def execute_block_info(chat, results):
     from mcpython.rendering.Window import Window
 
-    vector = Window.INSTANCE.get_sight_vector()
-    pos, *_ = Window.INSTANCE.world.hit_test(Window.INSTANCE.player.position, vector)
+    vector = Window.INSTANCE.player.get_sight_vector()
+    pos, *_ = Window.INSTANCE.player.hit_test(Window.INSTANCE.player.position, vector)
     instance = Window.INSTANCE.world.get_or_create_chunk_by_position(pos).blocks.get(
         pos
     )

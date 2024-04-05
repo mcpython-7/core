@@ -89,7 +89,8 @@ class PlayerInventoryContainer(Container):
         if self.slots.index(slot) == self.selected_slot:
             from mcpython.rendering.Window import Window
 
-            Window.INSTANCE.player.update_breaking_block(force_reset=True)
+            if Window.INSTANCE.player.breaking_block is not None:
+                Window.INSTANCE.player.update_breaking_block(force_reset=True)
 
     def hide_container(self):
         super().hide_container()
