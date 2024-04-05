@@ -138,6 +138,10 @@ class Window(pyglet.window.Window):
             self.player_inventory, (0, 0), on_update=self._update_moving_slot
         )
 
+        self.breaking_block: AbstractBlock | None = None
+        self.breaking_block_timer: float | None = None
+        self.breaking_block_position: tuple[float, float, float] | None = None
+
         # This call schedules the `update()` method to be called
         # TICKS_PER_SEC. This is the main game event loop.
         self.last_tick = time.time()
@@ -240,6 +244,7 @@ class Window(pyglet.window.Window):
 
         delta = time.time() - self.last_tick
         self.last_tick = time.time()
+        self.update_breaking_block_state(dt)
 
         for _ in range(int(delta * 20)):
             self.world.tick()
@@ -409,13 +414,7 @@ class Window(pyglet.window.Window):
                             b.update_render_state()
 
             elif button == pyglet.window.mouse.LEFT and block and block_chunk:
-                instance = block_chunk.blocks[block]
-
-                state = instance.on_block_broken(stack, block_raw)
-                if state is None:
-                    self.world.remove_block(block)
-
-                # todo: if state is not False, deal damage to tools
+                self.update_breaking_block()
 
             elif button == pyglet.window.mouse.MIDDLE and block and block_chunk:
                 instance = block_chunk.blocks[block]
@@ -439,6 +438,7 @@ class Window(pyglet.window.Window):
                     self.player_inventory.selected_slot = (
                         self.player_inventory.slots.index(slot)
                     )
+                    self.update_breaking_block(force_reset=True)
 
             return
 
@@ -451,6 +451,52 @@ class Window(pyglet.window.Window):
                 modifiers,
             ):
                 return
+
+    def on_mouse_release(self, x, y, button, modifiers):
+        self.breaking_block = None
+
+    def update_breaking_block(self, force_reset=False):
+        stack = self.player_inventory.get_selected_itemstack()
+
+        vector = self.get_sight_vector()
+        block, previous, block_raw, previous_real = self.world.hit_test(
+            self.position, vector
+        )
+        if block is None:
+            return
+        block_chunk = self.world.get_or_create_chunk_by_position(block)
+
+        instance = block_chunk.blocks[block]
+        self.breaking_block_position = block_raw
+
+        if instance is None:
+            self.breaking_block = None
+        elif instance != self.breaking_block or force_reset:
+            self.breaking_block = instance
+            self.breaking_block_timer = instance.on_block_starting_to_break(
+                stack, block_raw
+            )
+
+    def update_breaking_block_state(self, dt: float):
+        if self.breaking_block is None or self.breaking_block_timer is None:
+            return
+
+        self.breaking_block_timer -= dt * 20
+
+        if self.breaking_block_timer <= 0:
+            state = self.breaking_block.on_block_broken(
+                self.player_inventory.get_selected_itemstack(),
+                self.breaking_block_position,
+            )
+            if state is None:
+                self.world.remove_block(self.breaking_block)
+
+            # todo: if state is not False, deal damage to tools
+
+            if state is not False:
+                self.update_breaking_block()
+            else:
+                self.breaking_block = None
 
     def on_mouse_motion(self, x: int, y: int, dx: int, dy: int):
         self.on_any_mouse_motion(x, y, dx, dy, 0, 0)
@@ -556,6 +602,7 @@ class Window(pyglet.window.Window):
         elif symbol in self.num_keys and self.exclusive:
             index = symbol - self.num_keys[0]
             self.player_inventory.selected_slot = index
+            self.update_breaking_block(force_reset=True)
 
     def on_text(self, text):
         for container in CONTAINER_STACK:
@@ -567,6 +614,7 @@ class Window(pyglet.window.Window):
             self.player_inventory.selected_slot = int(
                 (self.player_inventory.selected_slot - scroll_y) % 9
             )
+            self.update_breaking_block(force_reset=True)
 
     def on_key_release(self, symbol: int, modifiers: int):
         """Called when the player releases a key. See pyglet docs for key

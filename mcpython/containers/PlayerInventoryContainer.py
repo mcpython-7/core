@@ -55,10 +55,7 @@ class PlayerInventoryContainer(Container):
 
         self.slots = (
             [
-                Slot(
-                    self,
-                    (8 + 18 * i, 8),
-                )
+                Slot(self, (8 + 18 * i, 8), on_update=self._on_hotbar_update)
                 for i in range(9)
             ]
             + [
@@ -87,6 +84,12 @@ class PlayerInventoryContainer(Container):
         )
 
         self.selected_slot = 0
+
+    def _on_hotbar_update(self, slot: Slot, itemstack: ItemStack):
+        if self.slots.index(slot) == self.selected_slot:
+            from mcpython.rendering.Window import Window
+
+            Window.INSTANCE.update_breaking_block(force_reset=True)
 
     def hide_container(self):
         super().hide_container()

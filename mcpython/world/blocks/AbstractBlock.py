@@ -38,6 +38,8 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
     BOUNDING_BOX: IAABB = AABB(Vec3(0, 0, 0), Vec3(1, 1, 1))
     BLOCk_STATE_LISTING: list[dict[str, str]] = [{}]
 
+    HARDNESS = 8
+
     @classmethod
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -140,6 +142,20 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
         :returns: False if the block should be placed / merged, True if the block is merged with this block (-> consumes item)
         """
         return False
+
+    def on_block_starting_to_break(
+        self,
+        itemstack: ItemStack | None,
+        hit_position: tuple[float, float, float] | None,
+    ) -> float | None:
+        """
+        Called when the player starts breaking a block
+
+        :param itemstack: the ItemStack used, or None
+        :param hit_position: the exact position this block was hit at, or None
+        :returns: the break time in ticks, or None if the block cannot be broken with this itemstack
+        """
+        return self.HARDNESS if self.BREAKABLE else None
 
     def on_block_broken(
         self,
