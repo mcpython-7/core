@@ -6,6 +6,7 @@ import typing
 
 if typing.TYPE_CHECKING:
     from mcpython.rendering.Window import Window
+    from mcpython.states.StateHandler import StateHandler
 
 
 class AbstractStatePart(ABC):
@@ -94,6 +95,7 @@ class AbstractStatePart(ABC):
 class AbstractState(ABC):
     def __init__(self):
         self.state_parts: list[AbstractStatePart] = []
+        self.state_handler: StateHandler | None = None
 
     def on_activate(self):
         from mcpython.rendering.Window import Window

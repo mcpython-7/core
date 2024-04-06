@@ -6,6 +6,7 @@ from mcpython.containers.AbstractContainer import CONTAINER_STACK
 from mcpython.rendering.Window import Window
 from mcpython.states.AbstractState import AbstractState
 from mcpython.states import InventoryController, PlayerController, WorldController
+from mcpython.states.EscapeState import EscapeState
 
 
 class GameState(AbstractState):
@@ -34,6 +35,8 @@ class GameState(AbstractState):
             self.inventory_controller,
         ]
         self.window = window
+        self.escape_state = EscapeState(window, self)
+        window.state_handler.register_state("minecraft:escape_game", self.escape_state)
 
     def on_tick(self, dt):
         super().on_tick(dt)
@@ -42,12 +45,11 @@ class GameState(AbstractState):
     def on_key_press(self, symbol: int, modifiers: int):
         super().on_key_press(symbol, modifiers)
 
-        # todo: add escape state!
         if symbol == key.ESCAPE:
             for container in CONTAINER_STACK:
                 container.on_close_with_escape()
 
-            self.window.set_exclusive_mouse(not self.window.exclusive)
+            self.state_handler.change_state(self.escape_state)
 
         elif symbol == key.E:
             if self.window.player.chat.open:

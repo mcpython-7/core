@@ -39,6 +39,7 @@ class StateHandler:
         )
 
         if self._current_state is not None:
+            self._current_state.state_handler = self
             self._current_state.on_activate()
 
         return self
