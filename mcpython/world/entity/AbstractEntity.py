@@ -8,7 +8,7 @@ import pyglet.graphics.vertexdomain
 from pyglet.math import Vec3
 
 from mcpython.resources.Registry import Registry, IRegisterAble
-
+from mcpython.world.util import sectorize
 
 if typing.TYPE_CHECKING:
     from mcpython.rendering.Window import Window
@@ -19,7 +19,9 @@ if typing.TYPE_CHECKING:
 class AbstractEntity(IRegisterAble, ABC):
     def __init__(self, world: World, position: Vec3, rotation: Vec3):
         self.world = world
-        self.position = position
+        self.chunk = self.world.get_or_create_chunk_by_position(position)
+        self.chunk.entities.append(self)
+        self._position = position
         self.rotation = rotation
         self.motion = Vec3(0, 0, 0)
         self.gravity_effect = 1
@@ -28,10 +30,27 @@ class AbstractEntity(IRegisterAble, ABC):
         self.batch = pyglet.graphics.Batch()
         self.vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
 
+    def get_position(self):
+        return self._position
+
+    def set_position(self, pos: Vec3):
+        self._position = pos
+        c = sectorize(pos)
+        if self.chunk.position != c:
+            chunk = self.world.get_or_create_chunk_by_position(pos)
+            self.chunk.entities.remove(self)
+            self.chunk = chunk
+            self.chunk.entities.append(self)
+
+    position = property(get_position, set_position)
+
     def try_pickup(self, itemstack: ItemStack) -> bool:
         return False
 
-    def tick(self, dt: float):
+    def tick(self):
+        pass
+
+    def move_tick(self, dt: float):
         self.update_position(dt)
 
     def update_position(self, dt: float):

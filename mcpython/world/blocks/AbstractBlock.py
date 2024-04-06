@@ -192,10 +192,10 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
 
     def set_ticking(self, ticking: bool):
         if ticking:
-            if self not in self.chunk.tick_list:
-                self.chunk.tick_list.append(self)
-        elif self in self.chunk.tick_list:
-            self.chunk.tick_list.remove(self)
+            if self not in self.chunk.block_tick_list:
+                self.chunk.block_tick_list.append(self)
+        elif self in self.chunk.block_tick_list:
+            self.chunk.block_tick_list.remove(self)
 
     def on_block_interaction(
         self, itemstack: ItemStack, button: int, modifiers: int

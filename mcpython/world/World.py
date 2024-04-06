@@ -15,6 +15,7 @@ from mcpython.config import TICKS_PER_SEC
 from mcpython.rendering.util import (
     FACES,
 )
+from mcpython.world.entity.AbstractEntity import AbstractEntity
 from mcpython.world.serialization.DataBuffer import (
     IBufferSerializableWithVersion,
     ReadBuffer,
@@ -42,11 +43,12 @@ class Chunk(IBufferSerializableWithVersion):
         self.world = world
         self.position = position
         self.blocks: dict[tuple[int, int, int], AbstractBlock] = {}
+        self.block_tick_list: list[AbstractBlock] = []
+        self.entities: list[AbstractEntity] = []
         self.shown = False
-        self.tick_list: list[AbstractBlock] = []
 
     def tick(self):
-        for block in self.tick_list:
+        for block in self.block_tick_list:
             block.on_tick()
 
         cx, cz = self.position
@@ -58,6 +60,13 @@ class Chunk(IBufferSerializableWithVersion):
             )
             if block := self.blocks.get(pos):
                 block.on_random_update()
+
+        for entity in self.entities:
+            entity.tick()
+
+    def entity_tick(self, dt: float):
+        for entity in self.entities:
+            entity.move_tick(dt)
 
     def decode_instance(self, buffer: ReadBuffer):
         sector = buffer.read_int32(), buffer.read_int32()
@@ -164,7 +173,7 @@ class Chunk(IBufferSerializableWithVersion):
             self.world.send_block_update(position)
 
         if instance.SHOULD_TICK:
-            self.tick_list.append(instance)
+            self.block_tick_list.append(instance)
 
         return instance
 
@@ -205,7 +214,7 @@ class Chunk(IBufferSerializableWithVersion):
 
         if instance.SHOULD_TICK:
             try:
-                self.tick_list.remove(instance)
+                self.block_tick_list.remove(instance)
             except ValueError:
                 print(
                     f"WARN: block {instance} is in the world and was scheduled to be ticked, but is not registered for ticking!",
@@ -239,6 +248,10 @@ class World:
     def tick(self):
         for chunk in self.chunks.values():
             chunk.tick()
+
+    def entity_tick(self, dt: float):
+        for chunk in self.chunks.values():
+            chunk.entity_tick(dt)
 
     def get_or_create_chunk_by_position(
         self, position: tuple[int, int, int] | tuple[int, int] | Vec3

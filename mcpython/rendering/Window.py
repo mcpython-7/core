@@ -138,7 +138,7 @@ class Window(pyglet.window.Window):
             self.world.tick()
 
     def _update(self, dt: float):
-        self.player.tick(dt)
+        self.world.entity_tick(dt)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
         """Called when a mouse button is pressed. See pyglet docs for button
@@ -596,7 +596,7 @@ class Window(pyglet.window.Window):
     def draw_label(self):
         """Draw the label in the top left of the screen."""
         x, y, z = self.player.position
-        self.label.text = "%02d (%.2f, %.2f, %.2f) %d (%d)" % (
+        self.label.text = "%02d (%.2f, %.2f, %.2f) %d (%d) %d" % (
             pyglet.clock.get_frequency(),
             x,
             y,
@@ -604,6 +604,11 @@ class Window(pyglet.window.Window):
             len(self.world.chunks),
             len(
                 self.world.get_or_create_chunk_by_position(self.player.position).blocks
+            ),
+            len(
+                self.world.get_or_create_chunk_by_position(
+                    self.player.position
+                ).entities
             ),
         )
         self.label.draw()
