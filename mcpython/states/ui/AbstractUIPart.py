@@ -29,8 +29,12 @@ class AbstractUIPart(AbstractStatePart, ABC):
         w, h = self.get_visual_size()
 
         return (
-            x - width * self.window_alignment[0] + w * self.item_alignment[0],
-            y - height * self.window_alignment[0] + h * self.item_alignment[1],
+            (x - width * self.window_alignment[0]) / Window.INSTANCE.inventory_scale
+            + w * self.item_alignment[0]
+            - self.position[0],
+            (y - height * self.window_alignment[0]) / Window.INSTANCE.inventory_scale
+            + h * self.item_alignment[1]
+            - self.position[1],
         )
 
     def get_visual_size(self) -> tuple[int, int]:

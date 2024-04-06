@@ -19,14 +19,23 @@ class EscapeState(AbstractState):
             self.world_controller,
             self.inventory_controller,
             UIPartButton(
-                (0, 0),
-                (150, 20),
+                (0, 60),
+                (120, 20),
                 "Back to the Game",
                 window_alignment=(0.5, 0.5),
                 item_alignment=(0.5, 0.5),
             ).on_press(
                 lambda _: self.state_handler.change_state(self.game_state)
                 == self.window.set_exclusive_mouse(True)
+            ),
+            UIPartButton(
+                (0, 20),
+                (120, 20),
+                "Quit Game",
+                window_alignment=(0.5, 0.5),
+                item_alignment=(0.5, 0.5),
+            ).on_press(
+                lambda _: self.window.close(),
             ),
         ]
         self.window = window

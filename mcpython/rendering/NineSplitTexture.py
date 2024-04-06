@@ -36,23 +36,20 @@ class NineSplitTexture:
                 f"Texture size is too small, must be at least {self.border * 2} pixels in both dimensions!"
             )
 
-        x, y = offset
-        w, h = self.texture.width, self.texture.height
-
         iw, ih = self.fragments[1][1].width, self.fragments[1][1].height
 
         sprites = [
-            pyglet.sprite.Sprite(self.fragments[0][0], x=-x, y=-y, batch=batch),
+            pyglet.sprite.Sprite(self.fragments[0][0], x=0, y=0, batch=batch),
             pyglet.sprite.Sprite(
-                self.fragments[2][0], x=size[0] - x - self.border, y=-y, batch=batch
+                self.fragments[2][0], x=size[0] - self.border, y=0, batch=batch
             ),
             pyglet.sprite.Sprite(
-                self.fragments[0][2], x=-x, y=size[1] - y - self.border, batch=batch
+                self.fragments[0][2], x=0, y=size[1] - self.border, batch=batch
             ),
             pyglet.sprite.Sprite(
                 self.fragments[2][2],
-                x=size[0] - x - self.border,
-                y=size[1] - y - self.border,
+                x=size[0] - self.border,
+                y=size[1] - self.border,
                 batch=batch,
             ),
         ]
@@ -83,7 +80,7 @@ class NineSplitTexture:
             pyglet.sprite.Sprite(
                 self.fragments[1][2],
                 x=self.border + i * iw,
-                y=size[1] - y - self.border,
+                y=size[1] - self.border,
                 batch=batch,
             )
             for i in range(hbox_count)
@@ -98,7 +95,7 @@ class NineSplitTexture:
                         self.border,
                     ),
                     x=self.border + hbox_count * iw,
-                    y=size[1] - y - self.border,
+                    y=size[1] - self.border,
                     batch=batch,
                 )
             )
@@ -126,7 +123,7 @@ class NineSplitTexture:
         sprites.extend(
             pyglet.sprite.Sprite(
                 self.fragments[2][1],
-                x=size[0] - x - self.border,
+                x=size[0] - self.border,
                 y=self.border + i * ih,
                 batch=batch,
             )
@@ -138,7 +135,7 @@ class NineSplitTexture:
                     self.fragments[2][1].get_region(
                         0, 0, self.border, (size[1] - 2 * self.border) % ih
                     ),
-                    x=size[0] - x - self.border,
+                    x=size[0] - self.border,
                     y=self.border + vbox_count * ih,
                     batch=batch,
                 )
@@ -201,5 +198,10 @@ class NineSplitTexture:
                     batch=batch,
                 )
             )
+
+        x, y = offset
+        for sprite in sprites:
+            sprite.x += x
+            sprite.y += y
 
         return sprites

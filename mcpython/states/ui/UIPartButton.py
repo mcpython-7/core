@@ -60,8 +60,8 @@ class UIPartButton(AbstractUIPart):
             self.text,
             anchor_x="center",
             anchor_y="center",
-            x=size[0] / 2,
-            y=size[1] / 2,
+            x=size[0] / 2 + position[0],
+            y=size[1] / 2 + position[1],
             color=(255, 255, 255, 255),
             font_size=font_size,
         )
