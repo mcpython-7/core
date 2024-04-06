@@ -44,7 +44,10 @@ class Window(pyglet.window.Window):
         super(Window, self).__init__(*args, **kwargs)
         Window.INSTANCE = self
 
-        self.mouse_position = 0, 0
+        self.key_state_handler = key.KeyStateHandler()
+        self.mouse_state_handler = mouse.MouseStateHandler()
+
+        self.push_handlers(self.key_state_handler, self.mouse_state_handler)
 
         # Whether or not the window exclusively captures the mouse.
         self.exclusive = False
@@ -95,6 +98,10 @@ class Window(pyglet.window.Window):
         # TICKS_PER_SEC. This is the main game event loop.
         self.last_tick = time.time()
         pyglet.clock.schedule_interval(self.update, 1.0 / TICKS_PER_SEC)
+
+    @property
+    def mouse_position(self) -> tuple[int, int]:
+        return self.mouse_state_handler["x"], self.mouse_state_handler["y"]
 
     def set_exclusive_mouse(self, exclusive: bool):
         """If `exclusive` is True, the game will capture the mouse, if False
@@ -281,8 +288,6 @@ class Window(pyglet.window.Window):
             y = max(-89.9, min(89.9, y))
 
             self.player.rotation = (x, y)
-
-        self.mouse_position = x, y
 
         for container in CONTAINER_STACK:
             container.on_mouse_motion(
