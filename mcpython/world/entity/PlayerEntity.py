@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import math
 
+from pyglet.gl import glClear, GL_DEPTH_BUFFER_BIT
 from pyglet.math import Vec3
 
 from mcpython.commands.Chat import Chat
@@ -13,7 +14,11 @@ from mcpython.config import (
     TERMINAL_VELOCITY,
     PLAYER_HEIGHT,
 )
-from mcpython.containers.AbstractContainer import Slot, ItemInformationScreen
+from mcpython.containers.AbstractContainer import (
+    Slot,
+    ItemInformationScreen,
+    CONTAINER_STACK,
+)
 from mcpython.containers.PlayerInventoryContainer import (
     PlayerInventoryContainer,
     HotbarContainer,
@@ -344,3 +349,27 @@ class PlayerEntity(AbstractEntity):
                     break
 
         return tuple(p)
+
+    def draw_inventories(self, window):
+        glClear(GL_DEPTH_BUFFER_BIT)
+
+        for container in CONTAINER_STACK:
+            window.set_2d_centered_for_inventory(container)
+            container.draw(window)
+
+        if any(container.SHOULD_DRAW_MOVING_SLOT for container in CONTAINER_STACK):
+            window.set_2d_centered_for_inventory(self.inventory)
+
+            self.moving_player_slot.update_position(
+                self.inventory.window_to_relative_world(
+                    (window.mouse_position[0] - 8, window.mouse_position[1] - 7),
+                    window.get_size(),
+                    window.inventory_scale,
+                )
+            )
+
+            self.moving_player_slot.draw(window)
+
+        self.slot_hover_info.draw(window)
+
+        self.chat.draw_chat_output(window)

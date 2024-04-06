@@ -528,30 +528,7 @@ class Window(pyglet.window.Window):
         self.draw_label()
         self.draw_reticle()
 
-        self.draw_inventories()
-        self.player.chat.draw_chat_output(self)
-
-    def draw_inventories(self):
-        glClear(GL_DEPTH_BUFFER_BIT)
-
-        for container in CONTAINER_STACK:
-            self.set_2d_centered_for_inventory(container)
-            container.draw(self)
-
-        if any(container.SHOULD_DRAW_MOVING_SLOT for container in CONTAINER_STACK):
-            self.set_2d_centered_for_inventory(self.player.inventory)
-
-            self.player.moving_player_slot.update_position(
-                self.player.inventory.window_to_relative_world(
-                    (self.mouse_position[0] - 8, self.mouse_position[1] - 7),
-                    self.get_size(),
-                    self.inventory_scale,
-                )
-            )
-
-            self.player.moving_player_slot.draw(self)
-
-        self.player.slot_hover_info.draw(self)
+        self.player.draw_inventories(self)
 
     def invalidate_focused_block(self):
         if self.focused_block:
