@@ -23,12 +23,21 @@ class GameState(AbstractState):
 
     def __init__(self, window: Window):
         super().__init__()
+        self.world_controller = WorldController.WorldController(window.world)
+        self.player_controller = PlayerController.PlayerController(window.player)
+        self.inventory_controller = InventoryController.InventoryController(
+            window.player
+        )
         self.state_parts = [
-            WorldController.WorldController(window.world),
-            PlayerController.PlayerController(window.player),
-            InventoryController.InventoryController(window.player),
+            self.world_controller,
+            self.player_controller,
+            self.inventory_controller,
         ]
         self.window = window
+
+    def on_tick(self, dt):
+        super().on_tick(dt)
+        self.player_controller.enabled = self.window.exclusive
 
     def on_key_press(self, symbol: int, modifiers: int):
         super().on_key_press(symbol, modifiers)

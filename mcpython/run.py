@@ -47,9 +47,7 @@ def main():
 
     BlockStateFile.bake_all()
 
-    window = Window(width=800, height=600, caption="mcpython 7", resizable=True)
-    # Hide the mouse cursor and prevent the mouse from leaving the window.
-    window.set_exclusive_mouse(True)
+    Window(width=800, height=600, caption="mcpython 7", resizable=True)
     setup()
 
     RECIPE_MANAGER.discover_recipes()

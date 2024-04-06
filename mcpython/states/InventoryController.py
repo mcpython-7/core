@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-import time
 
 import pyglet
-from pyglet.window import mouse, key
 
-from mcpython.config import JUMP_SPEED
 from mcpython.containers.AbstractContainer import CONTAINER_STACK
-from mcpython.containers.ItemStack import ItemStack
 from mcpython.rendering.Window import Window
 from mcpython.states.AbstractState import AbstractStatePart
 from mcpython.world.entity.PlayerEntity import PlayerEntity
-from mcpython.world.util import sectorize
 
 
 class InventoryController(AbstractStatePart):

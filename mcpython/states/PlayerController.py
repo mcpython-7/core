@@ -17,8 +17,24 @@ class PlayerController(AbstractStatePart):
         super().__init__()
         self.player = player
         self.last_space_press = 0
+        self._enabled = False
+
+    def get_enabled(self):
+        return self._enabled
+
+    def set_enabled(self, enabled: bool):
+        self._enabled = enabled
+        if not self._enabled:
+            self.player.strafe = [0, 0]
+            self.player.key_dy = 0
+            self.player.breaking_block = None
+
+    enabled = property(get_enabled, set_enabled)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
+        if not self._enabled:
+            return
+
         stack = self.player.inventory.get_selected_itemstack()
         world = self.player.world
 
@@ -97,9 +113,13 @@ class PlayerController(AbstractStatePart):
         return
 
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int):
+        if not self._enabled:
+            return
         self.player.breaking_block = None
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        if not self._enabled:
+            return
         self.player.inventory.selected_slot = int(
             (self.player.inventory.selected_slot - scroll_y) % 9
         )
@@ -109,6 +129,8 @@ class PlayerController(AbstractStatePart):
     def on_mouse_motion(
         self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int
     ):
+        if not self._enabled:
+            return
         m = 0.15
 
         x, y = self.player.rotation
@@ -120,6 +142,8 @@ class PlayerController(AbstractStatePart):
         self.player.rotation = (x, y)
 
     def on_key_press(self, symbol: int, modifiers: int):
+        if not self._enabled:
+            return
         if symbol == key.W:
             self.player.strafe[0] -= 1
 
@@ -159,6 +183,8 @@ class PlayerController(AbstractStatePart):
             self.player.key_dy = -1
 
     def on_key_release(self, symbol: int, modifiers: int):
+        if not self._enabled:
+            return
         if symbol == key.W:
             self.player.strafe[0] = 0
         elif symbol == key.S:
@@ -171,6 +197,8 @@ class PlayerController(AbstractStatePart):
             self.player.key_dy = 0
 
     def on_tick(self, dt: float):
+        if not self._enabled:
+            return
         sector = sectorize(self.player.position)
         if sector != self.player.sector:
             self.player.change_chunks(self.player.sector, sector)
