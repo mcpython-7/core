@@ -1,4 +1,11 @@
+from __future__ import annotations
+
 from abc import ABC
+
+import typing
+
+if typing.TYPE_CHECKING:
+    from mcpython.rendering.Window import Window
 
 
 class AbstractStatePart(ABC):
@@ -19,25 +26,29 @@ class AbstractStatePart(ABC):
     ):
         pass
 
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        pass
+
     def on_key_press(self, symbol: int, modifiers: int):
         pass
 
     def on_key_release(self, symbol: int, modifiers: int):
         pass
 
-    def on_draw(self):
+    def on_text(self, text: str):
+        pass
+
+    def on_draw(self, window: Window):
         pass
 
     def on_resize(self, w: int, h: int):
         pass
 
-    def on_tick(self):
+    def on_tick(self, dt: float):
         pass
 
 
 class AbstractState(ABC):
-    NAME: str = None
-
     def __init__(self):
         self.state_parts: list[AbstractStatePart] = []
 
@@ -84,6 +95,10 @@ class AbstractState(ABC):
         for part in self.state_parts:
             part.on_mouse_motion(x, y, dx, dy, buttons, modifiers)
 
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        for part in self.state_parts:
+            part.on_mouse_scroll(x, y, scroll_x, scroll_y)
+
     def on_key_press(self, symbol: int, modifiers: int):
         for part in self.state_parts:
             part.on_key_press(symbol, modifiers)
@@ -92,14 +107,18 @@ class AbstractState(ABC):
         for part in self.state_parts:
             part.on_key_release(symbol, modifiers)
 
-    def on_draw(self):
+    def on_text(self, text: str):
         for part in self.state_parts:
-            part.on_draw()
+            part.on_text(text)
+
+    def on_draw(self, window: Window):
+        for part in self.state_parts:
+            part.on_draw(window)
 
     def on_resize(self, w: int, h: int):
         for part in self.state_parts:
             part.on_resize(w, h)
 
-    def on_tick(self):
+    def on_tick(self, dt: float):
         for part in self.state_parts:
-            part.on_tick()
+            part.on_tick(dt)

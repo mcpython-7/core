@@ -43,6 +43,8 @@ class PlayerEntity(AbstractEntity):
         self.no_collision = False
         self.dy = 0
         self.key_dy = 0
+        # Which sector the player is currently in.
+        self.sector = None
 
         self.inventory = PlayerInventoryContainer()
         self.hotbar = HotbarContainer(self.inventory)
