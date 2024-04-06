@@ -56,7 +56,7 @@ class Window(pyglet.window.Window):
 
         self.game_state = GameState(self)
         self.state_handler.register_state("minecraft:game", self.game_state)
-        self.state_handler.change_state("minecraft:game")
+        self.state_handler.change_state(self.game_state.escape_state)
 
         # This call schedules the `update()` method to be called
         # TICKS_PER_SEC. This is the main game event loop.
@@ -152,13 +152,13 @@ class Window(pyglet.window.Window):
         self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
         self.view = Mat4()
         self.view @= Mat4.from_translation(
-            -Vec3(width * win_anchor[0], height * win_anchor[1], 0)
-        )
-        self.view @= Mat4.from_translation(
-            Vec3(item_anchor[0] * item_size[0], item_anchor[1] * item_size[1], 0)
+            Vec3(width * win_anchor[0], height * win_anchor[1], 0)
         )
         self.view @= Mat4.from_scale(
             Vec3(self.inventory_scale, self.inventory_scale, 1)
+        )
+        self.view @= Mat4.from_translation(
+            -Vec3(item_anchor[0] * item_size[0], item_anchor[1] * item_size[1], 0)
         )
         glDisable(GL_DEPTH_TEST)
 

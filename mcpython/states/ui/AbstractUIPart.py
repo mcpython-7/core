@@ -13,8 +13,11 @@ if typing.TYPE_CHECKING:
 
 
 class AbstractUIPart(AbstractStatePart, ABC):
-    def __init__(self, window_alignment=(0, 0), item_alignment=(0, 0)):
+    def __init__(
+        self, position: tuple[int, int], window_alignment=(0, 0), item_alignment=(0, 0)
+    ):
         super().__init__()
+        self.position = position
         self.window_alignment = window_alignment
         self.item_alignment = item_alignment
         self.general_batch = pyglet.graphics.Batch()

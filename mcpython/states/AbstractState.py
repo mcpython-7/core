@@ -108,7 +108,8 @@ class AbstractState(ABC):
         self.on_resize(*Window.INSTANCE.get_size())
 
         # call an on_mouse_motion event as the mouse might have moved
-        self.on_mouse_motion(*Window.INSTANCE.mouse_position, 0, 0, 0, 0)
+        x, y = Window.INSTANCE.mouse_position
+        self.on_mouse_motion(x, y, 0, 0, 0, 0)
 
         # todo: maybe press all currently active keys and buttons?
 
@@ -124,9 +125,10 @@ class AbstractState(ABC):
             if state:
                 self.on_key_release(key, 0)
 
+        x, y = Window.INSTANCE.mouse_position
         for button, state in Window.INSTANCE.mouse_state_handler.data.items():
             if state and button not in ("x", "y"):
-                self.on_mouse_release(button, 0)
+                self.on_mouse_release(x, y, button, 0)
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
         for part in self.state_parts:

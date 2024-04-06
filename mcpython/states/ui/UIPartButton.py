@@ -17,12 +17,12 @@ BUTTON_NORMAL = NineSplitTexture(
 )
 BUTTON_DISABLED = NineSplitTexture(
     ResourceManager.load_pyglet_image(
-        "assets/minecraft/textures/gui/sprites/widget/button.png"
+        "assets/minecraft/textures/gui/sprites/widget/button_disabled.png"
     )
 )
 BUTTON_HIGHLIGHTED = NineSplitTexture(
     ResourceManager.load_pyglet_image(
-        "assets/minecraft/textures/gui/sprites/widget/button.png"
+        "assets/minecraft/textures/gui/sprites/widget/button_highlighted.png"
     )
 )
 
@@ -36,18 +36,26 @@ class ButtonState(enum.Enum):
 class UIPartButton(AbstractUIPart):
     def __init__(
         self,
+        position: tuple[int, int],
         size: tuple[int, int],
         text: str,
-        window_alignment=(-1, -1),
-        item_alignment=(-1, -1),
+        font_size=10,
+        window_alignment=(0, 0),
+        item_alignment=(0, 0),
     ):
-        super().__init__(window_alignment, item_alignment)
+        super().__init__(position, window_alignment, item_alignment)
         self.size = size
         self.text = text
         self._state = ButtonState.NORMAL
-        self.normal_sprite_list = BUTTON_NORMAL.create_sprite_list(self.size)
-        self.disabled_sprite_list = BUTTON_DISABLED.create_sprite_list(self.size)
-        self.highlight_sprite_list = BUTTON_HIGHLIGHTED.create_sprite_list(self.size)
+        self.normal_sprite_list = BUTTON_NORMAL.create_sprite_list(
+            self.size, self.position
+        )
+        self.disabled_sprite_list = BUTTON_DISABLED.create_sprite_list(
+            self.size, self.position
+        )
+        self.highlight_sprite_list = BUTTON_HIGHLIGHTED.create_sprite_list(
+            self.size, self.position
+        )
         self.label = pyglet.text.Label(
             self.text,
             anchor_x="center",
@@ -55,6 +63,7 @@ class UIPartButton(AbstractUIPart):
             x=size[0] / 2,
             y=size[1] / 2,
             color=(255, 255, 255, 255),
+            font_size=font_size,
         )
         self._on_press = []
 
@@ -103,12 +112,18 @@ class UIPartButton(AbstractUIPart):
                 func(self)
 
     def on_draw(self, window):
+        window.set_2d_for_ui(self.window_alignment, self.item_alignment, self.size)
+
         if self.state == ButtonState.NORMAL:
             for sprite in self.normal_sprite_list:
                 sprite.draw()
+
         elif self.state == ButtonState.HIGHLIGHTED:
             for sprite in self.highlight_sprite_list:
                 sprite.draw()
+
         else:
             for sprite in self.disabled_sprite_list:
                 sprite.draw()
+
+        self.label.draw()

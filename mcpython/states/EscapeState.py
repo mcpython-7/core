@@ -5,6 +5,7 @@ from pyglet.window import key
 from mcpython.rendering.Window import Window
 from mcpython.states.AbstractState import AbstractState
 from mcpython.states import WorldController, InventoryController
+from mcpython.states.ui.UIPartButton import UIPartButton
 
 
 class EscapeState(AbstractState):
@@ -17,6 +18,16 @@ class EscapeState(AbstractState):
         self.state_parts = [
             self.world_controller,
             self.inventory_controller,
+            UIPartButton(
+                (0, 0),
+                (150, 20),
+                "Back to the Game",
+                window_alignment=(0.5, 0.5),
+                item_alignment=(0.5, 0.5),
+            ).on_press(
+                lambda _: self.state_handler.change_state(self.game_state)
+                == self.window.set_exclusive_mouse(True)
+            ),
         ]
         self.window = window
         self.game_state = game_state
