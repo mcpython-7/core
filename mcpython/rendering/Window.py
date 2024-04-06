@@ -141,6 +141,27 @@ class Window(pyglet.window.Window):
         )
         glDisable(GL_DEPTH_TEST)
 
+    def set_2d_for_ui(
+        self,
+        win_anchor: tuple[int, int],
+        item_anchor: tuple[int, int],
+        item_size: tuple[int, int],
+    ):
+        """Configure OpenGL to draw in 2d."""
+        width, height = self.get_size()
+        self.projection = Mat4.orthogonal_projection(0, width, 0, height, -255, 255)
+        self.view = Mat4()
+        self.view @= Mat4.from_translation(
+            -Vec3(width * win_anchor[0], height * win_anchor[1], 0)
+        )
+        self.view @= Mat4.from_translation(
+            Vec3(item_anchor[0] * item_size[0], item_anchor[1] * item_size[1], 0)
+        )
+        self.view @= Mat4.from_scale(
+            Vec3(self.inventory_scale, self.inventory_scale, 1)
+        )
+        glDisable(GL_DEPTH_TEST)
+
     def set_3d(self, offset: Vec3 = None, rotation: Vec3 = None):
         """Configure OpenGL to draw in 3d.3"""
         self.projection = Mat4.perspective_projection(
