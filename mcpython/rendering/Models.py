@@ -69,7 +69,7 @@ class BreakingTextureProvider:
         if state == self.old_state:
             return
 
-        texture = self.texture_variants[state]
+        texture = self.texture_variants[min(state, len(self.texture_variants) - 1)]
         self.vertex_list.tex_coords[:] = texture
 
 
