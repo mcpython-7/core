@@ -11,6 +11,7 @@ if typing.TYPE_CHECKING:
 class AbstractStatePart(ABC):
     def __init__(self):
         self._enabled = True
+        self.state_parts: list[AbstractStatePart] = []
 
     def get_enabled(self):
         return self._enabled
@@ -28,42 +29,66 @@ class AbstractStatePart(ABC):
     enabled = property(get_enabled, set_enabled)
 
     def on_activate(self):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_activate()
 
     def on_deactivate(self):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_deactivate()
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_mouse_press(x, y, button, modifiers)
 
     def on_mouse_release(self, x: int, y: int, button: int, modifiers: int):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_mouse_release(x, y, button, modifiers)
 
     def on_mouse_motion(
         self, x: int, y: int, dx: int, dy: int, buttons: int, modifiers: int
     ):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_mouse_motion(x, y, dx, dy, buttons, modifiers)
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_mouse_scroll(x, y, scroll_x, scroll_y)
 
     def on_key_press(self, symbol: int, modifiers: int):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_key_press(symbol, modifiers)
 
     def on_key_release(self, symbol: int, modifiers: int):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_key_release(symbol, modifiers)
 
     def on_text(self, text: str):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_text(text)
 
     def on_draw(self, window: Window):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_draw(window)
 
     def on_resize(self, w: int, h: int):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_resize(w, h)
 
     def on_tick(self, dt: float):
-        pass
+        for part in self.state_parts:
+            if part.enabled:
+                part.on_tick(dt)
 
 
 class AbstractState(ABC):
