@@ -4,6 +4,7 @@ import enum
 import typing
 
 import pyglet.text
+from pyglet.math import Vec2
 
 from mcpython.rendering.NineSplitTexture import NineSplitTexture
 from mcpython.resources.ResourceManager import ResourceManager
@@ -47,14 +48,17 @@ class UIPartButton(AbstractUIPart):
         self.size = size
         self.text = text
         self._state = ButtonState.NORMAL
-        self.normal_sprite_list = BUTTON_NORMAL.create_sprite_list(
-            self.size, self.position
+        self.normal_batch = pyglet.graphics.Batch()
+        self.normal_vertex_list = BUTTON_NORMAL.create_vertex_list(
+            Vec2(*self.size), self.normal_batch, Vec2(*self.position)
         )
-        self.disabled_sprite_list = BUTTON_DISABLED.create_sprite_list(
-            self.size, self.position
+        self.disabled_batch = pyglet.graphics.Batch()
+        self.disabled_vertex_list = BUTTON_DISABLED.create_vertex_list(
+            Vec2(*self.size), self.disabled_batch, Vec2(*self.position)
         )
-        self.highlight_sprite_list = BUTTON_HIGHLIGHTED.create_sprite_list(
-            self.size, self.position
+        self.highlighted_batch = pyglet.graphics.Batch()
+        self.highlighted_vertex_list = BUTTON_HIGHLIGHTED.create_vertex_list(
+            Vec2(*self.size), self.highlighted_batch, Vec2(*self.position)
         )
         self.label = pyglet.text.Label(
             self.text,
@@ -115,15 +119,12 @@ class UIPartButton(AbstractUIPart):
         window.set_2d_for_ui(self.window_alignment, self.item_alignment, self.size)
 
         if self.state == ButtonState.NORMAL:
-            for sprite in self.normal_sprite_list:
-                sprite.draw()
+            self.normal_batch.draw()
 
         elif self.state == ButtonState.HIGHLIGHTED:
-            for sprite in self.highlight_sprite_list:
-                sprite.draw()
+            self.highlighted_batch.draw()
 
         else:
-            for sprite in self.disabled_sprite_list:
-                sprite.draw()
+            self.disabled_batch.draw()
 
         self.label.draw()
