@@ -1,8 +1,8 @@
 
-pyglet==2.0.15
-pillow==10.3.0
-requests==2.31.0
-aiofiles==23.2.1
+pyglet==2.1.6
+pillow==11.3.0
+requests==2.32.4
+aiofiles==24.1.0
 clipboard==0.0.4
-numpy==1.26.4
-opensimplex==0.4.5
+numpy==2.3.2
+opensimplex==0.4.5.1

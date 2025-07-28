@@ -83,8 +83,8 @@ class InventoryController(AbstractStatePart):
         n = 10
 
         self.reticle = (
-            pyglet.shapes.Line(x - n, y, x + n, y, color=(0, 0, 0, 255), width=2),
-            pyglet.shapes.Line(x, y - n, x, y + n, color=(0, 0, 0, 255), width=2),
+            pyglet.shapes.Line(x - n, y, x + n, y, color=(0, 0, 0, 255), thickness=2),
+            pyglet.shapes.Line(x, y - n, x, y + n, color=(0, 0, 0, 255), thickness=2),
         )
 
         for container in CONTAINER_STACK:

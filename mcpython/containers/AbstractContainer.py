@@ -47,7 +47,7 @@ class Slot(IBufferSerializable):
         self.flat_batch = pyglet.graphics.Batch()
         self.slot_vertex_data: list[pyglet.graphics.vertexdomain.VertexList] = []
         self.number_label = pyglet.text.Label(
-            font_size=4 * 4, bold=True, anchor_x="right", anchor_y="bottom"
+            font_size=4 * 4, weight="bold", anchor_x="right", anchor_y="bottom"
         )
         self.update_position(relative_position)
         self.enable_interaction = enable_interaction

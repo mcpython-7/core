@@ -33,7 +33,7 @@ class NineSplitTexture:
             ],
         ]
         self.group = pyglet.model.TexturedMaterialGroup(
-            pyglet.model.Material(
+            pyglet.model.SimpleMaterial(
                 "XY",
                 [1.0, 1.0, 1.0, 1.0],
                 [1.0, 1.0, 1.0, 1.0],

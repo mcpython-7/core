@@ -29,7 +29,7 @@ def create_shader_group(
         (vertex_file.read_text(), "vertex"), (fragment_file.read_text(), "fragment")
     )
     group = pyglet.model.TexturedMaterialGroup(
-        pyglet.model.Material(
+        pyglet.model.SimpleMaterial(
             "XY",
             [1.0, 1.0, 1.0, 1.0],
             [1.0, 1.0, 1.0, 1.0],
@@ -168,8 +168,8 @@ def off_axis_projection_matrix(
     h = 2 * z_near / height
 
     # fmt: off
-    return Mat4((w, 0, 0, 0,
+    return Mat4(w, 0, 0, 0,
                  0, h, 0, 0,
                  -4.0*off_center_x/size[0], -4.0*off_center_y/size[1], q, -1,
-                 0, 0, qn, 0))
+                 0, 0, qn, 0)
     # fmt: on
