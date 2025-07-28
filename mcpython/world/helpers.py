@@ -56,6 +56,7 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
 
     Sapling = None
     if sapling:
+
         @BLOCK_REGISTRY.register
         class Sapling(GrowToStructureBlock):
             NAME = f"{namespace}:{wood_name}_sapling"

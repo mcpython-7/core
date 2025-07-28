@@ -8,7 +8,7 @@ from mcpython.resources.ResourceManager import ResourceManager
 
 
 def _normalize(
-    items: tuple[tuple[ItemStack | None, ...], ...]
+    items: tuple[tuple[ItemStack | None, ...], ...],
 ) -> tuple[tuple[ItemStack | None, ...], ...]:
     lrn = lcn = 0
     frn = len(items[0])
@@ -26,7 +26,7 @@ def _normalize(
 
 
 def _normalize_slots(
-    items: tuple[tuple[Slot, ...], ...]
+    items: tuple[tuple[Slot, ...], ...],
 ) -> tuple[tuple[Slot, ...], ...]:
     lrn = lcn = 0
     frn = len(items[0])

@@ -211,4 +211,3 @@ class AbstractBlock(IRegisterAble, IBufferSerializableWithVersion, abc.ABC):
 
 
 BLOCK_REGISTRY = Registry("minecraft:block", AbstractBlock)
-
