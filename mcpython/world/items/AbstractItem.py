@@ -8,7 +8,7 @@ import mcpython.world.blocks.CraftingTable
 import mcpython.world.blocks.GrassBlock
 import mcpython.world.blocks.Sand
 import mcpython.world.blocks.ShortGrass
-from mcpython.rendering.Models import Model
+from mcpython.rendering.Models import Model, ItemModel
 from mcpython.resources.Registry import IRegisterAble, Registry
 from mcpython.world.blocks import AbstractBlock
 from mcpython.world.serialization.DataBuffer import (
@@ -28,7 +28,7 @@ ITEMS: list[type[AbstractItem]] = []
 
 class AbstractItem(IRegisterAble, ABC):
     NAME: str | None = None
-    MODEL: Model | None = None
+    MODEL: ItemModel | None = None
     MAX_STACK_SIZE = 64
     TRANSPARENT = False
 
@@ -104,7 +104,7 @@ def create_item_for_block(
     @ITEM_REGISTRY.register
     class BlockItem(AbstractItem):
         NAME = block.NAME
-        MODEL = Model.by_name("{}:item/{}".format(*NAME.split(":")))
+        MODEL = ItemModel.by_name(NAME)
         TRANSPARENT = block.TRANSPARENT
 
         @classmethod
@@ -132,7 +132,7 @@ def create_basic_item(name: str) -> type[AbstractItem]:
     @ITEM_REGISTRY.register
     class BasicItem(AbstractItem):
         NAME = name
-        MODEL = Model.by_name("{}:item/{}".format(*NAME.split(":")))
+        MODEL = ItemModel.by_name(NAME)
 
     return typing.cast(type[AbstractItem], BasicItem)
 

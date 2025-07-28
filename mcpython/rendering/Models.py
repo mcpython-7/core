@@ -672,3 +672,51 @@ class BlockStateFile:
             print(texture_data, file=sys.stderr)
             traceback.print_exc()
             return []
+
+
+class ItemModel:
+    _MODEL_CACHE: dict[str, ItemModel] = {"minecraft:builtin/generated": None}
+
+    @classmethod
+    def by_name(cls, name: str) -> ItemModel:
+        if name in cls._MODEL_CACHE:
+            return cls._MODEL_CACHE[name]
+
+        if ":" not in name:
+            name = f"minecraft:{name}"
+
+        if name in cls._MODEL_CACHE:
+            return cls._MODEL_CACHE[name]
+
+        file = "assets/{}/items/{}.json".format(*name.split(":"))
+        data = ResourceManager.load_json(file)
+        model = cls.by_data(name, data)
+        cls._MODEL_CACHE[name] = model
+        return model
+
+    @classmethod
+    def by_data(cls, name: str, data: dict) -> ItemModel:
+        item_model = cls(name)
+
+        if "model" in data and data["model"].get("type") == "minecraft:model":
+            item_model.model = Model.by_name(data["model"].get("model"))
+
+        return item_model
+
+    def __init__(self, name: str):
+        self.name = name
+        self.model: Model | None = None
+
+    def create_vertex_list(
+        self,
+        batch: pyglet.graphics.Batch,
+        position: tuple[int, int, int],
+        flat_batch=None,
+        tint_colors: list[tuple[int, int, int]] = None,
+    ):
+        if self.model is None:
+            return []
+
+        return self.model.create_vertex_list(
+            batch, position, flat_batch=flat_batch, tint_colors=tint_colors
+        )
