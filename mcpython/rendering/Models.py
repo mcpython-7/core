@@ -541,7 +541,7 @@ class BlockStateConditionStateMatch(AbstractBlockStateCondition):
         self.state = state
 
     def applies(self, state: dict[str, str]) -> bool:
-        return all(state[key] == value for key, value in self.state.items())
+        return all(state.get(key) == value for key, value in self.state.items())
 
 
 class BlockStateFile:
