@@ -204,13 +204,13 @@ def generate_chunk(chunk: Chunk):
             (x, h, z), "minecraft:grass_block", immediate=False, block_update=False
         )
 
-        # if grass_noise.noise2(x / 10, z / 10) < 0.3:
-        #     chunk.add_block(
-        #         (x, h + 1, z),
-        #         "minecraft:short_grass",
-        #         immediate=False,
-        #         block_update=False,
-        #     )
+        if grass_noise.noise2(x / 10, z / 10) < 0.3 and r.randint(1, 3) == 1:
+            chunk.add_block(
+                (x, h + 1, z),
+                "minecraft:short_grass",
+                immediate=False,
+                block_update=False,
+            )
 
         for y in range(1, 4):
             if bedrock_noise.noise3(x, y, z) >= 0:
