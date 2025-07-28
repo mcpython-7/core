@@ -32,6 +32,8 @@ class ShortGrass(AbstractBlock):
         if block is None or not block.is_solid(Facing.UP):
             return False
 
+        return True
+
     def on_block_updated(self):
         x, y, z = self.position
         block = self.chunk.blocks.get((x, y - 1, z))
