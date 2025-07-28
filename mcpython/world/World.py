@@ -271,17 +271,17 @@ class World:
     def _initialize(self):
         """Initialize the world by placing all the blocks."""
 
-        # setup_debug_world_registry()
-        #
-        # from mcpython.world.worldgen.WorldgenManager import RANGE as GEN_RANGE
-        #
-        # for cx, cz in itertools.product(
-        #     range(-GEN_RANGE, GEN_RANGE + 1), range(-GEN_RANGE, GEN_RANGE + 1)
-        # ):
-        #     generate_debug_world_chunk(self.get_or_create_chunk_by_coord((cx, cz)))
+        setup_debug_world_registry()
 
-        for cx, cz in itertools.product(range(-3, 4), range(-3, 4)):
-            generate_chunk(self.get_or_create_chunk_by_coord((cx, cz)))
+        from mcpython.world.worldgen.WorldgenManager import RANGE as GEN_RANGE
+
+        for cx, cz in itertools.product(
+            range(-GEN_RANGE, GEN_RANGE + 1), range(-GEN_RANGE, GEN_RANGE + 1)
+        ):
+            generate_debug_world_chunk(self.get_or_create_chunk_by_coord((cx, cz)))
+
+        # for cx, cz in itertools.product(range(-3, 4), range(-3, 4)):
+        #     generate_chunk(self.get_or_create_chunk_by_coord((cx, cz)))
 
         self.ensure_chunks_shown()
 

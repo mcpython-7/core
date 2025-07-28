@@ -209,5 +209,7 @@ class Window(pyglet.window.Window):
         state = self.state_handler.find_active_part(WorldController)
         if state or state.focused_block:
             state.focused_block = None
-            state.focused_box_vertex.delete()
-            state.focused_box_vertex = None
+
+            if state.focused_box_vertex:
+                state.focused_box_vertex.delete()
+                state.focused_box_vertex = None

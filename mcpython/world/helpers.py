@@ -3,6 +3,7 @@ from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
     BLOCK_REGISTRY,
 )
+from mcpython.world.blocks.FenceGateLikeBlock import FenceGateLikeBlock
 from mcpython.world.blocks.GrowToStructureBlock import GrowToStructureBlock
 from mcpython.world.blocks.StairsLikeBlock import StairsLikeBlock
 from mcpython.world.blocks.SlabLikeBlock import SlabLikeBlock
@@ -34,6 +35,10 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
     @BLOCK_REGISTRY.register
     class Fence(FenceLikeBlock):
         NAME = f"{namespace}:{wood_name}_fence"
+
+    @BLOCK_REGISTRY.register
+    class FenceGate(FenceGateLikeBlock):
+        NAME = f"{namespace}:{wood_name}_fence_gate"
 
     @BLOCK_REGISTRY.register
     class Slab(SlabLikeBlock):
@@ -94,6 +99,7 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
     create_item_for_block(Log)
     create_item_for_block(Wood)
     create_item_for_block(Fence)
+    create_item_for_block(FenceGate)
     create_item_for_block(Slab)
     create_item_for_block(Stairs)
     create_item_for_block(Leaves)

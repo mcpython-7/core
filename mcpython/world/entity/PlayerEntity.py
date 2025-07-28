@@ -281,8 +281,6 @@ class PlayerEntity(AbstractEntity):
             if state is None:
                 self.world.remove_block(self.breaking_block)
 
-            # todo: if state is not False, deal damage to tools
-
             if state is not False:
                 self.update_breaking_block()
             else:
