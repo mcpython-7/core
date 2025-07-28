@@ -18,19 +18,21 @@ from mcpython.world.items.AbstractItem import (
 from mcpython.world.util import Facing
 
 
-def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
+def add_wooden_set(wood_name: str, namespace="minecraft", log=True, sapling=True, leaves=False):
 
     @BLOCK_REGISTRY.register
     class Planks(AbstractBlock):
         NAME = f"{namespace}:{wood_name}_planks"
 
-    @BLOCK_REGISTRY.register
-    class Log(LogLikeBlock):
-        NAME = f"{namespace}:{wood_name}_log"
+    Log = Wood = None
+    if log:
+        @BLOCK_REGISTRY.register
+        class Log(LogLikeBlock):
+            NAME = f"{namespace}:{wood_name}_log"
 
-    @BLOCK_REGISTRY.register
-    class Wood(LogLikeBlock):
-        NAME = f"{namespace}:{wood_name}_wood"
+        @BLOCK_REGISTRY.register
+        class Wood(LogLikeBlock):
+            NAME = f"{namespace}:{wood_name}_wood"
 
     @BLOCK_REGISTRY.register
     class Fence(FenceLikeBlock):
@@ -48,16 +50,18 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
     class Stairs(StairsLikeBlock):
         NAME = f"{namespace}:{wood_name}_stairs"
 
-    @BLOCK_REGISTRY.register
-    class Leaves(AbstractBlock):
-        NAME = f"{namespace}:{wood_name}_leaves"
-        TRANSPARENT = True
+    Leaves = None
+    if leaves:
+        @BLOCK_REGISTRY.register
+        class Leaves(AbstractBlock):
+            NAME = f"{namespace}:{wood_name}_leaves"
+            TRANSPARENT = True
 
-        def is_solid(self, face: Facing) -> bool:
-            return False
+            def is_solid(self, face: Facing) -> bool:
+                return False
 
-        def get_tint_colors(self) -> list[tuple[float, float, float, float]] | None:
-            return [(145 / 255, 189 / 255, 89 / 255, 1)]
+            def get_tint_colors(self) -> list[tuple[float, float, float, float]] | None:
+                return [(145 / 255, 189 / 255, 89 / 255, 1)]
 
     Sapling = None
     if sapling:
@@ -96,13 +100,18 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
                 return False
 
     create_item_for_block(Planks)
-    create_item_for_block(Log)
-    create_item_for_block(Wood)
+
+    if log:
+        create_item_for_block(Log)
+        create_item_for_block(Wood)
+
     create_item_for_block(Fence)
     create_item_for_block(FenceGate)
     create_item_for_block(Slab)
     create_item_for_block(Stairs)
-    create_item_for_block(Leaves)
+
+    if leaves:
+        create_item_for_block(Leaves)
 
     if sapling:
         create_item_for_block(Sapling)
@@ -143,6 +152,7 @@ def add_simple_block_set(name: str, base_name: str = None):
 
 
 add_wooden_set("acacia")
+add_wooden_set("bamboo", log=False, sapling=False, leaves=False)
 add_wooden_set("birch")
 add_wooden_set("dark_oak")
 add_wooden_set("jungle")
