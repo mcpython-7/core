@@ -18,21 +18,36 @@ from mcpython.world.items.AbstractItem import (
 from mcpython.world.util import Facing
 
 
-def add_wooden_set(wood_name: str, namespace="minecraft", log=True, sapling=True, leaves=False):
+def add_wooden_set(
+    wood_name: str, namespace="minecraft", log=True, sapling=True, leaves=False
+):
 
     @BLOCK_REGISTRY.register
     class Planks(AbstractBlock):
         NAME = f"{namespace}:{wood_name}_planks"
 
-    Log = Wood = None
+    Log = StrippedLog = Wood = StrippedWood = None
     if log:
+
         @BLOCK_REGISTRY.register
         class Log(LogLikeBlock):
             NAME = f"{namespace}:{wood_name}_log"
 
+            # todo: add stripping mechanic
+
+        @BLOCK_REGISTRY.register
+        class StrippedLog(LogLikeBlock):
+            NAME = f"{namespace}:stripped_{wood_name}_log"
+
         @BLOCK_REGISTRY.register
         class Wood(LogLikeBlock):
             NAME = f"{namespace}:{wood_name}_wood"
+
+            # todo: add stripping mechanic
+
+        @BLOCK_REGISTRY.register
+        class StrippedWood(LogLikeBlock):
+            NAME = f"{namespace}:stripped_{wood_name}_wood"
 
     @BLOCK_REGISTRY.register
     class Fence(FenceLikeBlock):
@@ -52,6 +67,7 @@ def add_wooden_set(wood_name: str, namespace="minecraft", log=True, sapling=True
 
     Leaves = None
     if leaves:
+
         @BLOCK_REGISTRY.register
         class Leaves(AbstractBlock):
             NAME = f"{namespace}:{wood_name}_leaves"
@@ -103,7 +119,9 @@ def add_wooden_set(wood_name: str, namespace="minecraft", log=True, sapling=True
 
     if log:
         create_item_for_block(Log)
+        create_item_for_block(StrippedLog)
         create_item_for_block(Wood)
+        create_item_for_block(StrippedWood)
 
     create_item_for_block(Fence)
     create_item_for_block(FenceGate)
