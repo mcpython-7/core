@@ -3,6 +3,11 @@ from __future__ import annotations
 import typing
 from abc import ABC
 
+import mcpython.world.blocks.Bedrock
+import mcpython.world.blocks.CraftingTable
+import mcpython.world.blocks.GrassBlock
+import mcpython.world.blocks.Sand
+import mcpython.world.blocks.ShortGrass
 from mcpython.rendering.Models import Model
 from mcpython.resources.Registry import IRegisterAble, Registry
 from mcpython.world.blocks import AbstractBlock
@@ -132,9 +137,9 @@ def create_basic_item(name: str) -> type[AbstractItem]:
     return typing.cast(type[AbstractItem], BasicItem)
 
 
-Bedrock = create_item_for_block(AbstractBlock.Bedrock)
-CraftingTable = create_item_for_block(AbstractBlock.CraftingTable)
-Sand = create_item_for_block(AbstractBlock.Sand)
+Bedrock = create_item_for_block(mcpython.world.blocks.Bedrock.Bedrock)
+CraftingTable = create_item_for_block(mcpython.world.blocks.CraftingTable.CraftingTable)
+Sand = create_item_for_block(mcpython.world.blocks.Sand.Sand)
 Stick = create_basic_item("minecraft:stick")
 IronIngot = create_basic_item("minecraft:iron_ingot")
 RawIron = create_basic_item("minecraft:raw_iron")
@@ -148,5 +153,5 @@ Diamond = create_basic_item("minecraft:diamond")
 Redstone = create_basic_item("minecraft:redstone")  # for now, this is item-only
 LapisLazuli = create_basic_item("minecraft:lapis_lazuli")
 Coal = create_basic_item("minecraft:coal")
-GrassBlock = create_item_for_block(AbstractBlock.GrassBlock)
-ShortGrass = create_item_for_block(AbstractBlock.ShortGrass)
+GrassBlock = create_item_for_block(mcpython.world.blocks.GrassBlock.GrassBlock)
+ShortGrass = create_item_for_block(mcpython.world.blocks.ShortGrass.ShortGrass)

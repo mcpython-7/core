@@ -1,13 +1,13 @@
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.world.blocks.AbstractBlock import (
     AbstractBlock,
-    LogLikeBlock,
-    FenceLikeBlock,
     BLOCK_REGISTRY,
-    SlabLikeBlock,
-    StairsLikeBlock,
-    GrowToStructureBlock,
 )
+from mcpython.world.blocks.GrowToStructureBlock import GrowToStructureBlock
+from mcpython.world.blocks.StairsLikeBlock import StairsLikeBlock
+from mcpython.world.blocks.SlabLikeBlock import SlabLikeBlock
+from mcpython.world.blocks.FenceLikeBlock import FenceLikeBlock
+from mcpython.world.blocks.LogLikeBlock import LogLikeBlock
 from mcpython.world.items.AbstractItem import (
     AbstractItem,
     create_basic_item,
@@ -54,8 +54,8 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
         def get_tint_colors(self) -> list[tuple[float, float, float, float]] | None:
             return [(145 / 255, 189 / 255, 89 / 255, 1)]
 
+    Sapling = None
     if sapling:
-
         @BLOCK_REGISTRY.register
         class Sapling(GrowToStructureBlock):
             NAME = f"{namespace}:{wood_name}_sapling"
@@ -96,6 +96,7 @@ def add_wooden_set(wood_name: str, namespace="minecraft", sapling=True):
     create_item_for_block(Slab)
     create_item_for_block(Stairs)
     create_item_for_block(Leaves)
+
     if sapling:
         create_item_for_block(Sapling)
 
