@@ -48,6 +48,8 @@ class UIPartButton(AbstractUIPart):
         self.size = size
         self.text = text
         self._state = ButtonState.NORMAL
+
+        # TODO: use a single texture list and instead change the texture?
         self.normal_batch = pyglet.graphics.Batch()
         self.normal_vertex_list = BUTTON_NORMAL.create_vertex_list(
             Vec2(*self.size), self.normal_batch, Vec2(*self.position)

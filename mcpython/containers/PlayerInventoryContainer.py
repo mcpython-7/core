@@ -8,6 +8,8 @@ from mcpython.containers.AbstractContainer import Container, Slot, SlotRenderCop
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.crafting.GridRecipes import GridRecipeManager
 from mcpython.resources.ResourceManager import ResourceManager
+
+# Magic import for loading items
 from mcpython.world.items.AbstractItem import ITEMS
 
 if typing.TYPE_CHECKING:

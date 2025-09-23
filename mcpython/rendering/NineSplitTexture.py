@@ -6,14 +6,23 @@ from pyglet.gl import GL_TRIANGLES
 from pyglet.math import Vec2
 
 from mcpython.rendering.util import LAYERED_ITEM_SHADER, LAYERED_ITEM_GROUP
+from mcpython.resources.ResourceManager import ImageWrapper
 
 
 class NineSplitTexture:
-    def __init__(self, texture: pyglet.image.Texture, border=3):
-        self.texture = texture
+    def __init__(
+        self,
+        texture: pyglet.image.Texture | pyglet.image.ImageData | ImageWrapper,
+        border=3,
+    ):
+        self.texture = (
+            texture
+            if isinstance(texture, (pyglet.image.Texture, pyglet.image.ImageData))
+            else texture.to_pyglet()
+        )
         self.border = border
 
-        width, height = texture.width, texture.height
+        width, height = self.texture.width, self.texture.height
 
         self.fragments = [
             [

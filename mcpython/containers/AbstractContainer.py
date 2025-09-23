@@ -15,6 +15,7 @@ from pyglet.gl import (
 from pyglet.math import Mat4, Vec3, Vec4, Vec2
 from pyglet.window import mouse
 
+from mcpython.containers.InventoryRenderer import InventoryRenderer
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.world.items.AbstractItem import AbstractItem
 from mcpython.world.serialization.DataBuffer import (
@@ -305,7 +306,15 @@ class Container(IBufferSerializableWithVersion):
     SHOULD_DRAW_MOVING_SLOT = True
 
     def __init__(
-        self, visual_size: tuple[int, int], texture: pyglet.image.AbstractImage | None
+        self,
+        visual_size: tuple[int, int],
+        texture: (
+            str
+            | pyglet.image.AbstractImage
+            | InventoryRenderer
+            | InventoryRenderer.InventoryRendererInstance
+            | None
+        ),
     ):
         self.visual_size = visual_size
         self.slots: list[Slot] = []
@@ -315,12 +324,25 @@ class Container(IBufferSerializableWithVersion):
         self.image_anchor = (0.5, 0.5)
         self.item_info_screen = ItemInformationScreen()
 
-        if texture:
+        self.sprite: (
+            pyglet.sprite.Sprite | InventoryRenderer.InventoryRendererInstance | None
+        ) = None
+
+        if isinstance(texture, (pyglet.image.AbstractImage, pyglet.image.ImageData)):
             self.sprite = pyglet.sprite.Sprite(self.texture)
             self.sprite.scale_x = visual_size[0] / self.texture.width
             self.sprite.scale_y = visual_size[1] / self.texture.height
-        else:
+        elif isinstance(texture, InventoryRenderer):
+            texture = texture.instantiate((0, 0))
+
+        if self.sprite:
+            pass
+        elif isinstance(texture, InventoryRenderer.InventoryRendererInstance):
+            self.sprite = texture
+        elif texture is None:
             self.sprite = None
+        else:
+            raise ValueError(texture)
 
         self.open = False
 
@@ -412,12 +434,16 @@ class Container(IBufferSerializableWithVersion):
 
     def draw(self, window: Window):
         if self.sprite:
-            self.sprite.position = (
-                -self.visual_size[0] * self.image_anchor[0],
-                -self.visual_size[1] * self.image_anchor[1],
-                0,
-            )
-            self.sprite.draw()
+            if isinstance(self.sprite, pyglet.sprite.Sprite):
+                self.sprite.position = (
+                    -self.visual_size[0] * self.image_anchor[0],
+                    -self.visual_size[1] * self.image_anchor[1],
+                    0,
+                )
+                self.sprite.draw()
+
+            elif isinstance(self.sprite, InventoryRenderer.InventoryRendererInstance):
+                self.sprite.draw()
 
         for slot in self.slots:
             slot.draw(window)
