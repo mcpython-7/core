@@ -1,34 +1,35 @@
 from __future__ import annotations
 
-from mcpython.crafting.GridRecipes import (
-    GridShapedRecipe,
-    GridShapelessRecipe,
-    AbstractGridRecipe,
-    InvalidRecipeType,
-)
+import typing
+
+from mcpython.crafting.AbstractRecipe import AbstractRecipe, RecipeAttachmentException
 from mcpython.resources.ResourceManager import ResourceManager
+
+if typing.TYPE_CHECKING:
+    from mcpython.crafting.GridRecipes import (
+        GridShapedRecipe,
+        GridShapelessRecipe,
+    )
 
 
 class RecipeManager:
-    DECODERS = [
-        GridShapedRecipe,
-        GridShapelessRecipe,
-    ]
+    DECODERS: dict[str, type[AbstractRecipe]] = {}
 
     def __init__(self):
-        self.shapeless_recipes: dict[int, list[GridShapelessRecipe]] = {}
         self.shaped_recipes: dict[tuple[int, int], list[GridShapedRecipe]] = {}
+        self.shapeless_recipes: dict[int, list[GridShapelessRecipe]] = {}
 
-    def decode_recipe_file(self, file: str) -> AbstractGridRecipe:
+    def decode_recipe_file(self, file: str) -> AbstractRecipe:
         data = ResourceManager.load_json(file)
 
-        for decoder in self.DECODERS:
-            if data["type"] == decoder.PROVIDER_NAME:
-                return decoder.decode(data)
+        decoder = self.DECODERS.get(data["type"])
 
-        raise InvalidRecipeType(f"unsupported recipe type: {data['type']}")
+        if decoder is None:
+            raise InvalidRecipeType(f"unsupported recipe type: {data['type']}")
 
-    def register_recipe_from_file(self, file: str) -> AbstractGridRecipe | None:
+        return decoder.decode(data)
+
+    def register_recipe_from_file(self, file: str) -> AbstractRecipe | None:
         try:
             recipe = self.decode_recipe_file(file)
         except InvalidRecipeType:
@@ -37,24 +38,29 @@ class RecipeManager:
         if recipe is None:
             return
 
-        if isinstance(recipe, GridShapedRecipe):
-            self.shaped_recipes.setdefault(recipe.size, []).append(recipe)
-        elif isinstance(recipe, GridShapelessRecipe):
-            self.shapeless_recipes.setdefault(len(recipe.itemlist), []).append(recipe)
-        else:
-            raise InvalidRecipeType(f"unsupported recipe to register: {recipe}")
+        try:
+            recipe.attach(self)
+        except RecipeAttachmentException:
+            print(f"Could not attach recipe loaded from {file}")
+            return
 
         return recipe
 
-    def discover_recipes(self):
-        from mcpython.rendering.Window import Window
+    def load_providers(self):
+        from mcpython.crafting.GridRecipes import GridShapelessRecipe, GridShapedRecipe
 
+    def discover_recipes(self):
         for file in ResourceManager.list_directory(
-            "data/minecraft/recipes", no_duplicates=False
+            "data/minecraft/recipe", no_duplicates=False
         ):
             recipe = self.register_recipe_from_file(file)
-            if file == "data/minecraft/recipes/oak_wood.json":
-                recipe: GridShapelessRecipe
+
+            if recipe:
+                recipe.attach(self)
 
 
 RECIPE_MANAGER = RecipeManager()
+
+
+class InvalidRecipeType(Exception):
+    pass

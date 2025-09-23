@@ -118,7 +118,7 @@ class _ResourceManager:
         self, directory: str, no_duplicates=True
     ) -> typing.Iterator[str]:
         if ".." in directory:
-            raise IOError
+            raise ValueError(f"invalid directory: {repr(directory)}")
 
         if no_duplicates:
             yielded = set()

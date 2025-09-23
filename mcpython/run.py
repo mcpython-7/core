@@ -50,6 +50,7 @@ def main():
     Window(width=800, height=600, caption="mcpython 7", resizable=True)
     setup()
 
+    RECIPE_MANAGER.load_providers()
     RECIPE_MANAGER.discover_recipes()
 
     pyglet.app.run(1 / 60)

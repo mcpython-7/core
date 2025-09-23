@@ -5,8 +5,8 @@ from abc import ABC
 
 from mcpython.containers.AbstractContainer import Slot, Container
 from mcpython.containers.ItemStack import ItemStack, TagStack
-from mcpython.crafting.AbstractRecipe import AbstractRecipe
-from mcpython.crafting.RecipeManager import RECIPE_MANAGER
+from mcpython.crafting.AbstractRecipe import AbstractRecipe, RecipeAttachmentException
+from mcpython.crafting.RecipeManager import RECIPE_MANAGER, RecipeManager
 
 
 def _normalize(
@@ -45,17 +45,30 @@ def _normalize_slots(
     return tuple(col[frn : lrn + 1] for col in items[fcn : lcn + 1])
 
 
-def _decode_ingredient(entry: dict | list) -> ItemStack:
+def _decode_ingredient(entry: dict | list | str) -> ItemStack:
     if isinstance(entry, list):
         return TagStack(None, [_decode_ingredient(entry) for entry in entry])
 
-    if "tag" in entry:
-        return TagStack(entry["tag"])
+    elif isinstance(entry, str):
+        return ItemStack(entry)
 
-    return ItemStack(
-        entry["item"],
-        entry.get("count", 1),
-    )
+    elif isinstance(entry, dict):
+        if "tag" in entry:
+            return TagStack(entry["tag"])
+
+        if "item" in entry:
+            return ItemStack(
+                entry["item"],
+                entry.get("count", 1),
+            )
+
+        if "id" in entry:
+            return ItemStack(
+                entry["id"],
+                entry.get("count", 1),
+            )
+
+    raise ValueError(entry)
 
 
 class AbstractGridRecipe(AbstractRecipe, ABC):
@@ -120,6 +133,18 @@ class GridShapedRecipe(AbstractGridRecipe):
             for x, y in zip(a, b):
                 x.set_stack(x.itemstack.add_amount(-y.count), update=False)
 
+    def attach(self, manager: RecipeManager):
+        manager.shaped_recipes.setdefault(self.size, []).append(self)
+
+    def detach(self, manager: RecipeManager):
+        try:
+            manager.shaped_recipes.setdefault(self.size, []).remove(self)
+        except:
+            raise RecipeAttachmentException
+
+
+GridShapedRecipe.register()
+
 
 class GridShapelessRecipe(AbstractGridRecipe):
     PROVIDER_NAME = "minecraft:crafting_shapeless"
@@ -129,9 +154,11 @@ class GridShapelessRecipe(AbstractGridRecipe):
         items = [_decode_ingredient(entry) for entry in data["ingredients"]]
         if any(entry.is_empty() for entry in items):
             return
+
         output = _decode_ingredient(data["result"])
         if output.is_empty():
             return
+
         return cls(items, output)
 
     def __init__(self, itemlist: list[ItemStack], output: ItemStack):
@@ -161,9 +188,17 @@ class GridShapelessRecipe(AbstractGridRecipe):
             pending.remove(p)
             slot.set_stack(slot.itemstack.add_amount(-p.count), update=False)
 
+    def attach(self, manager: RecipeManager):
+        manager.shapeless_recipes.setdefault(len(self.itemlist), []).append(self)
 
-class InvalidRecipeType(Exception):
-    pass
+    def detach(self, manager: RecipeManager):
+        try:
+            manager.shapeless_recipes.setdefault(len(self.itemlist), []).remove(self)
+        except:
+            raise RecipeAttachmentException
+
+
+GridShapelessRecipe.register()
 
 
 class GridRecipeManager:
