@@ -5,7 +5,7 @@ from pyglet.gl import *
 import pyglet.model.codecs.obj
 
 from mcpython.containers.ItemStack import ItemStack
-from mcpython.crafting.GridRecipes import RECIPE_MANAGER
+from mcpython.crafting.RecipeManager import RECIPE_MANAGER
 from mcpython.rendering.Models import BlockStateFile
 from mcpython.world.World import World
 
