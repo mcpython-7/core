@@ -169,6 +169,19 @@ def add_simple_block_set(name: str, base_name: str = None):
     create_item_for_block(Stairs)
 
 
+def add_color_set(name: str):
+    namespace = "minecraft" if ":" not in name else name.split(":")[0]
+    base_name = name.split(":")[-1]
+
+    add_simple_block(f"{namespace}:{base_name}_concrete")
+    # TODO: concrete powder
+    # TODO: glazed terracotta
+    add_simple_block(f"{namespace}:{base_name}_stained_glass")
+    # TODO: glass pane
+    add_simple_block(f"{namespace}:{base_name}_terracotta")
+    add_simple_block(f"{namespace}:{base_name}_wool")
+
+
 add_wooden_set("acacia")
 add_wooden_set("bamboo", log=False, sapling=False, leaves=False)
 add_wooden_set("birch")
@@ -209,3 +222,5 @@ add_simple_block("minecraft:deepslate_copper_ore")
 add_simple_block("minecraft:coal_block")
 add_simple_block("minecraft:coal_ore")
 add_simple_block("minecraft:deepslate_coal_ore")
+
+add_color_set("black")

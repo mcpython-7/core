@@ -113,9 +113,9 @@ def setup_debug_world_registry():
         block_states += map(lambda e: (block.NAME, e), block.BLOCk_STATE_LISTING)
     block_states.reverse()
 
-    size = math.ceil(math.sqrt(len(block_states))) // 2
+    size = math.ceil(math.sqrt(len(block_states))) // 2 + 1
     global RANGE
-    RANGE = math.floor(size / 4)
+    RANGE = math.floor(size / 4) + 2
 
     i = len(block_states) - 1
     for dx, dz in itertools.product(range(-size, size), range(-size, size)):

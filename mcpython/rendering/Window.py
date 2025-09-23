@@ -47,6 +47,8 @@ class Window(pyglet.window.Window):
         self.world = World(self)
 
         self.player = PlayerEntity(self.world, Vec3(0, 100, 0), Vec3(0, 0, 0))
+        self.player.set_gamemode(1)
+        # self.player.flying = True
 
         self.inventory_scale = 2
 
