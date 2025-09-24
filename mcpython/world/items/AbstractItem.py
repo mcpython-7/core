@@ -32,6 +32,8 @@ class AbstractItem(IRegisterAble, ABC):
     MAX_STACK_SIZE = 64
     TRANSPARENT = False
 
+    # max version is 255; 255 might get used to encode a "future version" encoded in a different way
+    # (Limit is ItemStack version + Item version)
     VERSION = 0
     DATA_FIXERS: dict[int, AbstractDataFixer] = {}
 
@@ -91,6 +93,14 @@ class AbstractItem(IRegisterAble, ABC):
         cls, itemstack: ItemStack, slot: Slot
     ) -> list[tuple[float, float, float, float]] | None:
         pass
+
+    @classmethod
+    def copy_metadata(cls, src: ItemStack, dst: ItemStack):
+        pass
+
+    @classmethod
+    def check_metadata_compatible(cls, first: ItemStack, second: ItemStack) -> bool:
+        return True
 
 
 ITEM_REGISTRY = Registry("minecraft:item", AbstractItem)
