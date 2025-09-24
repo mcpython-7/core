@@ -17,9 +17,11 @@ from mcpython.rendering.util import (
 )
 from mcpython.world.entity.AbstractEntity import AbstractEntity
 from mcpython.world.serialization.DataBuffer import (
-    IBufferSerializableWithVersion,
     ReadBuffer,
     WriteBuffer,
+)
+from mcpython.world.serialization.IBufferSerializable import (
+    IBufferSerializableWithVersion,
 )
 from mcpython.world.serialization.WorldStorage import WorldStorage
 from mcpython.world.util import normalize, sectorize, Facing

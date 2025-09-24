@@ -5,9 +5,11 @@ import functools
 from mcpython.resources.Tags import TAG_ITEMS
 from mcpython.world.items.AbstractItem import AbstractItem, ITEM_REGISTRY
 from mcpython.world.serialization.DataBuffer import (
-    IBufferSerializableWithVersion,
     ReadBuffer,
     WriteBuffer,
+)
+from mcpython.world.serialization.IBufferSerializable import (
+    IBufferSerializableWithVersion,
 )
 
 

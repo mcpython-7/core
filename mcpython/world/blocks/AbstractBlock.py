@@ -10,9 +10,11 @@ from mcpython.rendering.Models import BlockStateFile
 from mcpython.resources.Registry import IRegisterAble, Registry
 from mcpython.world.BoundingBox import AABB, IAABB
 from mcpython.world.serialization.DataBuffer import (
-    IBufferSerializableWithVersion,
     ReadBuffer,
     WriteBuffer,
+)
+from mcpython.world.serialization.IBufferSerializable import (
+    IBufferSerializableWithVersion,
 )
 from mcpython.world.util import Facing
 

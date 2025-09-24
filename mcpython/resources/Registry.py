@@ -4,10 +4,12 @@ import typing
 from abc import ABC
 
 from mcpython.world.serialization.DataBuffer import (
-    IBufferSerializable,
-    IBufferSerializableWithVersion,
     WriteBuffer,
     ReadBuffer,
+)
+from mcpython.world.serialization.IBufferSerializable import (
+    IBufferSerializable,
+    IBufferSerializableWithVersion,
 )
 
 

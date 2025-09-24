@@ -19,10 +19,12 @@ from mcpython.containers.InventoryRenderer import InventoryRenderer
 from mcpython.containers.ItemStack import ItemStack
 from mcpython.world.items.AbstractItem import AbstractItem
 from mcpython.world.serialization.DataBuffer import (
-    IBufferSerializable,
-    IBufferSerializableWithVersion,
     ReadBuffer,
     WriteBuffer,
+)
+from mcpython.world.serialization.IBufferSerializable import (
+    IBufferSerializable,
+    IBufferSerializableWithVersion,
 )
 
 if typing.TYPE_CHECKING:

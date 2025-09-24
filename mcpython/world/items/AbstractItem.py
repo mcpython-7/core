@@ -12,10 +12,10 @@ from mcpython.rendering.Models import Model, ItemModel
 from mcpython.resources.Registry import IRegisterAble, Registry
 from mcpython.world.blocks import AbstractBlock
 from mcpython.world.serialization.DataBuffer import (
-    AbstractDataFixer,
     ReadBuffer,
     WriteBuffer,
 )
+from mcpython.world.serialization.DataFixer import AbstractDataFixer
 from mcpython.world.util import normalize
 
 if typing.TYPE_CHECKING:
