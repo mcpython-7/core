@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import functools
+
 from mcpython.resources.Tags import TAG_ITEMS
 from mcpython.world.items.AbstractItem import AbstractItem, ITEM_REGISTRY
 from mcpython.world.serialization.DataBuffer import (
@@ -30,9 +32,16 @@ class ItemStack(IBufferSerializableWithVersion):
     def VERSION(self):
         return 0 if self.is_empty() else self.item.VERSION + 1
 
-    @property
+    @functools.cached_property
     def DATA_FIXERS(self):
-        return {} if self.is_empty() else self.item.DATA_FIXERS
+        # Ensure that the correct fixer is used
+        return (
+            {}
+            if self.is_empty()
+            else {
+                version + 1: fixer for version, fixer in self.item.DATA_FIXERS.items()
+            }
+        )
 
     def __init__(self, item: type[AbstractItem] | str | None, count=1):
         self._item = (
@@ -68,12 +77,44 @@ class ItemStack(IBufferSerializableWithVersion):
         return self.count == 0 or self.item is None
 
     def copy(self) -> ItemStack:
+        # TODO: copy over metadata
         return ItemStack(self.item, self.count)
 
-    def set_amount(self, amount: int) -> ItemStack:
+    def set_amount(self, amount: int = 1) -> ItemStack:
+        """
+        Creates a new ItemStack with the same item, but the given amount
+
+        :param amount: the amount to use
+        :return: the new itemstack, is empty when amount is 0
+        :raises ValueError if amount is negative
+        """
+        if amount < 0:
+            raise ValueError(
+                f"Cannot create an itemstack with negative amount {amount}"
+            )
+        if amount == 0:
+            return ItemStack(None)
+
+        # TODO: copy over metadata
         return ItemStack(self.item, amount)
 
     def add_amount(self, amount: int) -> ItemStack:
+        """
+        Creates a new ItemStack, with the added amount
+
+        :param amount: the amount to add, might be negative to reduce
+        :return: the ItemStack; might be empty if count is 0
+        :raises ValueError: if the count would be negative afterwards
+        """
+        if self.count + amount < 0:
+            raise ValueError(
+                f"Cannot subtract {-amount} from this stack, as it only holds {self.count} items"
+            )
+
+        if self.count + amount == 0:
+            return ItemStack(None)
+
+        # TODO: copy over metadata
         return ItemStack(self.item, self.count + amount)
 
     def is_compatible(self, other: ItemStack) -> bool:
@@ -102,10 +143,7 @@ class TagStack(ItemStack):
 
     def is_compatible(self, other: ItemStack) -> bool:
         if isinstance(other, TagStack):
-            for a in self.entries:
-                for b in other.entries:
-                    if a.matches(b):
-                        return True
+            return self.tag_name == other.tag_name
         else:
             for entry in self.entries:
                 if entry.is_compatible(other):

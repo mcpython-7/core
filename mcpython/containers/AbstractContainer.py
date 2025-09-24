@@ -392,10 +392,17 @@ class Container(IBufferSerializableWithVersion):
                 return True
 
             if slot.itemstack.is_empty():
-                slot.set_stack(itemstack)
-                return True
+                if itemstack.count <= itemstack.item.MAX_STACK_SIZE:
+                    slot.set_stack(itemstack)
+                    return True
+                else:
+                    slot.set_stack(
+                        itemstack.copy().set_amount(itemstack.item.MAX_STACK_SIZE)
+                    )
+                    added_slots.append((slot, itemstack.item.MAX_STACK_SIZE))
+                    itemstack = itemstack.add_amount(-itemstack.item.MAX_STACK_SIZE)
 
-            if (
+            elif (
                 merge
                 and slot.itemstack.is_compatible(itemstack)
                 and (
